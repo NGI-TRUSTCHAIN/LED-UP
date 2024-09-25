@@ -36,3 +36,5 @@ coverage/
 *.sol.js
 *.json
 
+# Ignore macOS system files
+.DS_Store
