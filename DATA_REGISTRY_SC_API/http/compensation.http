@@ -1,0 +1,97 @@
+@ROOT_URL=http://localhost:7071/api
+
+### Get Service Fee
+GET {{ROOT_URL}}/getServiceFee
+
+### Get Provider Wallet
+GET {{ROOT_URL}}/getProviderWallet
+
+
+### Get Token Address <------
+GET {{ROOT_URL}}/getPaymentTokenAddress
+
+### Get Unit Price <------
+GET {{ROOT_URL}}/getUnitPrice
+
+### Get Provider Balance **** Token Is Not Real One
+GET {{ROOT_URL}}/getProviderBalance
+
+### Check Producer Exist
+GET {{ROOT_URL}}/producerExist?producer=0x7bE129dc9F7715f51D459c36bB127Cc2FaE98B32
+
+
+### Get Producer Balance
+GET {{ROOT_URL}}/getProducerBalance?address=0x7bE129dc9F7715f51D459c36bB127Cc2FaE98B32
+
+
+### Get Minimum Withdraw Amount
+GET {{ROOT_URL}}/getMinimumWithdrawAmount
+
+
+### Remove Producer  **** Producer Does Not Exist - Check After Adding Producer
+POST  {{ROOT_URL}}/removeProducer
+Content-Type: application/json
+
+{
+    "address": "0x7bE129dc9F7715f51D459c36bB127Cc2FaE98B32"
+}
+
+
+### Set Minimu Withdraw Amount
+POST {{ROOT_URL}}/setMinimumWithdrawAmount
+Content-Type: application/json
+
+{
+    "value": 1
+}
+
+### pause Compensation
+POST {{ROOT_URL}}/pauseCompensation
+
+### Unpause Compensation
+POST {{ROOT_URL}}/unpauseCompensation
+
+### Process Payment
+POST {{ROOT_URL}}/processPayment
+Content-Type: application/json
+
+{
+  "producer": "0x7bE129dc9F7715f51D459c36bB127Cc2FaE98B32",
+  "recordId": "d0658788-9eeb-4b40-9053-09e1adacdf6a",
+  "dataSize": 100
+}
+  
+
+### Withdraw Producer Balance -  The producer should connect its wallet as signer to withdraw the balance
+POST {{ROOT_URL}}/withdrawProducerBalance
+Content-Type: application/json
+
+{
+  "value": 10
+}
+
+
+### Change Unit Price
+POST {{ROOT_URL}}/changeUnitPrice
+Content-Type: application/json
+
+{
+  "value": 5
+}
+
+
+### Change Service Fee - Percentage
+POST {{ROOT_URL}}/changeServiceFee
+Content-Type: application/json
+
+{
+  "value": 5
+}
+
+### Change Token Address - ERC20 Token Address
+POST {{ROOT_URL}}/changeTokenAddress
+Content-Type: application/json
+
+{
+  "address": "0x702Bd63ddB359fF45F1De789e9aD8E2EcAb15218"
+}
