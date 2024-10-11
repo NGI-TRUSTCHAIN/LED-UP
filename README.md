@@ -34,3 +34,39 @@ Our code repository is organized into the following sections:
 - **APIs**: Includes the serverless APIs built using Azure Functions that interact with the LED-UP platform. These APIs facilitate data uploads, sharing, and retrieval operations, providing a seamless interface for developers to integrate with LED-UP. <a href="https://github.com/NGI-TRUSTCHAIN/LED-UP/tree/master/DATA_REGISTRY_SC_API"><strong>Explore »</strong></a>
 
 - **Documentation**: Comprises detailed guides and resources for developers to understand and utilize LED-UP's features effectively. This section covers smart contract integration, API usage, and other essential information for working with LED-UP. <a href="https://github.com/NGI-TRUSTCHAIN/LED-UP/tree/master/led-up-docs"><strong>Explore »</strong></a>
+
+
+## Contribution
+
+We warmly welcome contributions to the LED-UP project! Whether you’re a developer, researcher, or just passionate about decentralized identity and secure data management, your input can help us build a better, more secure future for vulnerable populations and beyond. There are many ways to get involved, from contributing code, improving documentation, or testing new features, to sharing your insights on improving the platform. Together, we can make a difference.
+
+To get started, feel free to open an issue, submit a pull request, or reach out to us directly via GitHub. Our contributors are critical to the success of this project, and we value every contribution, no matter how big or small.
+
+### Core Contributors
+
+This project is supported and maintained by the following core contributors:
+
+- **Mengstu Fentaw**  
+  GitHub: [@menge-mm](https://github.com/menge-mm)  
+  Email: [mfn@modern-miracle.com](mailto:mfn@modern-miracle.com)
+
+- **Dr. Manuel Knott**  
+  GitHub: [@mak-mm](https://github.com/mak-mm)  
+  Email: [mak@modern-miracle.com](mailto:mak@modern-miracle.com)
+
+- **Sarra-Maryam Fezzani**  
+  GitHub: [@smfzzni](https://github.com/smfzzni)  
+  Email: [smf@modern-miracle.com](mailto:smf@modern-miracle.com)
+
+### Project Support
+
+The LED-UP project has received significant support from **TrustChain** and the **Next Generation Internet (NGI)** initiative. We are proud to be part of the **Horizon Europe** program, with funding provided by the **European Union**. Their support is instrumental in enabling the continued development of our decentralized identity and privacy-preserving solutions.
+
+## Contact
+
+For further information or to get involved, please reach out to us at:
+Email: [led-up@modern-miracle.com](mailto:led-up@modern-miracle.com)
+
+## License
+
+This project is licensed under the AGPL 3.0 License. You can find more details in the LICENSE file or refer to the official documentation of the AGPL 3.0 license for further information.
