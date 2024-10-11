@@ -1,0 +1,9 @@
+[submodule "led-up-docs"]
+	path = led-up-docs
+	url = https://github.com/LED-UP/led-up-docs.git
+[submodule "led-up-sc"]
+	path = led-up-sc
+	url = https://github.com/LED-UP/led-up-sc.git
+[submodule "ledup-sc-api"]
+	path = ledup-sc-api
+	url = https://github.com/LED-UP/ledup-sc-api.git
