@@ -29,11 +29,11 @@ LED-UP platform revolutionizing data sharing and compensation systems. Our platf
 
 Our code repository is organized into the following sections:
 
-- **Smart Contracts**: Contains the Solidity smart contracts that power LED-UP's decentralized data management system. These contracts define the rules and logic governing data registration, sharing, and compensation. <a href="https://github.com/NGI-TRUSTCHAIN/LED-UP/tree/master/LED-UP-SMART-CONTRACTS"><strong>Explore »</strong></a>
+- **Smart Contracts**: Contains the Solidity smart contracts that power LED-UP's decentralized data management system. These contracts define the rules and logic governing data registration, sharing, and compensation. 
 
-- **APIs**: Includes the serverless APIs built using Azure Functions that interact with the LED-UP platform. These APIs facilitate data uploads, sharing, and retrieval operations, providing a seamless interface for developers to integrate with LED-UP. <a href="https://github.com/NGI-TRUSTCHAIN/LED-UP/tree/master/DATA_REGISTRY_SC_API"><strong>Explore »</strong></a>
+- **APIs**: Includes the serverless APIs built using Azure Functions that interact with the LED-UP platform. These APIs facilitate data uploads, sharing, and retrieval operations, providing a seamless interface for developers to integrate with LED-UP.
 
-- **Documentation**: Comprises detailed guides and resources for developers to understand and utilize LED-UP's features effectively. This section covers smart contract integration, API usage, and other essential information for working with LED-UP. <a href="https://github.com/NGI-TRUSTCHAIN/LED-UP/tree/master/led-up-docs"><strong>Explore »</strong></a>
+- **Documentation**: Comprises detailed guides and resources for developers to understand and utilize LED-UP's features effectively. This section covers smart contract integration, API usage, and other essential information for working with LED-UP.
 
 
 ## Contribution
