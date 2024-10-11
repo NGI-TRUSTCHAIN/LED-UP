@@ -70,3 +70,5 @@ Email: [led-up@modern-miracle.com](mailto:led-up@modern-miracle.com)
 ## License
 
 This project is licensed under the AGPL 3.0 License. You can find more details in the LICENSE file or refer to the official documentation of the AGPL 3.0 license for further information.
+
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
