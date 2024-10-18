@@ -9,6 +9,8 @@ Welcome to LED-UP code repository, where we are building a decentralized data ma
 
 LED-UP platform revolutionizing data sharing and compensation systems. Our platform empowers individuals and organizations to manage their data in a secure, efficient, and transparent manner. We provide tools that allow data providers to register, share, and control access to their information, all while ensuring data integrity and trust through our smart contracts and serverless APIs.
 
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
+
 <img src="block.png"  alt="led-up general block diagram">
 
 ### Key Components
@@ -71,4 +73,3 @@ Email: [led-up@modern-miracle.com](mailto:led-up@modern-miracle.com)
 
 This project is licensed under the AGPL 3.0 License. You can find more details in the LICENSE file or refer to the official documentation of the AGPL 3.0 license for further information.
 
-[![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
