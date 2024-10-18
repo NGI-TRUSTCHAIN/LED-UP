@@ -7,3 +7,6 @@
 [submodule "ledup-sc-api"]
 	path = ledup-sc-api
 	url = https://github.com/LED-UP/ledup-sc-api.git
+[submodule "led-up-fe"]
+	path = led-up-fe
+	url = https://github.com/LED-UP/led-up-fe.git
