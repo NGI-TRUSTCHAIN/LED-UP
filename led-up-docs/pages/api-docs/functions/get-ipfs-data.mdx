@@ -1,0 +1,132 @@
+import HeaderTitle from '@/components/title';
+
+<HeaderTitle title="Azure Function:Get IPFS Data" source="https://github.com/your-repo-path-to-timerTrigger" />
+
+---
+
+## Overview
+
+This Azure Function retrieves encrypted data from IPFS using a `CID` and decrypts it before sending the decrypted result back in the response. The function expects a GET request and either a `cid` as a query or path parameter.
+
+## Table of Contents
+
+- [Function Description](#function-description)
+- [Handler Function](#handler-function)
+- [Request and Response](#request-and-response)
+- [Error Handling](#error-handling)
+- [Route Configuration](#route-configuration)
+- [Summary](#summary)
+
+## Function Description
+
+The function processes HTTP `GET` requests to retrieve encrypted data from IPFS using a provided `cid`, decrypt the data using a predefined encryption key, and return the decrypted data to the client.
+
+### Dependencies
+
+- **fetchFromIPFS**: Utility function for fetching data from IPFS using a `CID`.
+- **decrypt** and **toCipherKey**: Functions for decrypting the data retrieved from IPFS.
+
+```typescript
+import { fetchFromIPFS } from '../utils/fetch-ipfs';
+import { decrypt, toCipherKey } from '../utils/encrypt';
+```
+
+## Handler Function
+
+The handler function retrieves the `cid` from either the path parameters or query string, fetches the encrypted data from IPFS, decrypts it using the key defined in the environment variable `ENCRYPTION_KEY`, and returns the decrypted data in the HTTP response.
+
+### Key Logic
+
+```typescript
+const res = await fetchFromIPFS(cid);
+const decrypted = decrypt(res, toCipherKey(key));
+return {
+  status: 200,
+  jsonBody: {
+    data: decrypted,
+    res: res,
+  },
+};
+```
+
+## Request and Response
+
+### Request
+
+The function expects a `GET` request with a `cid` parameter either in the path or the query string.
+
+#### Request Example
+
+```
+GET /ipfs?cid=QmTzQwD1u...
+```
+
+### Response
+
+#### Successful Response (200 OK)
+
+On success, the function returns a `200 OK` status with the decrypted data and raw IPFS data.
+
+```json
+{
+  "data": { ...decrypted data... },
+  "res": { ...raw IPFS data... }
+}
+```
+
+#### Error Response (400 Bad Request)
+
+If no `cid` is provided:
+
+```json
+"Please provide a cid"
+```
+
+#### Error Response (500 Internal Server Error)
+
+If there is an error during the process:
+
+```json
+{
+  "error": "Detailed error message",
+  "message": "Failed to retrieve data from IPFS"
+}
+```
+
+## Error Handling
+
+The function logs errors related to data retrieval or decryption and returns a 500 response with the error message.
+
+### Error Snippet
+
+```typescript
+catch (error) {
+  context.error(`Error fetching data: ${error}`);
+  return {
+    status: 500,
+    jsonBody: {
+      error: error,
+      message: 'Failed to retrieve data from IPFS',
+    },
+  };
+}
+```
+
+## Route Configuration
+
+The function listens to the `GET` method at the `/ipfs` route and allows anonymous access.
+
+### Route Setup
+
+```typescript
+app.http('GetIPFSData', {
+  methods: ['GET'],
+  route: 'ipfs',
+  authLevel: 'anonymous',
+  handler: getIPFSData,
+});
+```
+
+## Summary
+
+This Azure Function allows clients to retrieve and decrypt data stored on IPFS using a `cid`. It handles decryption using a predefined encryption key and returns the decrypted result alongside the raw IPFS data. Error handling is in place for cases where the `cid` is missing or the decryption process fails.

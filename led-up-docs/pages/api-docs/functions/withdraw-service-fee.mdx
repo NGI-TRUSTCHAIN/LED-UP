@@ -1,0 +1,134 @@
+import HeaderTitle from '@/components/title';
+
+<HeaderTitle title="Azure Function: Withdraw Service Fee" source="https://github.com/your-repo-path-to-timerTrigger" />
+
+---
+
+This Azure Function that withdraws a service fee:
+
+## Overview
+
+This Azure Function is responsible for processing requests to withdraw a specified service fee. It handles POST requests and returns either the transaction receipt or an error message if the withdrawal fails.
+
+## Table of Contents
+
+- [Function Description](#function-description)
+- [Handler Function](#handler-function)
+- [Request and Response](#request-and-response)
+- [Error Handling](#error-handling)
+- [Route Configuration](#route-configuration)
+- [Summary](#summary)
+
+## Function Description
+
+The function allows for the withdrawal of a service fee from the system. It processes incoming requests, executes the withdrawal operation, and returns the result.
+
+### Dependencies
+
+- **withdrawServiceFee**: A helper function to handle the withdrawal operation.
+- **decodeError**: A utility function to decode error messages.
+- **CompensationABI**: ABI required for decoding errors.
+
+```typescript
+import { withdrawServiceFee } from '../helpers/update-query';
+import { decodeError } from '../helpers/decodeError';
+import { CompensationABI } from '../utils/compensation.abi';
+```
+
+## Handler Function
+
+The `handler` function logs the incoming request and processes the withdrawal operation.
+
+### Key Logic
+
+1. **Processing the Request**:
+   The function expects a JSON body structured according to the `ValueParam` type, which contains the amount to withdraw.
+
+   ```typescript
+   const { value } = (await request.json()) as ValueParam;
+   ```
+
+2. **Withdrawing Service Fee**:
+   The function calls `withdrawServiceFee` with the provided value and retrieves the transaction receipt.
+
+   ```typescript
+   const receipt = await withdrawServiceFee(value);
+   ```
+
+## Request and Response
+
+### Request
+
+The function expects a `POST` request at the `/withdrawServiceFee` route with a JSON body structured according to the `ValueParam` type.
+
+#### Request Example
+
+```http
+POST /withdrawServiceFee
+Content-Type: application/json
+
+{
+  "value": 50
+}
+```
+
+### Response
+
+#### Successful Response (200 OK)
+
+On a successful withdrawal, the function returns a `200 OK` status with the transaction receipt.
+
+```json
+{
+  "receipt": "transaction_receipt_here"
+}
+```
+
+#### Error Response (500 Internal Server Error)
+
+If an error occurs during the withdrawal process, the function returns a `500 Internal Server Error` status with the error details.
+
+```json
+{
+  "error": "Decoded error message",
+  "message": "Failed to withdraw the service fee"
+}
+```
+
+## Error Handling
+
+The function logs any errors encountered during the withdrawal process and returns a `500` response with the decoded error details.
+
+### Error Snippet
+
+```typescript
+catch (error) {
+  context.error(`Error withdrawing service fee: ${error}`);
+  return {
+    status: 500,
+    jsonBody: {
+      error: decodeError(CompensationABI, error), // Decode the error message
+      message: 'Failed to withdraw the service fee',
+    },
+  };
+}
+```
+
+## Route Configuration
+
+The function is configured to respond to `POST` requests at the `/withdrawServiceFee` route and allows anonymous access.
+
+### Route Setup
+
+```typescript
+app.http('withdrawServiceFee', {
+  methods: ['POST'], // Only supports POST requests
+  route: 'withdrawServiceFee', // The route for this function
+  authLevel: 'anonymous', // No authentication required
+  handler,
+});
+```
+
+## Summary
+
+This Azure Function efficiently manages the withdrawal of a service fee, ensuring robust error handling and informative responses to the users.

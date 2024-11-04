@@ -1,0 +1,121 @@
+import HeaderTitle from '@/components/title';
+
+<HeaderTitle title="Azure Function:Get Pause State" source="https://github.com/your-repo-path-to-timerTrigger" />
+
+---
+
+This Azure Function that retrieves the current pause state of the system:
+
+## Overview
+
+This Azure Function retrieves the current pause state of the system from a data source and returns it in the HTTP response. It processes HTTP `GET` requests and handles potential errors during the retrieval process.
+
+## Table of Contents
+
+- [Function Description](#function-description)
+- [Handler Function](#handler-function)
+- [Request and Response](#request-and-response)
+- [Error Handling](#error-handling)
+- [Route Configuration](#route-configuration)
+- [Summary](#summary)
+
+## Function Description
+
+The function is designed to process `GET` requests and returns the current pause state. It utilizes the `paused` helper function to fetch the required data.
+
+### Dependencies
+
+- **paused**: Helper function for retrieving the current pause state.
+
+```typescript
+import { paused } from '../helpers/view-query';
+```
+
+## Handler Function
+
+The handler function logs the request URL, retrieves the pause state, and sends the appropriate HTTP response.
+
+### Key Logic
+
+```typescript
+const pauseState = await paused();
+return {
+  status: 200,
+  jsonBody: {
+    pause: pauseState,
+  },
+};
+```
+
+## Request and Response
+
+### Request
+
+The function expects a `GET` request at the `/pauseState` route.
+
+#### Request Example
+
+```
+GET /pauseState
+```
+
+### Response
+
+#### Successful Response (200 OK)
+
+On success, the function returns a `200 OK` status with the current pause state in the response body.
+
+```json
+{
+  "pause": false
+}
+```
+
+#### Error Response (500 Internal Server Error)
+
+If there is an error during the data retrieval process:
+
+```json
+{
+  "error": "Detailed error message",
+  "message": "Failed to retrieve pause state"
+}
+```
+
+## Error Handling
+
+The function logs any errors encountered during the retrieval process and returns a `500` response with an error message.
+
+### Error Snippet
+
+```typescript
+catch (error) {
+  context.error(`Error fetching data: ${error}`);
+  return {
+    status: 500,
+    jsonBody: {
+      error: error,
+      message: 'Failed to retrieve pause state',
+    },
+  };
+}
+```
+
+## Route Configuration
+
+The function is set up to respond to `GET` requests at the `/pauseState` route and allows anonymous access.
+
+### Route Setup
+
+```typescript
+app.http('getPauseState', {
+  methods: ['GET'],
+  route: 'pauseState',
+  authLevel: 'anonymous',
+  handler,
+});
+```
+
+## Summary
+
+This Azure Function provides a straightforward way to retrieve the current pause state of the system. It returns the state in a structured format and handles errors gracefully, ensuring that users receive clear feedback in case of issues.

@@ -1,0 +1,145 @@
+import HeaderTitle from '@/components/title';
+
+<HeaderTitle title="Azure Function: Register Producer" source="https://github.com/your-repo-path-to-timerTrigger" />
+
+---
+
+This Azure Function that registers a producer by uploading encrypted data to IPFS and creating a blockchain record, based on the provided code:
+
+## Overview
+
+This Azure Function is responsible for registering a producer by uploading their encrypted data to IPFS (InterPlanetary File System) and creating a corresponding record on the blockchain.
+
+## Table of Contents
+
+- [Function Description](#function-description)
+- [Handler Function](#handler-function)
+- [Request and Response](#request-and-response)
+- [Error Handling](#error-handling)
+- [Route Configuration](#route-configuration)
+- [Summary](#summary)
+
+## Function Description
+
+The function processes requests to register a producer. It takes the producer's details from the request body, encrypts the data, uploads it to IPFS, calculates a signature for the data, and registers the producer record on the blockchain.
+
+### Dependencies
+
+- **uploadToIPFS**: Utility function for uploading data to IPFS.
+- **registerProducerRecord**: Helper function for registering the producer record on the blockchain.
+- **encrypt**: Utility function for encrypting data.
+- **hashData**: Utility functions for hashing data.
+- **wallet**: Helper to sign the data using a blockchain wallet.
+
+```typescript
+import { uploadToIPFS } from '../utils/pin-json';
+import { registerProducerRecord } from '../helpers/update-query';
+import { encrypt, toCipherKey } from '../utils/encrypt';
+import { hashHex } from '../utils/hash-data';
+import { wallet } from '../helpers/provider';
+```
+
+## Handler Function
+
+The handler function logs the request URL, retrieves registration data from the request body, encrypts the data, uploads it to IPFS, computes a signature, and sends the appropriate HTTP response.
+
+### Key Logic
+
+```typescript
+const encryptedData = encrypt(JSON.stringify(data), toCipherKey(key));
+const res = await uploadToIPFS({ pinataContent: encryptedData });
+const hash = await hashHex(JSON.stringify(data));
+const signature = await wallet.signMessage(hash);
+```
+
+## Request and Response
+
+### Request
+
+The function expects a `POST` request at the `/registerProducer` route with the following body:
+
+#### Request Example
+
+```json
+{
+  "producer": "0xProducerAddress",
+  "consent": 1,
+  "data": {
+    "id": "1234",
+    "resourceType": "SomeResourceType"
+  }
+}
+```
+
+### Response
+
+#### Successful Response (200 OK)
+
+On success, the function returns a `200 OK` status with a JSON object containing the transaction hash and the blockchain data.
+
+```json
+{
+  "txhash": "transaction_hash_here",
+  "data": {
+    "recordId": "1234",
+    "producer": "0xProducerAddress",
+    "signature": "signature_here",
+    "resourceType": "SomeResourceType",
+    "consent": 1,
+    "metadata": {
+      "url": "https://ipfs.io/ipfs/ipfs_hash_here",
+      "cid": "ipfs_hash_here",
+      "hash": "0xhash_here"
+    }
+  }
+}
+```
+
+#### Error Response (500 Internal Server Error)
+
+If there is an error during the process:
+
+```json
+{
+  "error": "Detailed error message",
+  "message": "Failed to retrieve data from IPFS"
+}
+```
+
+## Error Handling
+
+The function logs any errors encountered during the registration process and returns a `500` response with an error message.
+
+### Error Snippet
+
+```typescript
+catch (error) {
+  context.error(`Error fetching data: ${error}`);
+  return {
+    status: 500,
+    jsonBody: {
+      error: error,
+      message: 'Failed to retrieve data from IPFS',
+    },
+  };
+}
+```
+
+## Route Configuration
+
+The function is configured to respond to `POST` requests at the `/registerProducer` route and allows anonymous access.
+
+### Route Setup
+
+```typescript
+app.http('registerProducer', {
+  methods: ['POST'],
+  route: 'registerProducer',
+  authLevel: 'anonymous',
+  handler,
+});
+```
+
+## Summary
+
+This Azure Function efficiently registers a producer by securely handling their data, storing it on IPFS, and registering the necessary blockchain record, while providing clear responses and error management.

@@ -1,0 +1,21 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .dark .swagger-ui .scheme-container {
+    @apply bg-gray-900 text-gray-300 border border-gray-500; /* Dark mode styles */
+  }
+
+  .dark .swagger-ui .opblock-section-header,
+  .dark .swagger-ui .content-type,
+  .dark .swagger-ui #servers,
+  .dark .swagger-ui input {
+    @apply bg-[#011407] text-white !important;
+  }
+  .dark .swagger-ui .title,
+  .dark .swagger-ui p,
+  .dark .swagger-ui h3 {
+    @apply text-white !important;
+  }
+}

@@ -1,0 +1,129 @@
+import HeaderTitle from '@/components/title';
+
+<HeaderTitle title="Azure Function: Transfer Ownership" source="https://github.com/your-repo-path-to-timerTrigger" />
+
+---
+
+This Azure Function that transfers ownership to a new provider:
+
+## Overview
+
+This Azure Function enables the transfer of ownership of a resource to a specified new provider. It processes incoming HTTP requests to facilitate this operation.
+
+## Table of Contents
+
+- [Function Description](#function-description)
+- [Handler Function](#handler-function)
+- [Request and Response](#request-and-response)
+- [Error Handling](#error-handling)
+- [Route Configuration](#route-configuration)
+- [Summary](#summary)
+
+## Function Description
+
+The function processes `POST` requests to transfer ownership of a specified resource to a new provider. The new provider's address is provided in the request body.
+
+### Dependencies
+
+- **transferOwnership**: A helper function that executes the ownership transfer process.
+
+```typescript
+import { transferOwnership } from '../helpers/update-query';
+```
+
+## Handler Function
+
+The handler function logs the request URL, processes the transfer request, and sends the appropriate HTTP response based on the outcome.
+
+### Key Logic
+
+1. **Extracting New Provider**:
+
+   ```typescript
+   const { newProvider } = (await request.json()) as { newProvider: string };
+   ```
+
+2. **Ownership Transfer**:
+   ```typescript
+   const receipt = await transferOwnership(newProvider);
+   ```
+
+## Request and Response
+
+### Request
+
+The function expects a `POST` request at the `/transferOwnership` route. The request body must contain the following parameter:
+
+- **newProvider**: The address of the new provider to whom ownership is being transferred.
+
+#### Request Example
+
+```http
+POST /transferOwnership
+Content-Type: application/json
+
+{
+  "newProvider": "new_provider_address"
+}
+```
+
+### Response
+
+#### Successful Response (200 OK)
+
+On success, the function returns a `200 OK` status with a JSON object containing the receipt of the ownership transfer.
+
+```json
+{
+  "receipt": "transaction_receipt_here"
+}
+```
+
+#### Error Response (500 Internal Server Error)
+
+If an error occurs during the ownership transfer process, the function returns a `500 Internal Server Error` status with details about the error.
+
+```json
+{
+  "error": "Detailed error message",
+  "message": "Failed to retrieve data from IPFS"
+}
+```
+
+## Error Handling
+
+The function logs any errors encountered during the ownership transfer process. It returns a `500` response with the error details.
+
+### Error Snippet
+
+```typescript
+catch (error) {
+  context.error(`Error transferring ownership: ${error}`);
+  return {
+    status: 500,
+    jsonBody: {
+      error,
+      message: 'Failed to retrieve data from IPFS',
+    },
+  };
+}
+```
+
+## Route Configuration
+
+The function is configured to respond to `POST` requests at the `/transferOwnership` route and allows anonymous access.
+
+### Route Setup
+
+```typescript
+app.http('transferOwnership', {
+  methods: ['POST'],
+  route: 'transferOwnership',
+  authLevel: 'anonymous',
+  handler,
+});
+```
+
+## Summary
+
+This Azure Function efficiently facilitates the transfer of ownership of a resource to a new provider, handling potential errors gracefully and providing clear feedback to users.

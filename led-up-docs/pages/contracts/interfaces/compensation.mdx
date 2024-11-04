@@ -1,0 +1,270 @@
+import HeaderTitle from '@/components/title';
+
+<HeaderTitle
+  title="Compensation Interface"
+  source="https://github.com/LED-UP/LED-UP-SMART-CONTRACTS/blob/46bc8208caaf3c05f42bbf95751a615170476620/src/interface/ICompensation.sol"
+/>
+
+This interface defines the functions for handling compensation-related operations.
+
+## Functions
+
+### processPayment
+
+Processes a payment for a given producer based on the data size.
+
+```solidity
+function processPayment(address _producer, string memory _recordId, uint256 dataSize) external;
+```
+
+**Parameters**
+
+| Name        | Type      | Description                                                    |
+| ----------- | --------- | -------------------------------------------------------------- |
+| `_producer` | `address` | The address of the producer receiving the payment.             |
+| `_recordId` | `string`  | The ID of the record associated with the payment.              |
+| `dataSize`  | `uint256` | The size of the data for which the payment is being processed. |
+
+### verifyPayment
+
+Verifies whether a payment has been made for a specific record.
+
+```solidity
+function verifyPayment(string memory _recordId) external view returns (bool);
+```
+
+**Parameters**
+
+| Name        | Type     | Description                                     |
+| ----------- | -------- | ----------------------------------------------- |
+| `_recordId` | `string` | The ID of the record to verify the payment for. |
+
+**Returns**
+
+| Name     | Type   | Description                                              |
+| -------- | ------ | -------------------------------------------------------- |
+| `<none>` | `bool` | True if the payment has been processed, otherwise false. |
+
+### withdrawProducerBalance
+
+Withdraws the balance of the caller (producer).
+
+```solidity
+function withdrawProducerBalance(uint256 _amount) external;
+```
+
+**Parameters**
+
+| Name      | Type      | Description                                         |
+| --------- | --------- | --------------------------------------------------- |
+| `_amount` | `uint256` | The amount to withdraw from the producer's balance. |
+
+### withdrawServiceFee
+
+Withdraws a specified service fee amount to the levea wallet.
+
+```solidity
+function withdrawServiceFee(uint256 _amount) external;
+```
+
+**Parameters**
+
+| Name      | Type      | Description                            |
+| --------- | --------- | -------------------------------------- |
+| `_amount` | `uint256` | The amount of service fee to withdraw. |
+
+### removeProducer
+
+Removes a producer from the system, clearing their balance.
+
+```solidity
+function removeProducer(address _producer) external;
+```
+
+**Parameters**
+
+| Name        | Type      | Description                                |
+| ----------- | --------- | ------------------------------------------ |
+| `_producer` | `address` | The address of the producer to be removed. |
+
+### changeServiceFee
+
+Changes the service fee percentage.
+
+```solidity
+function changeServiceFee(uint256 _newServiceFee) external;
+```
+
+**Parameters**
+
+| Name             | Type      | Description                            |
+| ---------------- | --------- | -------------------------------------- |
+| `_newServiceFee` | `uint256` | The new service fee percentage to set. |
+
+### changeUnitPrice
+
+Changes the unit price for payments.
+
+```solidity
+function changeUnitPrice(uint256 _newUnitPrice) external;
+```
+
+**Parameters**
+
+| Name            | Type      | Description                |
+| --------------- | --------- | -------------------------- |
+| `_newUnitPrice` | `uint256` | The new unit price to set. |
+
+### setMinimumWithdrawAmount
+
+Sets the minimum withdrawable amount for producers.
+
+```solidity
+function setMinimumWithdrawAmount(uint256 _amount) external;
+```
+
+**Parameters**
+
+| Name      | Type      | Description                      |
+| --------- | --------- | -------------------------------- |
+| `_amount` | `uint256` | The new minimum withdraw amount. |
+
+### pauseService
+
+Pauses the service, preventing any payments or withdrawals.
+
+```solidity
+function pauseService() external;
+```
+
+### unpauseService
+
+Unpauses the service, allowing payments and withdrawals.
+
+```solidity
+function unpauseService() external;
+```
+
+### getServiceFee
+
+Retrieves the current service fee percentage.
+
+```solidity
+function getServiceFee() external view returns (uint256);
+```
+
+**Returns**
+
+| Name     | Type      | Description                         |
+| -------- | --------- | ----------------------------------- |
+| `<none>` | `uint256` | The current service fee percentage. |
+
+### getLeveaWallet
+
+Retrieves the address of the levea wallet.
+
+```solidity
+function getLeveaWallet() external view returns (address);
+```
+
+**Returns**
+
+| Name     | Type      | Description                      |
+| -------- | --------- | -------------------------------- |
+| `<none>` | `address` | The address of the levea wallet. |
+
+### getLeveaWalletBalance
+
+Retrieves the balance of the levea wallet.
+
+```solidity
+function getLeveaWalletBalance() external view returns (uint256);
+```
+
+**Returns**
+
+| Name     | Type      | Description                                |
+| -------- | --------- | ------------------------------------------ |
+| `<none>` | `uint256` | The balance of the levea wallet in tokens. |
+
+### getProducerBalance
+
+Retrieves the producer's balance of the caller.
+
+```solidity
+function getProducerBalance() external view returns (uint256);
+```
+
+**Returns**
+
+| Name     | Type      | Description                                     |
+| -------- | --------- | ----------------------------------------------- |
+| `<none>` | `uint256` | The balance of the caller (producer) in tokens. |
+
+### getProducerBalance
+
+Retrieves the balance of a specific producer.
+
+```solidity
+function getProducerBalance(address _producer) external view returns (uint256);
+```
+
+**Parameters**
+
+| Name        | Type      | Description                           |
+| ----------- | --------- | ------------------------------------- |
+| `_producer` | `address` | The address of the producer to check. |
+
+**Returns**
+
+| Name     | Type      | Description                                      |
+| -------- | --------- | ------------------------------------------------ |
+| `<none>` | `uint256` | The balance of the specified producer in tokens. |
+
+### getMinimumWithdrawAmount
+
+Retrieves the minimum withdrawable amount for producers.
+
+```solidity
+function getMinimumWithdrawAmount() external view returns (uint256);
+```
+
+**Returns**
+
+| Name     | Type      | Description                                |
+| -------- | --------- | ------------------------------------------ |
+| `<none>` | `uint256` | The minimum withdrawable amount in tokens. |
+
+### producerExist
+
+Checks if a producer exists based on their address.
+
+```solidity
+function producerExist(address _producer) external view returns (bool);
+```
+
+**Parameters**
+
+| Name        | Type      | Description                           |
+| ----------- | --------- | ------------------------------------- |
+| `_producer` | `address` | The address of the producer to check. |
+
+**Returns**
+
+| Name     | Type   | Description                                   |
+| -------- | ------ | --------------------------------------------- |
+| `<none>` | `bool` | True if the producer exists, otherwise false. |
+
+### getUnitPrice
+
+Retrieves the current unit price for payments.
+
+```solidity
+function getUnitPrice() external view returns (uint256);
+```
+
+**Returns**
+
+| Name     | Type      | Description                       |
+| -------- | --------- | --------------------------------- |
+| `<none>` | `uint256` | The current unit price in tokens. |

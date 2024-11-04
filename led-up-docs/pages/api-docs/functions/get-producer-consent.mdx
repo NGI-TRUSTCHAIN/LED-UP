@@ -1,0 +1,124 @@
+import HeaderTitle from '@/components/title';
+
+<HeaderTitle title="Azure Function: Get Producer Consent" source="https://github.com/your-repo-path-to-timerTrigger" />
+
+---
+
+This Azure Function that retrieves the consent status for a specified producer:
+
+## Overview
+
+This Azure Function retrieves the consent status associated with a specific producer. It processes HTTP `GET` requests and returns the consent data or an error message if the retrieval fails.
+
+## Table of Contents
+
+- [Function Description](#function-description)
+- [Handler Function](#handler-function)
+- [Request and Response](#request-and-response)
+- [Error Handling](#error-handling)
+- [Route Configuration](#route-configuration)
+- [Summary](#summary)
+
+## Function Description
+
+The function is designed to handle `GET` requests and return the consent status associated with a specified producer address. It utilizes the `getProducerConsent` helper function to fetch the consent data.
+
+### Dependencies
+
+- **getProducerConsent**: Helper function for retrieving the consent status for a producer.
+- **stringifyBigInt**: Helper function for converting BigInt values to strings.
+
+```typescript
+import { getProducerConsent } from '../helpers/view-query';
+import { stringifyBigInt } from '../helpers/bigIntStringify';
+```
+
+## Handler Function
+
+The handler function logs the request URL, retrieves the consent for the specified producer, and sends the appropriate HTTP response.
+
+### Key Logic
+
+```typescript
+const producer = (await request.query.get('producer')) as string;
+const consent = await getProducerConsent(producer);
+return {
+  status: 200,
+  jsonBody: {
+    consent: stringifyBigInt(consent),
+  },
+};
+```
+
+## Request and Response
+
+### Request
+
+The function expects a `GET` request at the `/getProducerConsent` route, with the producer address passed as a query parameter.
+
+#### Request Example
+
+```
+GET /getProducerConsent?producer=0x1234567890abcdef1234567890abcdef12345678
+```
+
+### Response
+
+#### Successful Response (200 OK)
+
+On success, the function returns a `200 OK` status with the consent status in the response body.
+
+```json
+{
+  "consent": "100"
+}
+```
+
+#### Error Response (500 Internal Server Error)
+
+If there is an error during the consent retrieval process:
+
+```json
+{
+  "error": "Detailed error message",
+  "message": "Failed to retrieve producer consent"
+}
+```
+
+## Error Handling
+
+The function logs any errors encountered during the retrieval process and returns a `500` response with an error message.
+
+### Error Snippet
+
+```typescript
+catch (error) {
+  context.error(`Error fetching data: ${error}`);
+  return {
+    status: 500,
+    jsonBody: {
+      error: error,
+      message: 'Failed to retrieve producer consent',
+    },
+  };
+}
+```
+
+## Route Configuration
+
+The function is set up to respond to `GET` requests at the `/getProducerConsent` route and allows anonymous access.
+
+### Route Setup
+
+```typescript
+app.http('getProducerConsent', {
+  methods: ['GET'],
+  route: 'getProducerConsent',
+  authLevel: 'anonymous',
+  handler,
+});
+```
+
+## Summary
+
+This Azure Function provides an efficient way to retrieve the consent status for a specified producer. It returns the consent status in a structured format and handles errors gracefully, ensuring that users receive clear feedback in case of issues.

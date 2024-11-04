@@ -1,0 +1,120 @@
+import HeaderTitle from '@/components/title';
+
+<HeaderTitle
+  title="Azure Function:Get Minimum Withdrawal Amount"
+  source="https://github.com/your-repo-path-to-timerTrigger"
+/>
+
+---
+
+## Overview
+
+This Azure Function retrieves the minimum withdraw amount from a data source and returns it in the HTTP response. It processes HTTP `GET` requests and handles potential errors during the retrieval process.
+
+## Table of Contents
+
+- [Function Description](#function-description)
+- [Handler Function](#handler-function)
+- [Request and Response](#request-and-response)
+- [Error Handling](#error-handling)
+- [Route Configuration](#route-configuration)
+- [Summary](#summary)
+
+## Function Description
+
+The function is designed to process `GET` requests and returns the minimum withdraw amount. It utilizes the `getMinimumWithdrawAmount` helper function to fetch the required data.
+
+### Dependencies
+
+- **getMinimumWithdrawAmount**: Helper function for retrieving the minimum withdraw amount from the data source.
+
+```typescript
+import { getMinimumWithdrawAmount } from '../helpers/view-query';
+```
+
+## Handler Function
+
+The handler function logs the request URL, retrieves the minimum withdraw amount, and sends the appropriate HTTP response.
+
+### Key Logic
+
+```typescript
+const minimumWithdrawAmount = await getMinimumWithdrawAmount();
+return {
+  status: 200,
+  jsonBody: minimumWithdrawAmount,
+};
+```
+
+## Request and Response
+
+### Request
+
+The function expects a `GET` request at the `/getMinimumWithdrawAmount` route.
+
+#### Request Example
+
+```
+GET /getMinimumWithdrawAmount
+```
+
+### Response
+
+#### Successful Response (200 OK)
+
+On success, the function returns a `200 OK` status with the minimum withdraw amount in the response body.
+
+```json
+{
+  "minimumWithdrawAmount": 100
+}
+```
+
+#### Error Response (500 Internal Server Error)
+
+If there is an error during the data retrieval process:
+
+```json
+{
+  "error": "Detailed error message",
+  "message": "Failed to get minimum withdraw amount"
+}
+```
+
+## Error Handling
+
+The function logs any errors encountered during the retrieval process and returns a `500` response with an error message.
+
+### Error Snippet
+
+```typescript
+catch (error) {
+  context.error(`Error getting minimum withdraw amount: ${error}`);
+  return {
+    status: 500,
+    jsonBody: {
+      error: error,
+      message: 'Failed to get minimum withdraw amount',
+    },
+  };
+}
+```
+
+## Route Configuration
+
+The function is set up to respond to `GET` requests at the `/getMinimumWithdrawAmount` route and allows anonymous access.
+
+### Route Setup
+
+```typescript
+app.http('getMinimumWithdrawAmount', {
+  methods: ['GET'],
+  route: 'getMinimumWithdrawAmount',
+  authLevel: 'anonymous',
+  handler,
+});
+```
+
+## Summary
+
+This Azure Function provides a straightforward way to retrieve the minimum withdraw amount from a data source. It returns the amount in a structured format and handles errors gracefully, ensuring that users receive clear feedback in case of issues.

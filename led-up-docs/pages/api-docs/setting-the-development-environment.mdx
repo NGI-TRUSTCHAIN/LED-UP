@@ -1,0 +1,163 @@
+import HeaderTitle from '@/components/title';
+
+<HeaderTitle title="Setting the development environment" />
+This section will guide you through the steps to get started with the LED-UP Platform API, including prerequisites, installation,
+configuration, and basic usage.
+
+### Prerequisites
+
+Before you begin, ensure you have the following:
+
+- **Node.js** 18.x or later installed on your machine
+- **TypeScript** 4.x or later
+- **A Deployed LED-UP Smart Contract** - see [LED-UP Smart Contract](https://github.com/NGI-TRUSTCHAIN/LED-UP/blob/master/LED-UP-SMART-CONTRACTS/README.md) for more information
+- **IPFS Node** - you can also use Pinata, Infura, or your own IPFS Node - see [IPFS](https://ipfs.io) for more information
+- Visual Studio Code
+- **Azure Functions Core Tools** - for local development
+- **Azure Functions Extension** - for Visual Studio Code
+- \*Git\*\*: Make sure you have [Git](https://git-scm.com/) installed for version control.
+
+### Installation
+
+1. **Clone the Repository**:
+
+   ```bash
+   git clone https://github.com/NGI-TRUSTCHAIN/LED-UP/tree/master/DATA_REGISTRY_SC_API
+   cd DATA_REGISTRY_SC_API
+   ```
+
+2. **Install Dependencies**:
+   Navigate to the project directory and run:
+   ```bash
+   npm install
+   ```
+
+### Configuration
+
+- **Environment Variables**:
+  The project requires several environment variables. They are stored in the local.settings.json for local development and in Azure Application Settings for production.
+  Create a `local.settings.json` file at the project root if it doesn't already exist. This file should not be committed to version control. Here’s an example setting that you can use:
+
+  ```json
+  {
+    "IsEncrypted": false,
+    "Values": {
+      "ALCHEMY_API_KEY": "your-alchemy-api-key",
+      "AzureWebJobsStorage": "your-webjobsstorage-connection-string-here-or-use-azure-storage-emulator",
+      "COMPENSATION_CONTRACT_ADDRESS": "compensation-contract-address",
+      "DATA_REGISTRY_CONTRACT_ADDRESS": "data-registry-contract-address",
+      "DB_NAME": "azure-sql-db-name-for-data-sync-operations",
+      "DB_PORT": "azure-sql-db-port",
+      "DB_SERVER": "sql-server-url",
+      "ENCRYPTION_KEY": "encryption-key-for-data-encryption",
+      "FUNCTIONS_EXTENSION_VERSION": "~4",
+      "FUNCTIONS_WORKER_RUNTIME": "node",
+      "INFURA_API_KEY": "infura-api-key-optional",
+      "OWNER_ADDRESS": "owner-wallet-address",
+      "PATIENT_ADDRESS": "patient-wallet-address",
+      "PATIENT_PRIVATE_KEY": "patient-wallet-private-key",
+      "PRIVATE_KEY": "owner-wallet-private-key",
+      "RPC_URL": "local-rpc-url(localhost:8545)",
+      "SEPOLIA_RPC_URL": "sepolia-rpc-url",
+      "TABLE_ACCOUNT_ENDPOINT": "your-azure-table-account-endpoint",
+      "TABLE_ACCOUNT_KEY": "your-azure-table-account-key",
+      "TABLE_ACCOUNT_NAME": "your-azure-table-account-name",
+      "TABLE_CONNECTION_STRING": "your-azure-table-connection-string",
+      "TABLE_NAME": "your-azure-table-name",
+      "PARTITION_KEY": "your-azure-table-partition-key",
+      "ROW_KEY": "your-azure-table-row-key",
+      "TOKEN_ADDRESS": "your-token-address",
+      "SqlConnectionString": "azure-sql-connection-string",
+      "WEBSITE_CONTENTSHARE": "your-website-content-share",
+
+      "PINATA_JWT": "your-pinata-jwt",
+      "API_KEY": "your-pinata-api-key",
+      "API_SECRET": "your-pinata-api-secret",
+      "GATEWAY_URL": "your-ipfs-gateway-url"
+    },
+    "Host": {
+      "CORS": "*",
+      "CORSCredentials": false
+    }
+  }
+  ```
+
+### Running the API Locally
+
+1. **Start the Azure Functions Host**:
+   To run the API locally, use the following command:
+
+   ```bash
+   npm start
+   ```
+
+2. **Test the Endpoints**:
+   Once the API is running, you can test the endpoints using tools like [Postman](https://www.postman.com/) or [curl](https://curl.se/). Below are examples of how to interact with the API.
+
+### Basic Usage
+
+#### Update Producer Record
+
+- **Endpoint**: `POST /updateProducerRecord`
+- **Request Body**:
+  ```json
+  {
+    "producer": "producer_id",
+    "recordId": "record_id",
+    "metadata": {
+      "cid": "content_identifier",
+      "url": "https://example.com",
+      "hash": "hash_value"
+    }
+  }
+  ```
+
+#### Withdraw Producer Balance
+
+- **Endpoint**: `POST /withdrawProducerBalance`
+- **Request Body**:
+  ```json
+  {
+    "value": 100
+  }
+  ```
+
+### Deployment to Azure
+
+To deploy the application to Azure:
+
+1. **Login to Azure**:
+
+   ```bash
+   az login
+   ```
+
+2. **Create a resource group** (if not done already):
+
+   ```bash
+   az group create --name <resource-group-name> --location <location>
+   ```
+
+3. **Create a new Azure Function App**:
+
+   ```bash
+   az functionapp create --resource-group <resource-group-name> --consumption-plan-location <location> --runtime node --functions-version 4 --name <function-app-name> --storage-account <storage-account-name>
+   ```
+
+4. **Deploy the application**:
+
+   ```bash
+   npm run deploy
+   ```
+
+   This script will automatically build and deploy the functions to Azure.
+
+### Additional Resources
+
+- [Azure Functions Documentation](https://learn.microsoft.com/en-us/azure/azure-functions/)
+- [Node.js Documentation](https://nodejs.org/en/docs/)
+- [TypeScript Documentation](https://www.typescriptlang.org/docs/)
+
+### Conclusion
+
+With these steps, you should have a fully functional API for managing producer and provider records. Feel free to explore the various endpoints and functionalities provided by the API, and customize it to suit your needs!

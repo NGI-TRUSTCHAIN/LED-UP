@@ -1,0 +1,157 @@
+import HeaderTitle from '@/components/title';
+
+<HeaderTitle title="Azure Function: Share Data" source="https://github.com/your-repo-path-to-timerTrigger" />
+
+---
+
+This Azure Function that shares data between a producer and a consumer after verifying payment:
+
+## Overview
+
+This Azure Function facilitates data sharing between a producer and a consumer after verifying that a payment has been successfully made.
+
+## Table of Contents
+
+- [Function Description](#function-description)
+- [Handler Function](#handler-function)
+- [Request and Response](#request-and-response)
+- [Error Handling](#error-handling)
+- [Route Configuration](#route-configuration)
+- [Summary](#summary)
+
+## Function Description
+
+The function processes requests to share data between a producer and a consumer. It verifies the payment associated with a given record ID before allowing data sharing.
+
+### Dependencies
+
+- **shareData**: Helper function to execute the data sharing process.
+- **verifyPayment**: Helper function to verify if the payment associated with the record ID is valid.
+- **decodeError**: Helper function to decode errors for better understanding.
+- **CompensationABI**: ABI for managing compensation processes.
+- **DataRegistryABI**: ABI for interacting with the data registry smart contract.
+
+```typescript
+import { CompensationABI } from '../utils/compensation.abi';
+import { DataRegistryABI } from '../utils/dataRegistry.abi';
+import { shareData } from '../helpers/update-query';
+import { verifyPayment } from '../helpers/view-query';
+import { decodeError } from '../helpers/decodeError';
+```
+
+## Handler Function
+
+The handler function logs the request URL, processes the data sharing request, verifies the payment, and sends the appropriate HTTP response.
+
+### Key Logic
+
+1. **Payment Verification**:
+
+   ```typescript
+   const verified = await verifyPayment(body.recordId);
+   ```
+
+2. **Data Sharing**:
+   ```typescript
+   const receipt = await shareData(body.producer, body.consumer, body.recordId);
+   ```
+
+## Request and Response
+
+### Request
+
+The function expects a `POST` request at the `/shareData` route. The request body must contain the following parameters:
+
+- **producer**: The address of the producer.
+- **consumer**: The address of the consumer.
+- **recordId**: The ID of the record being shared.
+
+#### Request Example
+
+```http
+POST /shareData
+Content-Type: application/json
+
+{
+  "producer": "producer_address",
+  "consumer": "consumer_address",
+  "recordId": "record_id"
+}
+```
+
+### Response
+
+#### Successful Response (200 OK)
+
+On success, the function returns a `200 OK` status with a JSON object containing the receipt of the sharing operation.
+
+```json
+{
+  "receipt": "transaction_receipt_here"
+}
+```
+
+#### Error Responses
+
+1. **Payment Not Verified (400 Bad Request)**
+
+If the payment cannot be verified:
+
+```json
+{
+  "message": "Payment not verified"
+}
+```
+
+2. **Internal Server Error (500 Internal Server Error)**
+
+If an error occurs during the data sharing process:
+
+```json
+{
+  "error": "Detailed error message",
+  "parsed": "Parsed error message",
+  "message": "Failed to share resource"
+}
+```
+
+## Error Handling
+
+The function logs any errors encountered during the payment verification or data sharing processes. It returns a `500` response with the error details.
+
+### Error Snippet
+
+```typescript
+catch (error: any) {
+  context.error(`Error sharing Data: ${error}`);
+  console.error(decodeError(DataRegistryABI, error));
+
+  return {
+    status: 500,
+    jsonBody: {
+      error,
+      parsed: decodeError(DataRegistryABI, error),
+      message: 'Failed to share resource',
+    },
+  };
+}
+```
+
+## Route Configuration
+
+The function is configured to respond to `POST` requests at the `/shareData` route and allows anonymous access.
+
+### Route Setup
+
+```typescript
+app.http('shareData', {
+  methods: ['POST'],
+  route: 'shareData',
+  authLevel: 'anonymous',
+  handler,
+});
+```
+
+## Summary
+
+This Azure Function efficiently facilitates data sharing between a producer and a consumer after confirming that the necessary payment has been made. It handles potential errors gracefully and provides clear feedback to users.

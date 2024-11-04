@@ -1,0 +1,127 @@
+import HeaderTitle from '@/components/title';
+
+<HeaderTitle title="Azure Function: Process Payment" source="https://github.com/your-repo-path-to-timerTrigger" />
+
+---
+
+This Azure Function that processes a payment for data usage:
+
+## Overview
+
+This Azure Function processes payments for data usage based on specified parameters. It handles HTTP `POST` requests and returns a receipt upon successful payment processing or an error message if the operation fails.
+
+## Table of Contents
+
+- [Function Description](#function-description)
+- [Handler Function](#handler-function)
+- [Request and Response](#request-and-response)
+- [Error Handling](#error-handling)
+- [Route Configuration](#route-configuration)
+- [Summary](#summary)
+
+## Function Description
+
+The function processes payments by approving the payment transaction using ERC20 tokens and invoking the `processPayment` helper function.
+
+### Dependencies
+
+- **processPayment**: Helper function to execute the payment.
+- **erc20**: Helper for interacting with ERC20 tokens.
+- **getUnitPrice**: Helper function to retrieve the current unit price.
+
+```typescript
+import { processPayment } from '../helpers/update-query';
+import erc20 from '../helpers/erc20';
+import { getUnitPrice } from '../helpers/view-query';
+```
+
+## Handler Function
+
+The handler function logs the request URL, retrieves the payment parameters from the request, checks the unit price, approves the payment transaction, and sends the appropriate HTTP response.
+
+### Key Logic
+
+```typescript
+const { unitPrice } = await getUnitPrice();
+await erc20.approve(compensationSmartContractAddress, parseEther(`${dataSize * unitPrice}`));
+```
+
+## Request and Response
+
+### Request
+
+The function expects a `POST` request at the `/processPayment` route with the following JSON body:
+
+#### Request Example
+
+```json
+{
+  "producer": "0xProducerAddress",
+  "recordId": "12345",
+  "dataSize": 10
+}
+```
+
+### Response
+
+#### Successful Response (200 OK)
+
+On success, the function returns a `200 OK` status with a receipt in the response body.
+
+```json
+{
+  "receipt": {
+    "transactionId": "abc123",
+    "status": "success" // Receipt of the payment
+  }
+}
+```
+
+#### Error Response (500 Internal Server Error)
+
+If there is an error during payment processing:
+
+```json
+{
+  "error": "Detailed error message",
+  "message": "Failed to process payment"
+}
+```
+
+## Error Handling
+
+The function logs any errors encountered during payment processing and returns a `500` response with an error message.
+
+### Error Snippet
+
+```typescript
+catch (error) {
+  context.error(`Error processing payment: ${error}`);
+  return {
+    status: 500,
+    jsonBody: {
+      error: error,
+      message: 'Failed to process payment',
+    },
+  };
+}
+```
+
+## Route Configuration
+
+The function is set up to respond to `POST` requests at the `/processPayment` route and allows anonymous access.
+
+### Route Setup
+
+```typescript
+app.http('processPayment', {
+  methods: ['POST'],
+  route: 'processPayment',
+  authLevel: 'anonymous',
+  handler,
+});
+```
+
+## Summary
+
+This Azure Function facilitates the processing of payments for data usage, ensuring efficient transaction management and clear error reporting for any issues that may arise during the process.

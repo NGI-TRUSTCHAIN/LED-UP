@@ -1,0 +1,115 @@
+# Introduction
+
+To get started with the Compensation and DataRegistry smart contracts built Foundry, follow these steps:
+
+### 1. **Clone Your GitHub Repository**
+
+Start by cloning the GitHub repository that contains your contract. Run the following command, replacing `YOUR_REPO_URL` with your repository URL:
+
+```bash
+ git clone https://github.com/NGI-TRUSTCHAIN/LED-UP/tree/master/LED-UP-SMART-CONTRACTS
+ cd LED-UP-SMART-CONTRACTS
+```
+
+## Project structure
+
+import SCTree from '@/components/sc-tree';
+
+<SCTree />
+
+### 2. **Install Foundry**
+
+If you haven't installed Foundry yet, you can do so by running:
+
+```bash
+curl -L https://foundry.paradigm.xyz | bash
+foundryup
+```
+
+This will install Foundry and keep it updated.
+
+### 3. **Install Dependencies**
+
+After cloning the repository, navigate to the project directory and install the required dependencies. If there are any dependencies listed in `foundry.toml`, install them using the following command:
+
+```bash
+forge install
+```
+
+### 4. **Compile the Smart Contracts**
+
+To compile your contracts, simply run:
+
+```bash
+forge build
+```
+
+or
+
+```bash
+forge compile
+```
+
+This will generate the compiled output in the `out` directory.
+
+### 5. **Start Local Blockchain with Anvil**
+
+Start a local blockchain using `Anvil` for development and testing:
+
+```bash
+anvil
+```
+
+This will run a local node at `127.0.0.1:8545`.
+
+### 6. **Deploy Contracts**
+
+You can deploy contracts locally (with Anvil) or on a custom RPC. To deploy locally:
+
+```bash
+forge create CONTRACT_NAME --rpc-url http://127.0.0.1:8545 --private-key YOUR_PRIVATE_KEY
+```
+
+For custom endpoints (e.g., Sepolia testnet), you need to specify an RPC URL and private key:
+
+```bash
+forge create CONTRACT_NAME --rpc-url YOUR_RPC_URL --private-key YOUR_PRIVATE_KEY
+```
+
+### 7. **Write and Run Tests**
+
+Create test contracts for your boundary contracts, and run the tests using:
+
+```bash
+# simple local test
+$ forge test
+
+# test locally with details
+forge test -vvvv --detailed --summary --build-info --show-progress
+# fork test with details
+forge test -vvvv --detailed --summary --build-info --show-progress --fork <rpc_url>
+```
+
+The `-vvv` flag enables verbose output for better insights.
+
+### 8. **Run Coverage Analysis**
+
+To check test coverage of your smart contracts, use:
+
+```bash
+forge coverage --fork-url YOUR_RPC_URL
+```
+
+This will give you a detailed table showing how much of your code is covered by tests.
+
+### 9. **Set Environment Variables**
+
+Make sure to set the required environment variables, such as RPC URL, private key, and any other credentials needed for deployment or testing:
+
+```bash
+export SEPOLIA_RPC_URL="https://sepolia.infura.io/v3/YOUR_PROJECT_ID"
+export PRIVATE_KEY="YOUR_PRIVATE_KEY"
+export ETHERSCAN_API_KEY="YOUR_ETHERSCAN_API__KEY
+```
+
+Follow this structure for deploying, testing, and iterating on your boundary smart contracts. If you have specific contracts already set up in the repo, simply adjust the commands to fit your setup.

@@ -1,0 +1,472 @@
+openapi: 3.1.0
+info:
+  title: API Documentation
+  description: This is a sample API definition.
+  version: 1.0.0
+servers:
+  - url: https://ledupblockchain.azurewebsites.net/api
+paths:
+  /getData:
+    get:
+      summary: Get Data
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: string
+                  # Include example response if possible
+                example:
+                  data: 'Sample data'
+
+  /pauseState:
+    get:
+      summary: Get Pause State
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  pause:
+                    type: boolean
+              example:
+                pause: false
+
+  /provider:
+    get:
+      summary: Get Provider
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  provider:
+                    type: string
+              example:
+                provider: 'Sample provider'
+
+  /getProducerRecord:
+    get:
+      summary: Get Producer Record
+      parameters:
+        - in: query
+          name: recordId
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: producer
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  record:
+                    type: string
+              example:
+                record: 'Sample record'
+
+    /getProducerRecords:
+    get:
+      summary: Get Producer Records with corresponding record status, consent status, record Ids and nonce
+      parameters:
+        - in: query
+          name: producer
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  record:
+                    type: string
+              example:
+                record: 'Sample record'
+
+  /getProducerRecordInfo:
+    get:
+      summary: Get Producer Record Info
+      parameters:
+        - in: query
+          name: producer
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  info:
+                    type: string
+              example:
+                info: 'Sample info'
+
+  /getProducerRecordStatus:
+    get:
+      summary: Get Producer Record Status
+      parameters:
+        - in: query
+          name: producer
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+              example:
+                status: 'Active'
+
+  /getProducerConsent:
+    get:
+      summary: Get Producer Record Consent
+      parameters:
+        - in: query
+          name: producer
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  consent:
+                    type: string
+              example:
+                consent: 'Granted'
+
+  /getRecordSchema:
+    get:
+      summary: Get Record Schema
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  schema:
+                    type: string
+              example:
+                schema: 'Sample schema'
+
+  /getProviderMetadata:
+    get:
+      summary: Get Provider Metadata
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  metadata:
+                    type: string
+              example:
+                metadata: 'Sample metadata'
+
+  /getProducerRecordCount:
+    get:
+      summary: Get Producer Record Metadata Count
+      parameters:
+        - in: query
+          name: producer
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+              example:
+                count: 10
+
+  /producerExists:
+    get:
+      summary: Check Whether Producer Record Exists
+      parameters:
+        - in: query
+          name: producer
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  exists:
+                    type: boolean
+              example:
+                exists: true
+
+  /registerProducer:
+    post:
+      summary: Register Producer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                recordId:
+                  type: string
+                producer:
+                  type: string
+                signature:
+                  type: string
+                resourceType:
+                  type: string
+                consent:
+                  type: integer
+                metadata:
+                  type: object
+                  properties:
+                    cid:
+                      type: string
+                    url:
+                      type: string
+                    hash:
+                      type: string
+      responses:
+        '200':
+          description: Successful response
+
+  /updateProducerRecord:
+    post:
+      summary: Update Producer Record
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                recordId:
+                  type: string
+                producer:
+                  type: string
+                signature:
+                  type: string
+                resourceType:
+                  type: string
+                status:
+                  type: integer
+                consent:
+                  type: integer
+                metadata:
+                  type: object
+                  properties:
+                    cid:
+                      type: string
+                    url:
+                      type: string
+                    hash:
+                      type: string
+      responses:
+        '200':
+          description: Successful response
+
+  /updateProducerConsent:
+    post:
+      summary: Update Producer Consent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                producer:
+                  type: string
+                status:
+                  type: integer
+      responses:
+        '200':
+          description: Successful response
+
+  /removeProducerRecord:
+    post:
+      summary: Remove Producer Record
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                producer:
+                  type: string
+      responses:
+        '200':
+          description: Successful response
+
+  /changePauseState:
+    post:
+      summary: Pause Contract
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                pause:
+                  type: boolean
+      responses:
+        '200':
+          description: Successful response
+
+  /renounceOwnership:
+    post:
+      summary: Renounce Ownership
+      responses:
+        '200':
+          description: Successful response
+
+  /transferOwnership:
+    post:
+      summary: Transfer Ownership
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                newProvider:
+                  type: string
+      responses:
+        '200':
+          description: Successful response
+
+  /updateProviderMetadata:
+    post:
+      summary: Update Provider Metadata
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                url:
+                  type: string
+                hash:
+                  type: string
+      responses:
+        '200':
+          description: Successful response
+
+  /updateProviderRecordSchema:
+    post:
+      summary: Update Provider Record Schema
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                schemaRef:
+                  type: object
+                  properties:
+                    url:
+                      type: string
+                    hash:
+                      type: string
+      responses:
+        '200':
+          description: Successful response
+
+  /updateProducerRecordMetadata:
+    post:
+      summary: Update Producer Record Metadata
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                producer:
+                  type: string
+                recordId:
+                  type: string
+                metadata:
+                  type: object
+                  properties:
+                    cid:
+                      type: string
+                    url:
+                      type: string
+                    hash:
+                      type: string
+      responses:
+        '200':
+          description: Successful response
+
+  /updateProducerRecordStatus:
+    post:
+      summary: Update Producer Record Status
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                producer:
+                  type: string
+                status:
+                  type: integer
+      responses:
+        '200':
+          description: Successful response

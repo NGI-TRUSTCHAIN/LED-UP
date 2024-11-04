@@ -1,0 +1,123 @@
+import HeaderTitle from '@/components/title';
+
+<HeaderTitle
+  title="Azure Function: Set Minimum Withdraw Amount"
+  source="https://github.com/your-repo-path-to-timerTrigger"
+/>
+
+---
+
+This Azure Function that sets the minimum withdrawal amount for a payment system:
+
+## Overview
+
+This Azure Function is responsible for setting the minimum withdrawal amount for a payment system.
+
+## Table of Contents
+
+- [Function Description](#function-description)
+- [Handler Function](#handler-function)
+- [Request and Response](#request-and-response)
+- [Error Handling](#error-handling)
+- [Route Configuration](#route-configuration)
+- [Summary](#summary)
+
+## Function Description
+
+The function processes requests to set a minimum withdrawal amount. It calls the `setMinimumWithdrawAmount` function to execute the update and provides a receipt for the operation.
+
+### Dependencies
+
+- **setMinimumWithdrawAmount**: Helper function to update the minimum withdrawal amount in the payment system.
+
+```typescript
+import { setMinimumWithdrawAmount } from '../helpers/update-query';
+```
+
+## Handler Function
+
+The handler function logs the request URL, attempts to set the minimum withdrawal amount, and sends the appropriate HTTP response.
+
+### Key Logic
+
+```typescript
+const receipt = await setMinimumWithdrawAmount(value);
+```
+
+## Request and Response
+
+### Request
+
+The function expects a `POST` request at the `/setMinimumWithdrawAmount` route. The request body must contain the `value` parameter indicating the minimum amount to be set.
+
+#### Request Example
+
+```http
+POST /setMinimumWithdrawAmount
+Content-Type: application/json
+
+{
+  "value": 100
+}
+```
+
+### Response
+
+#### Successful Response (200 OK)
+
+On success, the function returns a `200 OK` status with a JSON object containing the receipt of the operation.
+
+```json
+{
+  "receipt": "transaction_receipt_here"
+}
+```
+
+#### Error Response (500 Internal Server Error)
+
+If there is an error during the process of setting the minimum withdrawal amount:
+
+```json
+{
+  "error": "Detailed error message",
+  "message": "Failed to set minimum withdraw amount"
+}
+```
+
+## Error Handling
+
+The function logs any errors encountered during the update process and returns a `500` response with an error message.
+
+### Error Snippet
+
+```typescript
+catch (error) {
+  context.error(`Error setting minimum withdraw amount: ${error}`);
+  return {
+    status: 500,
+    jsonBody: {
+      error: error,
+      message: 'Failed to set minimum withdraw amount',
+    },
+  };
+}
+```
+
+## Route Configuration
+
+The function is configured to respond to `POST` requests at the `/setMinimumWithdrawAmount` route and allows anonymous access.
+
+### Route Setup
+
+```typescript
+app.http('setMinimumWithdrawAmount', {
+  methods: ['POST'],
+  route: 'setMinimumWithdrawAmount',
+  authLevel: 'anonymous',
+  handler,
+});
+```
+
+## Summary
+
+This Azure Function efficiently sets the minimum withdrawal amount for a payment system by securely handling the request and providing clear responses and error management.

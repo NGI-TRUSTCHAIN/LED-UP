@@ -1,0 +1,124 @@
+import HeaderTitle from '@/components/title';
+
+<HeaderTitle title="Azure Function: Get Service Fee" source="https://github.com/your-repo-path-to-timerTrigger" />
+
+---
+
+This Azure Function that retrieves the service fee:
+
+## Overview
+
+This Azure Function retrieves the service fee associated with a provider. It processes HTTP `GET` requests and returns the service fee or an error message if the retrieval fails.
+
+## Table of Contents
+
+- [Function Description](#function-description)
+- [Handler Function](#handler-function)
+- [Request and Response](#request-and-response)
+- [Error Handling](#error-handling)
+- [Route Configuration](#route-configuration)
+- [Summary](#summary)
+
+## Function Description
+
+The function is designed to handle `GET` requests and return the service fee related to a provider. It utilizes the `getServiceFee` helper function to fetch the service fee.
+
+### Dependencies
+
+- **getServiceFee**: Helper function for retrieving the service fee.
+
+```typescript
+import { getServiceFee } from '../helpers/view-query';
+```
+
+````
+
+## Handler Function
+
+The handler function logs the request URL, retrieves the service fee, and sends the appropriate HTTP response.
+
+### Key Logic
+
+```typescript
+const serviceFee = await getServiceFee();
+return {
+  status: 200,
+  jsonBody: serviceFee,
+};
+```
+
+## Request and Response
+
+### Request
+
+The function expects a `GET` request at the `/getServiceFee` route.
+
+#### Request Example
+
+```
+GET /getServiceFee
+```
+
+### Response
+
+#### Successful Response (200 OK)
+
+On success, the function returns a `200 OK` status with the service fee in the response body.
+
+```json
+{
+  "serviceFee": {
+    // Service fee details here
+  }
+}
+```
+
+#### Error Response (500 Internal Server Error)
+
+If there is an error during the service fee retrieval process:
+
+```json
+{
+  "error": "Detailed error message",
+  "message": "Failed to retrieve service fee"
+}
+```
+
+## Error Handling
+
+The function logs any errors encountered during the retrieval process and returns a `500` response with an error message.
+
+### Error Snippet
+
+```typescript
+catch (error) {
+  context.error(`Error fetching service fee: ${error}`);
+  return {
+    status: 500,
+    jsonBody: {
+      error: error,
+      message: 'Failed to retrieve service fee',
+    },
+  };
+}
+```
+
+## Route Configuration
+
+The function is set up to respond to `GET` requests at the `/getServiceFee` route and allows anonymous access.
+
+### Route Setup
+
+```typescript
+app.http('getServiceFee', {
+  methods: ['GET'],
+  route: 'getServiceFee',
+  authLevel: 'anonymous',
+  handler,
+});
+```
+
+## Summary
+
+This Azure Function provides a straightforward way to retrieve the service fee associated with a provider. It returns the service fee in a structured format and handles errors gracefully, ensuring that users receive clear feedback in case of issues.
+````

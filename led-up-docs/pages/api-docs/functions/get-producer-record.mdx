@@ -1,0 +1,125 @@
+import HeaderTitle from '@/components/title';
+
+<HeaderTitle title="Azure Function: Get Producer Record" source="https://github.com/your-repo-path-to-timerTrigger" />
+
+---
+
+This Azure Function that retrieves a specific record for a given producer:
+
+## Overview
+
+This Azure Function retrieves a specific record associated with a producer. It processes HTTP `GET` requests and returns the record data or an error message if the retrieval fails.
+
+## Table of Contents
+
+- [Function Description](#function-description)
+- [Handler Function](#handler-function)
+- [Request and Response](#request-and-response)
+- [Error Handling](#error-handling)
+- [Route Configuration](#route-configuration)
+- [Summary](#summary)
+
+## Function Description
+
+The function is designed to handle `GET` requests and return the record data for a specified producer address and record ID. It utilizes the `getProducerRecord` helper function to fetch the record data.
+
+### Dependencies
+
+- **getProducerRecord**: Helper function for retrieving the record associated with a producer.
+
+```typescript
+import { getProducerRecord } from '../helpers/view-query';
+```
+
+## Handler Function
+
+The handler function logs the request URL, retrieves the record for the specified producer and record ID, and sends the appropriate HTTP response.
+
+### Key Logic
+
+```typescript
+const producer = (await request.query.get('producer')) as string;
+const recordId = (await request.query.get('recordId')) as string;
+const record = await getProducerRecord(producer, recordId);
+return {
+  status: 200,
+  jsonBody: {
+    record,
+  },
+};
+```
+
+## Request and Response
+
+### Request
+
+The function expects a `GET` request at the `/getProducerRecord` route, with the producer address and record ID passed as query parameters.
+
+#### Request Example
+
+```
+GET /getProducerRecord?producer=0x1234567890abcdef1234567890abcdef12345678&recordId=record123
+```
+
+### Response
+
+#### Successful Response (200 OK)
+
+On success, the function returns a `200 OK` status with the record data in the response body.
+
+```json
+{
+  "record": {
+    // record data structure
+  }
+}
+```
+
+#### Error Response (500 Internal Server Error)
+
+If there is an error during the record retrieval process:
+
+```json
+{
+  "error": "Detailed error message",
+  "message": "Failed to retrieve producer record"
+}
+```
+
+## Error Handling
+
+The function logs any errors encountered during the retrieval process and returns a `500` response with an error message.
+
+### Error Snippet
+
+```typescript
+catch (error) {
+  context.error(`Error fetching data: ${error}`);
+  return {
+    status: 500,
+    jsonBody: {
+      error: error,
+      message: 'Failed to retrieve producer record',
+    },
+  };
+}
+```
+
+## Route Configuration
+
+The function is set up to respond to `GET` requests at the `/getProducerRecord` route and allows anonymous access.
+
+### Route Setup
+
+```typescript
+app.http('getProducerRecord', {
+  methods: ['GET'],
+  route: 'getProducerRecord',
+  authLevel: 'anonymous',
+  handler,
+});
+```
+
+## Summary
+
+This Azure Function provides an efficient way to retrieve a specific record associated with a producer. It returns the record data in a structured format and handles errors gracefully, ensuring that users receive clear feedback in case of issues.
