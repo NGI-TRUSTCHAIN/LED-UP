@@ -1,4 +1,4 @@
-# LED-UP Demo Frontend Application
+# LED-UP Frontend
 
 LED-UP is a secure health data transaction platform that leverages blockchain and IPFS technologies to provide a robust and privacy-preserving solution for sharing medical files.
 
