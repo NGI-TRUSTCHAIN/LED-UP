@@ -34,7 +34,8 @@ coverage/
 
 # Ignore compiled smart contracts (specific to Solidity or similar)
 *.sol.js
-*.json
 
 # Ignore macOS system files
 .DS_Store
+./led-up-sc/broadcast/DataRegistry.s.sol/11155111/*.json
+./led-up-sc/broadcast/
