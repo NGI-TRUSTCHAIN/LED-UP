@@ -1,0 +1,21 @@
+{
+  "inputs": [
+    {
+      "name": "data",
+      "public": false,
+      "type": "array",
+      "components": {
+        "size": 4,
+        "type": "field"
+      }
+    },
+    {
+      "name": "expectedHash",
+      "public": true,
+      "type": "field"
+    }
+  ],
+  "output": {
+    "type": "field"
+  }
+}
