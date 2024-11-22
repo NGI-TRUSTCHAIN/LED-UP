@@ -3,30 +3,38 @@ pragma solidity ^0.8.19;
 
 import {Script, console} from "forge-std/Script.sol";
 import {DataTypes} from "../src/library/DataTypes.sol";
+import {LedUpToken} from "../src/contracts/Token.sol";
 
 contract HelperConfig is Script {
-    address public provider = 0x1234ABCD1234ABCD1234ABCD1234ABCD1234ABCD1;
-    address public owner = msg.sender;
-    address public leveaWallet = 0x1323ABCD1323ABCD1323ABCD1323ABCD1323ABCD1;
-    address public token = 0x3232ABCD3232ABCD3232ABCD3232ABCD3232ABCD3;
+    LedUpToken public paymentToken;
 
-    string _data_url = "https://example.com";
-    bytes32 _data_hash = intoBytes32("https://example.com");
-    string _schema_url = "https://example.com";
-    bytes32 _schema_hash = intoBytes32("https://example.com");
+    struct Config {
+        address provider;
+        address leveaWallet;
+        address token;
+        address owner;
+    }
+
+    string _data_url = "https://led-up-sc-api.fhir.net";
+    bytes32 _data_hash = intoBytes32("https://led-up-sc-api.fhir.net");
+    string _schema_url = "https://led-up-sc-api.azurewebsites.net";
+    bytes32 _schema_hash = intoBytes32("https://led-up-sc-api.fhir.net");
 
     DataTypes.Metadata public metadata;
     DataTypes.Schema public schema;
+    Config public config;
 
     constructor() {
         metadata = DataTypes.Metadata({url: _data_url, hash: _data_hash});
         schema = DataTypes.Schema({schemaRef: DataTypes.Metadata({url: _schema_url, hash: _schema_hash})});
+        if (block.chainid == 11155111) {
+            config = getSepoliaConfig();
+        } else {
+            config = getAnvilConfig();
+        }
     }
 
     // Helper function
-    function intoBytes32(string memory _input) public pure returns (bytes32) {
-        return bytes32(keccak256(abi.encodePacked(_input)));
-    }
 
     function getMetadata() public view returns (DataTypes.Metadata memory) {
         return metadata;
@@ -37,18 +45,49 @@ contract HelperConfig is Script {
     }
 
     function getProvider() public view returns (address) {
-        return provider;
+        return config.provider;
     }
 
     function getLeveaWallet() public view returns (address) {
-        return leveaWallet;
+        return config.leveaWallet;
     }
 
     function getToken() public view returns (address) {
-        return token;
+        return config.token;
     }
 
     function getOwner() public view returns (address) {
-        return owner;
+        return config.owner;
+    }
+
+    function getSepoliaConfig() public view returns (Config memory) {
+        return Config({
+            provider: 0x04E1B236182b9703535ecB490697b79B45453Ba1,
+            leveaWallet: 0xc11d7664cE6C27AD61e1D935735683686A9B4E9a,
+            token: 0x702Bd63ddB359fF45F1De789e9aD8E2EcAb15218,
+            owner: msg.sender
+        });
+    }
+
+    function getAnvilConfig() public returns (Config memory) {
+        vm.startBroadcast();
+        paymentToken = new LedUpToken("MockToken", "MTK");
+        paymentToken.mint(msg.sender, 1000000000000000000000000);
+        vm.stopBroadcast();
+
+        return Config({
+            provider: 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266,
+            leveaWallet: 0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC,
+            token: address(paymentToken),
+            owner: msg.sender
+        });
+    }
+
+    function addressToString(address _address) public pure returns (string memory) {
+        return string(abi.encodePacked(_address));
+    }
+
+    function intoBytes32(string memory _input) public pure returns (bytes32) {
+        return bytes32(keccak256(abi.encodePacked(_input)));
     }
 }

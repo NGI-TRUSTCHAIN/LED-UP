@@ -14,6 +14,7 @@ contract DeployDataRegistry is Script {
     function run() public returns (DataRegistry) {
         config = new HelperConfig();
 
+        vm.startBroadcast();
         dataRegistry = new DataRegistry(
             config.getMetadata(),
             config.getSchema(),
