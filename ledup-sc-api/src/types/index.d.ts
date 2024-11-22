@@ -64,6 +64,36 @@ export type RegRecord = {
 };
 
 /**
+ * Represents the records associated with a producer.
+ */
+export type ProducerRecords = {
+  /**
+   * The status of the records associated with the producer.
+   */
+  status: number;
+
+  /**
+   * The consent status of the records associated with the producer.
+   */
+  consent: number;
+
+  /**
+   * The records associated with the producer.
+   */
+  records: RegRecord[];
+
+  /**
+   * The current count of records (nonce) associated with the producer.
+   */
+  nonce: number;
+
+  /**
+   * The recordIds associated with the producer.
+   */
+  recordIds: string[];
+};
+
+/**
  * Contains information about the record's state and producer.
  */
 export type RecordInfo = {

@@ -1,7 +1,7 @@
 import { signer } from './get-signer';
 import DataRegistry from './data-registry';
 import Compensation from './compensation';
-import { ConsentStatus, Metadata, RecordInfo, RecordStatus, RegRecord } from '../types';
+import { ConsentStatus, Metadata, ProducerRecords, RecordInfo, RecordStatus, RegRecord } from '../types';
 
 /**
  * Calls the contract with the provided query.
@@ -46,6 +46,17 @@ export const getProducerConsent = async (_address: string): Promise<ConsentStatu
  */
 export const getProducerRecord = async (_producer: string, _recordId: string): Promise<RegRecord> => {
   return await DataRegistry.getProducerRecord(_producer, _recordId);
+};
+
+/**
+ * Retrieves all records for a specific producer.
+ *
+ * @param {string} _producer - The producer's address.
+ * @returns {Promise<ProducerRecords[]>} - a list of records with status, consent, records and nonce
+ */
+
+export const getProducerRecords = async (_producer: string): Promise<ProducerRecords> => {
+  return await DataRegistry.getProducerRecords(_producer);
 };
 
 /**
