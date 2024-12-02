@@ -126,6 +126,26 @@ interface IDataRegistry {
         returns (DataTypes.Record memory);
 
     /**
+     * @param _producer The address of the producer whose records are being retrieved.
+     *
+     * @return status The current status of the records associated with the specified producer.
+     * @return consentStatus The current consent status of the records associated with the specified producer.
+     * @return records An array of records associated with the specified producer.
+     * @return recordIds An array of record IDs associated with the specified producer.
+     * @return nonce The current count of records (nonce) associated with the specified producer.
+     */
+    function getProducerRecords(address _producer)
+        external
+        view
+        returns (
+            DataTypes.RecordStatus status,
+            DataTypes.ConsentStatus consentStatus,
+            DataTypes.Record[] memory records,
+            string[] memory recordIds,
+            uint256 nonce
+        );
+
+    /**
      * @param _address The address of the producer whose consent status is being retrieved.
      *
      * @return DataTypes.ConsentStatus The current consent status of the specified producer.

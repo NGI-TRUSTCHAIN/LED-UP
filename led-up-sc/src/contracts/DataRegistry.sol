@@ -103,11 +103,12 @@ contract DataRegistry is IDataRegistry, Ownable, Pausable {
     event TokenAddressUpdated(address indexed _tokenAddress);
 
     /*===================== MODIFIERS =====================*/
-    modifier onlyProviderOrProducer(address _producer, string memory _recordId) {
+
+    modifier onlyProviderOrProducer(address _producer) {
         if (producerRecords[_producer].producer == address(0)) {
             revert Registry__ProducerNotFound(_producer);
         }
-        if (owner() != msg.sender && msg.sender != _producer) {
+        if (msg.sender != owner() && msg.sender != _producer) {
             revert Registry__NotAuthorized();
         }
         _;
@@ -140,10 +141,8 @@ contract DataRegistry is IDataRegistry, Ownable, Pausable {
         providerMetadataHash = _metadata.hash;
         recordSchemaUrl = _schema.schemaRef.url;
         recordSchemaHash = _schema.schemaRef.hash;
-
         // token = new LedUpToken("LedUp Token", "LTK");
         token = IERC20(_tokenAddress);
-
         compensation = new Compensation(_provider, _tokenAddress, _leveaWallet, _serviceFeePercent, 1e18);
     }
 
@@ -190,14 +189,19 @@ contract DataRegistry is IDataRegistry, Ownable, Pausable {
         }
 
         // check wether the resourceType already exists, update the record
-        if (
-            keccak256(abi.encodePacked(_recordId))
-                == keccak256(abi.encodePacked(producerData.records[_recordId].resourceType))
-        ) {
+        // if (
+        //     keccak256(abi.encodePacked(_recordId))
+        //         == keccak256(abi.encodePacked(producerData.records[_recordId].resourceType))
+        // ) {
+        //     revert Registry__RecordAlreadyExists(_recordId);
+        // }
+
+        if (bytes(producerData.records[_recordId].resourceType).length != 0) {
             revert Registry__RecordAlreadyExists(_recordId);
         }
 
         // Add the record to the producer's records
+        producerData.recordIds.push(_recordId); // add the recordId to the producer's recordIds array
         producerData.records[_recordId] = medicalResource;
         producerData.nonce = producerData.nonce + 1;
 
@@ -559,10 +563,41 @@ contract DataRegistry is IDataRegistry, Ownable, Pausable {
         external
         view
         override
-        onlyProviderOrProducer(_producer, _recordId)
+        onlyProviderOrProducer(_producer)
         returns (DataTypes.Record memory)
     {
         return producerRecords[_producer].records[_recordId];
+    }
+
+    /**
+     * @notice Retrieves all records associated with a producer.
+     * @dev This function returns the status, consent status, and all records for a specified producer.
+     *      It is useful for retrieving comprehensive information about a producer's records.
+     *
+     * @param _producer The address of the producer whose records are being retrieved.
+     *
+     * @return DataTypes.RecordStatus The current status of the producer's records.
+     * @return DataTypes.ConsentStatus The current consent status of the specified producer.
+     * @return DataTypes.Record[] memory An array of records associated with the specified producer.
+     * @return uint256 The current count of records (nonce) associated with the specified producer.
+     */
+    function getProducerRecords(address _producer)
+        external
+        view
+        override
+        onlyProviderOrProducer(_producer)
+        returns (DataTypes.RecordStatus, DataTypes.ConsentStatus, DataTypes.Record[] memory, string[] memory, uint256)
+    {
+        DataTypes.ProducerRecord storage producerRecord = producerRecords[_producer];
+        uint256 count = producerRecord.recordIds.length;
+
+        DataTypes.Record[] memory records = new DataTypes.Record[](count);
+
+        for (uint256 i = 0; i < count; i++) {
+            records[i] = producerRecord.records[producerRecord.recordIds[i]];
+        }
+
+        return (producerRecord.status, producerRecord.consent, records, producerRecord.recordIds, producerRecord.nonce);
     }
 
     /**

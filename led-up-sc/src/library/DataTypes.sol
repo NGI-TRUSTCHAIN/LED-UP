@@ -93,6 +93,7 @@ library DataTypes {
      * @param consent The consent status of the producer.
      * @param records A mapping of record identifiers to their respective records.
      * @param nonce A unique identifier for the producer's records to prevent replay attacks.
+     * @param recordIds An array of record identifiers.
      */
     struct ProducerRecord {
         address producer;
@@ -100,5 +101,6 @@ library DataTypes {
         DataTypes.ConsentStatus consent; // allowed, denied, pending
         mapping(string => DataTypes.Record) records;
         uint256 nonce;
+        string[] recordIds;
     }
 }

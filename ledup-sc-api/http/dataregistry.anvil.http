@@ -1,0 +1,247 @@
+@ROOT_URL=http://localhost:7071/api
+
+### Get Data
+GET {{ROOT_URL}}/getData
+
+### Get Pause State
+GET {{ROOT_URL}}/pauseState
+
+### Get Provider
+GET {{ROOT_URL}}/provider
+
+
+### Get Producer Record
+GET {{ROOT_URL}}/getProducerRecord?recordId=d0658788-9eeb-4b40-9053-09e1adacdf6a&producer=0x70997970C51812dc3A010C7d01b50e0d17dc79C8
+
+
+### Get Producer Record Info
+GET {{ROOT_URL}}/getProducerRecordInfo?producer=0x70997970C51812dc3A010C7d01b50e0d17dc79C8
+
+
+### Get Producer Record Status
+GET {{ROOT_URL}}/getProducerRecordStatus?producer=0x70997970C51812dc3A010C7d01b50e0d17dc79C8
+
+### Get Producer Record Consent
+GET {{ROOT_URL}}/getProducerConsent?producer=0x70997970C51812dc3A010C7d01b50e0d17dc79C8
+
+
+### Get Record Schema
+GET {{ROOT_URL}}/getRecordSchema
+
+
+### Get Provider Metadata
+GET {{ROOT_URL}}/getProviderMetadata
+
+### Get Producer Record
+GET {{ROOT_URL}}/getProducerRecord?recordId=a055b805-db69-431f-9fbc-e521cb9ad9e4&producer=0x70997970C51812dc3A010C7d01b50e0d17dc79C8
+
+### Get Producer Records
+GET {{ROOT_URL}}/getProducerRecords?producer=0x70997970C51812dc3A010C7d01b50e0d17dc79C8
+
+
+### Get Producer Record Metadata Count
+GET {{ROOT_URL}}/getProducerRecordCount?producer=0x70997970C51812dc3A010C7d01b50e0d17dc79C8
+
+
+### Check Whether Producer Record Exists
+GET {{ROOT_URL}}/producerExists?producer=0x70997970C51812dc3A010C7d01b50e0d17dc79C8
+
+
+
+### Update Producer Record
+POST {{ROOT_URL}}/updateProducerRecord
+Content-Type: application/json
+
+{
+    "recordId": "6de58ca5-4d7e-4bf5-9b05-225ecf4b4b17",
+    "producer": "0x7bE129dc9F7715f51D459c36bB127Cc2FaB98B32",
+    "signature": "0x3ea4f50709550ffcaad8480db2910ca85b2c0a9179c9bed5a38fc8c4e39fdded2e81b6f9142a10979d21158918de628cd170aeacfae5757332be7b4c721b01d31b",
+    "resourceType": "Patient",
+    "consent": 2,
+    "metadata": {
+        "cid": "bafkreif6h4e7by2u3tsac35zpdo4mgu4tobc3o6tjidfffnzuvzdma5omi",
+        "url": "https://ledup-fhirserver.com",
+        "hash": "0x1c438ce8a6cf867c55614d80239092dd6b14a9a0f060a588357013983be2bff0"
+    }
+}
+
+### Update Producer Consent
+POST {{ROOT_URL}}/updateProducerConsent
+Content-Type: application/json
+
+{
+    "producer": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+    "status": 0
+}
+
+
+### Remove Producer Record
+POST {{ROOT_URL}}/removeProducerRecord
+Content-Type: application/json
+
+{   
+    "producer": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8"   
+}
+
+
+### Pause Contract
+POST {{ROOT_URL}}/changePauseState
+Content-Type: application/json
+
+{
+    "pause": false
+}
+
+### Renounce Ownership
+POST {{ROOT_URL}}/renounceOwnership
+
+
+### Transfer Onwership
+POST {{ROOT_URL}}/transferOwnership
+Content-Type: application/json
+
+{
+    "newProvider": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+}
+
+### Update Provider Metadata
+POST {{ROOT_URL}}/updateProviderMetadata
+Content-Type: application/json
+
+{    
+    "url": "https://provider-metadata.com",
+    "hash": "0x1c438ce8a6cf867c55614d80239092dd6b14a9a0f060a588357013983be2bff0"
+}
+
+
+### Update Provider Record Schema
+POST {{ROOT_URL}}/updateProviderRecordSchema
+
+{   
+    "schemaRef": {
+        "url": "https://provider-record-schema.com",
+        "hash": "0x1c438ce8a6cf867c55614d80239092dd6b14a9a0f060a588357013983be2bff0"
+    }    
+}
+
+### Update Producer Record
+POST {{ROOT_URL}}/updateProducerRecord
+Content-Type: application/json
+
+{
+    "recordId": "6de58ca5-4d7e-4bf5-9b05-225ecf4b4b17",
+    "producer": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+    "signature": "0x3ea4f50709550ffcaad8480db2910ca85b2c0a9179c9bed5a38fc8c4e39fdded2e81b6f9142a10979d21158918de628cd170aeacfae5757332be7b4c721b01d31b",
+    "resourceType": "Patient",
+     "status": 1,
+    "consent": 1,   
+    "metadata": {
+        "cid": "bafkreif6h4e7by2u3tsac35zpdo4mgu4tobc3o6tjidfffnzuvzdma5omi",
+        "url": "https://leadup-fhirserver.com",
+        "hash": "0x1c438ce8a6cf867c55614d80239092dd6b14a9a0f060a588357013983be2bff0"
+    }
+}
+
+
+### Update Producer Record Metadata
+POST {{ROOT_URL}}/updateProducerRecordMetadata
+Content-Type: application/json
+
+{
+    "producer": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+    "recordId": "6de58ca5-4d7e-4bf5-9b05-225ecf4b4b17",
+    "metadata": {
+        "cid": "bafkreif6h4e7by2u3tsac35zpdo4mgu4tobc3o6tjidfffnzuvzdma5omi",
+        "url": "https://leadup-fhirserver1.com",
+        "hash": "0x1c438ce8a6cf867c55614d80239092dd6b14a9a0f060a588357013983be2bff0"
+    }
+}
+
+
+### Update Producer Record Status
+POST {{ROOT_URL}}/updateProducerRecordStatus
+Content-Type: application/json
+
+{
+    "producer": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+    "status": 1
+}
+
+
+### Update Blockchain
+POST {{ROOT_URL}}/pin
+Content-Type: application/json
+
+{
+    "name": "d0658787-9eeb-4b40-9053-09e1adacdf6a",
+    "data": {
+        "resourceType": "Patient",
+        "id": "d0658787-9eeb-4b40-9053-09e1adacdf6a",
+        "meta": {
+            "versionId": "1",
+            "lastUpdated": "2024-04-19T04:55:59.038+00:00"
+        },
+        "active": true,
+        "name": [
+            {
+                "use": "official",
+                "family": "Smith",
+                "given": [
+                    "Lisa",
+                    "Marie"
+                ]
+            },
+            {
+                "use": "usual",
+                "given": [
+                    "Lisa"
+                ]
+            }
+        ],
+        "gender": "female",
+        "birthDate": "1974-12-25"
+    }
+}
+
+
+### Register Producer
+POST {{ROOT_URL}}/registerProducer
+Content-Type: application/json
+
+{
+    "producer": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+    "consent": 2,
+    "data":{
+        "resourceType": "Patient",
+        "id": "a055b805-db69-431f-9fbc-e521cb9ad9e4",
+        "meta": {
+            "versionId": "1",
+            "lastUpdated": "2024-04-19T04:55:59.038+00:00"
+        },
+        "active": true,
+        "name": [
+            {
+            "use": "official",
+            "family": "Smith",
+            "given": ["Lisa", "Marie"]
+            },
+            {
+            "use": "usual",
+            "given": ["Lisa"]
+            }
+        ],
+        "gender": "female",
+        "birthDate": "1974-12-25"
+    }
+
+}
+
+### Share Data
+POST {{ROOT_URL}}/shareData
+Content-Type: application/json
+
+{
+    "producer": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+    "consumer": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+    "recordId": "d0658788-9eeb-4b40-9053-09e1adacdf6a"   
+}

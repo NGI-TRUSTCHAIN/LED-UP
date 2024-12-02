@@ -45,18 +45,8 @@ contract Compensation is ICompensation, Ownable, Pausable {
     mapping(string => Payment) public payments; // bytes32 is --> recordId
 
     /*===================== EVENTS ======================*/
-    event ProducerRemoved(
-        address indexed producer,
-        // uint256 indexed payedAmount,
-        uint256 timestamp
-    );
-    event ProducerPaid(
-        address indexed producer,
-        //address indexed from,
-        uint256 indexed amount,
-        // uint256 dataSize,
-        uint256 indexed timestamp
-    );
+    event ProducerRemoved(address indexed producer, uint256 timestamp);
+    event ProducerPaid(address indexed producer, uint256 indexed amount, uint256 indexed timestamp);
     // address indexed initiator,
     event ServiceFeeWithdrawn(address indexed wallet, uint256 indexed amount, uint256 indexed timestamp);
     event ServiceFeeChanged(address indexed initiator, uint256 oldServiceFee, uint256 indexed newServiceFee);
