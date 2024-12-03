@@ -220,7 +220,7 @@ POST {{ROOT_URL}}/registerProducer
 Content-Type: application/json
 
 {
-    "producer": "0x7bE129dc9F7715f51D459c36bB127Cc2FaE98B32",
+    "producer": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
     "consent": 2,
     "data":{
         "resourceType": "AllergyIntolerance",
