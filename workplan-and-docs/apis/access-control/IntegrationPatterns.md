@@ -1,0 +1,271 @@
+# Access Control Integration Patterns
+
+**Version:** 1.0.0  
+**Last Updated:** April 2024  
+**Status:** Production
+
+## Overview
+
+This document describes common integration patterns for the LEDUP Access Control system. These patterns provide best practices for securely implementing data access controls in various application scenarios.
+
+## Data Flow Diagram
+
+The following diagram illustrates the complete data flow in the access control system:
+
+```mermaid
+flowchart TD
+    subgraph "Data Producer Side"
+        P1[Patient/Data Owner]
+        P2[Healthcare Provider]
+        P3[Producer Application]
+        P4[Data Encryption]
+    end
+
+    subgraph "Blockchain Layer"
+        B1[Data Registry Contract]
+        B2[DID Authentication]
+        B3[Access Control Records]
+    end
+
+    subgraph "Off-chain Storage"
+        S1[IPFS]
+        S2[Key Vault]
+    end
+
+    subgraph "Data Consumer Side"
+        C1[Consumer Application]
+        C2[Access Request]
+        C3[Data Decryption]
+        C4[Health Record Display]
+    end
+
+    P1 -->|Provides Data| P3
+    P2 -->|Enters Data| P3
+    P3 -->|Encrypts| P4
+    P4 -->|Stores Reference| B1
+    P4 -->|Stores Encrypted Data| S1
+
+    C1 -->|Initiates| C2
+    C2 -->|Validates| B2
+    C2 -->|Checks Access Rights| B3
+
+    B1 -->|Verifies| B2
+    B1 <-->|Records Access| B3
+
+    B3 -->|Returns Metadata| C2
+    S1 -->|Returns Encrypted Data| C2
+    S2 <-->|Manages Keys| C2
+
+    C2 -->|Delivers Secure Package| C3
+    C3 -->|Provides Decrypted Data| C4
+
+    style B1 fill:#f9f,stroke:#333,stroke-width:2px
+    style B3 fill:#f9f,stroke:#333,stroke-width:2px
+    style S1 fill:#bbf,stroke:#333,stroke-width:2px
+    style S2 fill:#bbf,stroke:#333,stroke-width:2px
+```
+
+## Integration Patterns
+
+### 1. Standard Consumer Access Pattern
+
+The most common pattern for accessing protected health data:
+
+```mermaid
+sequenceDiagram
+    participant CA as Consumer App
+    participant API as Access API
+    participant BC as Blockchain
+    participant IPFS as IPFS Storage
+
+    Note over CA: User wants to access health record
+    CA->>BC: Check if DID registered
+    BC-->>CA: DID status
+
+    CA->>API: Validate access (GET /access/validate)
+    API->>BC: Check access rights
+    BC-->>API: Access status
+    API-->>CA: Access validation result
+
+    Note over CA: If access is granted, request data
+    CA->>API: Request data access (POST /consumer-access/request)
+    API->>BC: Verify access rights
+    BC-->>API: Access confirmation
+    API->>IPFS: Fetch encrypted data
+    IPFS-->>API: Return encrypted data
+    API-->>CA: Encrypted data package
+
+    Note over CA: Decrypt data locally with private key
+    CA->>CA: Decrypt shared secret
+    CA->>CA: Decrypt data with shared secret
+    CA->>CA: Display health record
+```
+
+### 2. Cross-Organization Data Sharing Pattern
+
+Pattern for securely sharing data between healthcare organizations:
+
+```mermaid
+sequenceDiagram
+    participant Org1 as Organization 1
+    participant Org2 as Organization 2
+    participant API as Access API
+    participant BC as Blockchain
+
+    Org1->>BC: Register patient data
+    Org1->>BC: Grant access to Org2
+
+    Org2->>API: Request data access
+    API->>BC: Verify cross-org permission
+    BC-->>API: Confirm access
+    API-->>Org2: Return encrypted data
+
+    Org2->>Org2: Process health data
+    Org2->>BC: Log access (audit trail)
+```
+
+### 3. Tiered Access Control Pattern
+
+Pattern for implementing different access levels based on user roles:
+
+```mermaid
+sequenceDiagram
+    participant Patient
+    participant Provider
+    participant Researcher
+    participant API as Access API
+    participant BC as Blockchain
+
+    Patient->>BC: Set tiered access permissions
+
+    Provider->>API: Request full record access
+    API->>BC: Check provider role & permissions
+    BC-->>API: Grant full access
+    API-->>Provider: Complete health record
+
+    Researcher->>API: Request anonymized data
+    API->>BC: Check researcher role & permissions
+    BC-->>API: Grant limited access
+    API-->>Researcher: Anonymized subset of data
+```
+
+## Implementation Examples
+
+### Producer-Side Implementation
+
+```typescript
+import { LedupSDK } from '@ledup/sdk';
+
+async function registerHealthRecord(recordData, ownerDid, privateKey) {
+  const sdk = new LedupSDK({
+    apiEndpoint: 'https://api.ledup.io',
+    privateKey,
+  });
+
+  try {
+    // 1. Encrypt the health record data
+    const { cid, contentHash } = await sdk.producer.encryptAndStore(recordData);
+
+    // 2. Register the record on the blockchain
+    await sdk.producer.registerRecord({
+      cid,
+      recordId: `${recordData.resourceType}-${recordData.id}`,
+      contentHash,
+      owner: ownerDid,
+    });
+
+    // 3. Set initial access permissions (optional)
+    // Grant access to primary care provider
+    await sdk.producer.grantAccess(cid, primaryProviderDid);
+
+    return { success: true, recordId: `${recordData.resourceType}-${recordData.id}`, cid };
+  } catch (error) {
+    console.error('Failed to register health record:', error);
+    throw error;
+  }
+}
+```
+
+### Consumer-Side Implementation
+
+```typescript
+import { LedupSDK } from '@ledup/sdk';
+
+async function accessHealthRecord(cid, consumerDid, privateKey) {
+  const sdk = new LedupSDK({
+    apiEndpoint: 'https://api.ledup.io',
+    privateKey,
+  });
+
+  try {
+    // 1. Check if we have access before requesting
+    const hasAccess = await sdk.access.validate(cid, consumerDid);
+
+    if (!hasAccess) {
+      throw new Error('Access denied to requested record');
+    }
+
+    // 2. Request the encrypted data
+    const { encryptedData, encryptedSharedSecret } = await sdk.consumer.requestAccess(cid);
+
+    // 3. Decrypt the shared secret using consumer's private key
+    const sharedSecret = await sdk.crypto.decryptWithPrivateKey(encryptedSharedSecret, privateKey);
+
+    // 4. Decrypt the health record data using the shared secret
+    const healthRecordData = await sdk.crypto.decryptWithSharedSecret(encryptedData, sharedSecret);
+
+    return JSON.parse(healthRecordData);
+  } catch (error) {
+    console.error('Failed to access health record:', error);
+    throw error;
+  }
+}
+```
+
+## Best Practices
+
+### Security
+
+1. **Secure Key Management**: Never store private keys in local storage or expose them in client-side code
+2. **Validate All Input**: Always validate input data before processing to prevent injection attacks
+3. **Implement Rate Limiting**: Protect APIs from brute force and DDoS attacks with proper rate limiting
+4. **Use HTTPS Everywhere**: Ensure all API communications use secure HTTPS connections
+
+### Performance
+
+1. **Optimize Data Size**: Only encrypt and transfer necessary data fields
+2. **Implement Caching**: Cache validation results temporarily to reduce blockchain queries
+3. **Batch Operations**: When possible, batch multiple access checks into a single transaction
+4. **Optimize IPFS Retrieval**: Consider IPFS gateway selection based on performance and reliability
+
+### User Experience
+
+1. **Provide Clear Feedback**: Clearly communicate access status to end users
+2. **Implement Progressive Loading**: Show available data while waiting for secure data retrieval
+3. **Handle Offline Scenarios**: Implement proper offline functionality where permitted by security requirements
+4. **Graceful Error Handling**: Present user-friendly messages for access control issues
+
+## Compliance Considerations
+
+When implementing access control, ensure compliance with relevant regulations:
+
+1. **HIPAA**: Maintain audit trails for all PHI access
+2. **GDPR**: Implement data portability and right to be forgotten
+3. **Consent Management**: Document all patient consents for data sharing
+4. **Audit Trails**: Maintain immutable logs of all data access
+
+## Common Implementation Challenges
+
+1. **Key Management**: Secure storage and recovery of cryptographic keys
+2. **Cross-Organization Trust**: Establishing trust between different healthcare entities
+3. **Versioning**: Handling updates to health records while maintaining security
+4. **Performance vs. Security**: Balancing system performance with security requirements
+
+## Troubleshooting
+
+| Issue                       | Possible Cause                          | Solution                                                 |
+| --------------------------- | --------------------------------------- | -------------------------------------------------------- |
+| Access Denied Unexpectedly  | Expired permissions on blockchain       | Check permission expiration and renew if needed          |
+| Decryption Failure          | Incorrect private key or corrupted data | Verify key pair matches and check data integrity         |
+| Slow Performance            | Network latency or large data payloads  | Implement pagination and optimize data size              |
+| Inconsistent Access Results | Blockchain node synchronization         | Wait for blockchain confirmation or try alternative node |

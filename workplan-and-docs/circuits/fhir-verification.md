@@ -1,0 +1,287 @@
+# FhirVerifier Circuit Documentation
+
+## Overview
+
+The `FhirVerifier` circuit allows users to prove claims about FHIR (Fast Healthcare Interoperability Resources) data without revealing sensitive health information. This enables zero-knowledge verification of health-related attributes while preserving privacy.
+
+```circom
+import { FhirVerifier } from '@circuits/FhirVerifier.circom';
+
+// Public inputs (known to verifier)
+const resourceType = 1;       // 1 = Patient resource
+const path = 2;              // 2 = birthDate path
+const operator = 1;          // 1 = Equals
+const comparisonValue = 19900101; // YYYYMMDD format for Jan 1, 1990
+const expectedResult = 1;    // 1 = True (match)
+
+// Private inputs (only known to prover)
+const resource = [/* FHIR resource representation as field elements */];
+
+// Circuit instantiation
+component verifier = FhirVerifier();
+verifier.resource <== resource;
+verifier.resourceType <== resourceType;
+verifier.path <== path;
+verifier.operator <== operator;
+verifier.comparisonValue <== comparisonValue;
+verifier.expectedResult <== expectedResult;
+
+// Result will be accessible at verifier.result
+```
+
+## Input Signals
+
+| Signal            | Type          | Visibility | Description                                                           |
+| ----------------- | ------------- | ---------- | --------------------------------------------------------------------- |
+| `resource`        | Array         | Private    | FHIR resource represented as field elements                           |
+| `resourceType`    | Integer       | Public     | Type of FHIR resource (e.g., 1 for Patient)                           |
+| `path`            | Integer       | Public     | Code representing the attribute path to check (e.g., 2 for birthDate) |
+| `operator`        | Integer       | Public     | Comparison operator code (e.g., 1 for Equals)                         |
+| `comparisonValue` | Field Element | Public     | Value to compare against                                              |
+| `expectedResult`  | Integer       | Public     | Expected outcome of the comparison (1 = true, 0 = false)              |
+
+## Output Signal
+
+| Signal   | Type    | Description                                 |
+| -------- | ------- | ------------------------------------------- |
+| `result` | Integer | Result code indicating verification outcome |
+
+## Supported Resource Types
+
+| Code | Resource Type     |
+| ---- | ----------------- |
+| `1`  | Patient           |
+| `2`  | Observation       |
+| `3`  | Condition         |
+| `4`  | MedicationRequest |
+
+## Supported Paths (Patient Resource)
+
+| Code | Path            |
+| ---- | --------------- |
+| `1`  | id              |
+| `2`  | birthDate       |
+| `3`  | gender          |
+| `4`  | name.given      |
+| `5`  | name.family     |
+| `6`  | address.city    |
+| `7`  | address.country |
+
+## Supported Operators
+
+| Code | Operator    | Description                                             |
+| ---- | ----------- | ------------------------------------------------------- |
+| `1`  | Equals      | Field exactly matches the comparison value              |
+| `2`  | NotEquals   | Field does not match the comparison value               |
+| `3`  | GreaterThan | Field is greater than the comparison value              |
+| `4`  | LessThan    | Field is less than the comparison value                 |
+| `5`  | Contains    | Field contains the comparison value (for string fields) |
+
+## Result Codes
+
+| Code | Description                                                          |
+| ---- | -------------------------------------------------------------------- |
+| `0`  | Default state (should never be returned)                             |
+| `14` | Success: Verification passed                                         |
+| `21` | Failure: Value in resource does not match expected comparison result |
+| `31` | Failure: Invalid resource type                                       |
+| `32` | Failure: Invalid path                                                |
+| `33` | Failure: Invalid operator                                            |
+| `34` | Failure: Path not found in resource                                  |
+
+## Implementation Details
+
+The circuit extracts and validates field values from FHIR resources using internal templates:
+
+1. **Resource Type Validation**:
+
+   ```circom
+   component resourceTypeValid = IsInRange(1, 4);
+   resourceTypeValid.in <== resourceType;
+   ```
+
+2. **Path Selection**:
+
+   ```circom
+   component pathSelector = PathSelector();
+   pathSelector.resource <== resource;
+   pathSelector.resourceType <== resourceType;
+   pathSelector.path <== path;
+   ```
+
+3. **Comparison Operation**:
+
+   ```circom
+   component comparator = Comparator();
+   comparator.value <== pathSelector.value;
+   comparator.comparisonValue <== comparisonValue;
+   comparator.operator <== operator;
+   ```
+
+4. **Result Verification**:
+   ```circom
+   component resultMatcher = IsEqual();
+   resultMatcher.in[0] <== comparator.result;
+   resultMatcher.in[1] <== expectedResult;
+   signal resultMatches <== resultMatcher.out;
+   ```
+
+## Usage Examples
+
+### Example 1: Verifying Patient Age
+
+```javascript
+// Setup
+import { generateProof, verifyProof } from '@circuits/utils';
+import { encodeFhirResource } from '@circuits/fhir';
+
+// Create FHIR patient resource
+const patientResource = {
+  resourceType: 'Patient',
+  id: 'example',
+  birthDate: '1990-01-01',
+  gender: 'male',
+  name: [
+    {
+      use: 'official',
+      family: 'Smith',
+      given: ['John', 'Jacob'],
+    },
+  ],
+  address: [
+    {
+      city: 'San Francisco',
+      country: 'USA',
+    },
+  ],
+};
+
+// Encode the resource for the circuit
+const encodedResource = encodeFhirResource(patientResource);
+
+// Create circuit inputs to verify patient was born on 1990-01-01
+const circuitInputs = {
+  resource: encodedResource,
+  resourceType: 1, // Patient
+  path: 2, // birthDate
+  operator: 1, // Equals
+  comparisonValue: 19900101, // YYYYMMDD format
+  expectedResult: 1, // True - we expect it to match
+};
+
+// Generate ZK proof
+const { proof, publicSignals } = await generateProof(circuitInputs, 'fhir-verifier.wasm', 'fhir-verifier.zkey');
+
+// Verify the proof
+const isValid = await verifyProof(proof, publicSignals, 'fhir-verifier-verification-key.json');
+
+// Extract and interpret the result
+const resultCode = parseInt(publicSignals[0]);
+console.log('Is proof valid?', isValid);
+console.log('Result code:', resultCode);
+console.log('Verification successful:', resultCode === 14);
+```
+
+### Example 2: Verifying Patient Gender
+
+```javascript
+// Using the same patient resource from above
+
+// Create circuit inputs to verify patient's gender is male
+const circuitInputs = {
+  resource: encodedResource,
+  resourceType: 1, // Patient
+  path: 3, // gender
+  operator: 1, // Equals
+  comparisonValue: encodeFhirValue('male'), // Encoded string value
+  expectedResult: 1, // True - we expect it to match
+};
+
+// Generate and verify proof as in Example 1
+```
+
+## Integration with Smart Contracts
+
+The FhirVerifier circuit can be integrated with healthcare applications using the generated Solidity verifier:
+
+```solidity
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+import "./FhirVerifier.sol"; // Generated Solidity verifier
+
+contract HealthcareVerificationService {
+    FhirVerifier public verifier;
+
+    // Map of authorized healthcare providers
+    mapping(address => bool) public authorizedProviders;
+
+    constructor(address _verifierAddress) {
+        verifier = FhirVerifier(_verifierAddress);
+        authorizedProviders[msg.sender] = true;
+    }
+
+    // Add or remove authorized providers
+    function setProviderAuthorization(address provider, bool isAuthorized) public {
+        require(authorizedProviders[msg.sender], "Only authorized providers can modify");
+        authorizedProviders[provider] = isAuthorized;
+    }
+
+    // Verify FHIR-based claims
+    function verifyHealthClaim(
+        uint[2] memory a,
+        uint[2][2] memory b,
+        uint[2] memory c,
+        uint[5] memory input // [resourceType, path, operator, comparisonValue, expectedResult]
+    ) public view returns (bool success, uint8 resultCode) {
+        // Verify the ZK proof
+        bool isValidProof = verifier.verifyProof(a, b, c, input);
+
+        if (!isValidProof) {
+            return (false, 0);
+        }
+
+        // Extract result code
+        uint8 code = uint8(input[5]); // This may vary based on the verifier contract
+
+        return (true, code);
+    }
+
+    // Example: Age verification for a service
+    function verifyPatientAge(
+        uint[2] memory a,
+        uint[2][2] memory b,
+        uint[2] memory c,
+        uint minimumAge
+    ) public view returns (bool) {
+        // Current date in YYYYMMDD format
+        uint today = getCurrentDate(); // Implementation not shown
+
+        // Calculate birthdate cutoff for the minimum age
+        uint birthDateCutoff = calculateBirthDateCutoff(today, minimumAge); // Implementation not shown
+
+        // Prepare inputs for age verification
+        uint[5] memory input = [
+            1, // resourceType = Patient
+            2, // path = birthDate
+            4, // operator = LessThan
+            birthDateCutoff, // birthDate should be before the cutoff
+            1  // expectedResult = true
+        ];
+
+        (bool success, uint8 resultCode) = verifyHealthClaim(a, b, c, input);
+
+        return success && resultCode == 14;
+    }
+}
+```
+
+## Limitations and Considerations
+
+- The circuit works with a predefined set of FHIR resource types and paths
+- Complex nested FHIR structures may require specific encoding strategies
+- String comparisons have limited functionality compared to full FHIR search capabilities
+- Dates are represented in YYYYMMDD format to facilitate numeric comparisons
+- Extending to new resource types or paths requires circuit modifications
+
+For further information on compiling and using this circuit, refer to the [Installation and Setup](./installation-and-setup.md) documentation.

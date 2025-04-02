@@ -1,0 +1,349 @@
+# Theme & Styling Documentation
+
+## Overview
+
+This document describes the theming and styling system used in the LEDUP frontend application. It covers the design system principles, Tailwind CSS configuration, component styling, responsive design approach, and accessibility considerations.
+
+## Design System
+
+The LEDUP design system is built on the following principles:
+
+- **Consistency**: Unified visual language across the application
+- **Modularity**: Reusable UI components
+- **Accessibility**: WCAG-compliant design elements
+- **Responsiveness**: Adaptive layouts for various devices
+- **Performance**: Optimized styling with minimal CSS footprint
+
+### Design Tokens
+
+Design tokens are implemented through CSS variables and Tailwind configuration:
+
+```css
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 3.9%;
+    --primary: 224.4 64.3% 32.9%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 0 0% 96.1%;
+    --secondary-foreground: 0 0% 9%;
+    --muted: 0 0% 96.1%;
+    --muted-foreground: 0 0% 45.1%;
+    --accent: 0 0% 96.1%;
+    --accent-foreground: 0 0% 9%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 89.8%;
+    --input: 0 0% 89.8%;
+    --ring: 0 0% 3.9%;
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 47.4% 11.2%;
+    --card-foreground: 0 0% 98%;
+    --popover: 222.2 47.4% 11.2%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 255.1 91.7% 76.3%;
+    --primary-foreground: 0 0% 9%;
+    --secondary: 0 0% 14.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 0 0% 14.9%;
+    --muted-foreground: 0 0% 63.9%;
+    --accent: 0 0% 14.9%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 14.9%;
+    --input: 0 0% 14.9%;
+    --ring: 0 0% 83.1%;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+  }
+}
+```
+
+### Typography System
+
+The application uses custom fonts and typographic styles:
+
+```css
+@font-face {
+  font-family: 'Agrandir';
+  font-style: normal;
+  font-weight: 100 900;
+  src: url('../fonts/AgrandirVariable.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Telegraf';
+  font-style: normal;
+  font-weight: 100 900;
+  src: url('../fonts/TelegrafVariable.woff2') format('woff2');
+}
+
+@layer base {
+  html {
+    font-family: var(--font-inter);
+  }
+
+  h1,
+  h2,
+  h3,
+  .logo,
+  a {
+    font-family: 'Agrandir';
+  }
+}
+```
+
+## Tailwind CSS Configuration
+
+### Core Configuration
+
+The application uses Tailwind CSS as its primary styling framework with a customized configuration:
+
+```typescript
+// tailwind.config.ts
+import type { Config } from 'tailwindcss';
+
+const config: Config = {
+  darkMode: ['class'],
+  content: [
+    './pages/**/*.{js,ts,jsx,tsx,mdx}',
+    './components/**/*.{js,ts,jsx,tsx,mdx}',
+    './app/**/*.{js,ts,jsx,tsx,mdx}',
+  ],
+  theme: {
+    extend: {
+      backgroundImage: {
+        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+        'gradient-conic': 'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
+        'grid-pattern': 'url("/grid-pattern.svg")',
+        'grid-pattern-light': 'url("/grid-pattern-light.svg")',
+      },
+      borderRadius: {
+        lg: 'var(--radius)',
+        md: 'calc(var(--radius) - 2px)',
+        sm: 'calc(var(--radius) - 4px)',
+      },
+      colors: {
+        background: 'hsl(var(--background))',
+        foreground: 'hsl(var(--foreground))',
+        card: {
+          DEFAULT: 'hsl(var(--card))',
+          foreground: 'hsl(var(--card-foreground))',
+        },
+        // Other colors defined using CSS variables
+      },
+      keyframes: {
+        'accordion-down': {
+          from: { height: '0' },
+          to: { height: 'var(--radix-accordion-content-height)' },
+        },
+        // Other keyframes definitions
+      },
+      animation: {
+        'accordion-down': 'accordion-down 0.2s ease-out',
+        'accordion-up': 'accordion-up 0.2s ease-out',
+        'collapsible-down': 'collapsible-down 0.2s ease-out',
+        'collapsible-up': 'collapsible-up 0.2s ease-out',
+      },
+    },
+  },
+  plugins: [require('tailwindcss-animate')],
+};
+```
+
+### Plugins
+
+The application uses the following Tailwind plugins:
+
+- **tailwindcss-animate**: For animation utilities
+
+## Component Library
+
+### UI Component Architecture
+
+The application uses a comprehensive UI component library located in `components/ui/`. These components leverage:
+
+- **Radix UI**: For accessible UI primitives
+- **class-variance-authority (cva)**: For component variants
+- **cn utility**: For merging class names
+
+The UI components include:
+
+- Accordion
+- Alert
+- Avatar
+- Badge
+- Button
+- Calendar
+- Card
+- Checkbox
+- Command (command palette)
+- Dialog
+- Dropdown menu
+- Form
+- Input
+- Pagination
+- Popover
+- Progress
+- Radio group
+- Scroll area
+- Search
+- Select
+- Separator
+- Sheet
+- Skeleton
+- Stepper
+- Switch
+- Table
+- Tabs
+- Textarea
+- Toggle
+- Tooltip
+
+### Component Example: Button
+
+```tsx
+// Button component implementation example
+import * as React from 'react';
+import { Slot } from '@radix-ui/react-slot';
+import { cva, type VariantProps } from 'class-variance-authority';
+
+import { cn } from '@/utils/utils';
+
+const buttonVariants = cva(
+  'inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50',
+  {
+    variants: {
+      variant: {
+        default: 'bg-primary text-primary-foreground shadow hover:bg-primary/90',
+        destructive: 'bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90',
+        outline: 'border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground',
+        secondary: 'bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80',
+        ghost: 'hover:bg-accent hover:text-accent-foreground',
+        link: 'text-primary underline-offset-4 hover:underline',
+      },
+      size: {
+        default: 'h-9 px-4 py-2',
+        sm: 'h-8 rounded-md px-3 text-xs',
+        lg: 'h-10 rounded-md px-8',
+        icon: 'h-9 w-9',
+      },
+    },
+    defaultVariants: {
+      variant: 'default',
+      size: 'default',
+    },
+  }
+);
+
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {
+  asChild?: boolean;
+}
+
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, variant, size, asChild = false, ...props }, ref) => {
+    const Comp = asChild ? Slot : 'button';
+    return <Comp className={cn(buttonVariants({ variant, size, className }))} ref={ref} {...props} />;
+  }
+);
+Button.displayName = 'Button';
+
+export { Button, buttonVariants };
+```
+
+## Theme System
+
+### Light & Dark Mode
+
+The application supports light and dark themes using Tailwind's `darkMode: ['class']` configuration. Theme colors are defined using CSS variables in `globals.css`, with separate values for light and dark modes.
+
+The theme is toggled by adding or removing the `.dark` class to the document root element.
+
+### Global Styles
+
+Global styles are defined in `globals.css`:
+
+```css
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Font definitions */
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  /* Typography styles */
+}
+```
+
+## Best Practices
+
+### Component Usage
+
+When using UI components:
+
+1. Import components from the UI library
+2. Use component variants consistently
+3. Extend components using composition rather than modifying base components
+4. Use the `cn` utility for class name merging
+
+### Custom Styling
+
+When custom styling is needed:
+
+1. Use Tailwind utilities whenever possible
+2. Create reusable patterns with `@apply` directives in the components layer
+3. Follow the established color palette using CSS variables
+4. Maintain accessibility by ensuring proper contrast ratios
+
+## Accessibility Considerations
+
+The UI components are built with accessibility in mind:
+
+- Use of Radix UI primitives for accessible components
+- Keyboard navigation support
+- Focus management
+- ARIA attributes
+- Color contrast compliance
+
+## Responsive Design
+
+The application follows these responsive design principles:
+
+- Mobile-first approach
+- Breakpoint-based layouts
+- Flexible components that adapt to container width
+- Context-aware responsive behavior
+
+## Last Updated
+
+Date: [Current Date]
+
+## Contact Information
+
+For questions or updates to this documentation, contact the LEDUP frontend team.

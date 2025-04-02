@@ -1,0 +1,328 @@
+# LEDUP - DidAuth Contract
+
+**Version:** 1.0.0  
+**Last Updated:** March 2025  
+**Status:** Production
+
+## Overview
+
+The DidAuth contract is the identity and authentication cornerstone of the LEDUP ecosystem. It implements Decentralized Identifier (DID) based authentication and authorization with credential verification, enabling secure role-based access control across the platform.
+
+This contract ensures that only authenticated and authorized entities can interact with sensitive health data, maintaining compliance with privacy requirements while enabling the secure sharing of health information.
+
+## Key Features
+
+### DID-Based Authentication
+
+The DidAuth contract implements authentication using DIDs instead of traditional addresses:
+
+```mermaid
+flowchart LR
+    A[User Wallet] -->|"Resolves to"| B[DID]
+    B -->|"Authenticated by"| C[DidAuth]
+    C -->|"Verifies"| D{Roles & Permissions}
+    D -->|"Grants Access to"| E[LEDUP Ecosystem]
+```
+
+- **DID Resolution**: Maps blockchain addresses to DIDs
+- **Authentication Logic**: Verifies DID existence and status
+- **Role-Based Control**: Manages role assignments and authorization checks
+- **Cross-Contract Verification**: Provides authentication services to other contracts
+
+### Role Management
+
+The contract implements a comprehensive role management system:
+
+```mermaid
+classDiagram
+    class Roles {
+        DEFAULT_ADMIN_ROLE
+        ADMIN_ROLE
+        OPERATOR_ROLE
+        PRODUCER_ROLE
+        CONSUMER_ROLE
+        PROVIDER_ROLE
+        ISSUER_ROLE
+        VERIFIER_ROLE
+    }
+
+    class AccessControl {
+        grantDidRole()
+        revokeDidRole()
+        hasDidRole()
+        hasRole()
+        getUserRoles()
+    }
+
+    Roles -- AccessControl
+```
+
+- **Predefined Roles**: Includes essential roles like Producer, Consumer, Provider, etc.
+- **Role Assignment**: Grants or revokes roles to DIDs
+- **Role Verification**: Validates if a DID has specific roles
+- **Role Querying**: Retrieves all roles assigned to a DID or address
+
+### Credential Verification
+
+The contract implements credential verification for enhanced security:
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant DidAuth
+    participant DidVerifier
+    participant DidIssuer
+
+    User->>DidAuth: Request Access
+    DidAuth->>DidAuth: Check Role
+    DidAuth->>DidVerifier: Verify Credential
+    DidVerifier->>DidIssuer: Validate Credential
+    DidIssuer-->>DidVerifier: Credential Status
+    DidVerifier-->>DidAuth: Verification Result
+    DidAuth-->>User: Access Decision
+```
+
+- **Credential Types**: Maps credential types to specific roles
+- **Trusted Issuers**: Manages a registry of trusted credential issuers
+- **Verification Logic**: Validates credentials against issuer records
+- **Role Requirements**: Associates required credential types with roles
+
+### Multi-Contract Integration
+
+The DidAuth contract serves as the authentication hub for the LEDUP platform:
+
+```mermaid
+flowchart TD
+    A[DidAuth] <-->|"Identity Management"| B[DidRegistry]
+    A <-->|"Credential Verification"| C[DidVerifier]
+    A <-->|"Credential Issuance"| D[DidIssuer]
+    E[DataRegistry] -->|"Authentication"| A
+    F[Compensation] -->|"Role Verification"| A
+    G[Other Contracts] -->|"Authorization"| A
+```
+
+## Role Definitions
+
+The DidAuth contract defines the following roles:
+
+| Role                 | Description                              | Access Level |
+| -------------------- | ---------------------------------------- | ------------ |
+| `DEFAULT_ADMIN_ROLE` | System-level administrative role         | Highest      |
+| `ADMIN_ROLE`         | Platform administrators                  | High         |
+| `OPERATOR_ROLE`      | Day-to-day operation managers            | Medium-High  |
+| `PRODUCER_ROLE`      | Health data producers/owners             | Medium       |
+| `CONSUMER_ROLE`      | Health data consumers/requestors         | Medium       |
+| `PROVIDER_ROLE`      | Healthcare providers with special access | Medium-High  |
+| `ISSUER_ROLE`        | Credential issuers                       | High         |
+| `VERIFIER_ROLE`      | Credential verifiers                     | Medium-High  |
+
+## Credential Types
+
+The contract defines the following credential types:
+
+| Credential Type       | Description                          | Required For  |
+| --------------------- | ------------------------------------ | ------------- |
+| `PRODUCER_CREDENTIAL` | Validates data producer status       | PRODUCER_ROLE |
+| `CONSUMER_CREDENTIAL` | Validates data consumer status       | CONSUMER_ROLE |
+| `PROVIDER_CREDENTIAL` | Validates healthcare provider status | PROVIDER_ROLE |
+
+## Interaction with Other Contracts
+
+### DidRegistry Integration
+
+```mermaid
+flowchart LR
+    A[DidAuth] -->|"1. Is DID Active?"| B[DidRegistry]
+    A -->|"2. Get DID Controller"| B
+    A -->|"3. Resolve Address to DID"| B
+    B -->|"4. Return DID Status/Info"| A
+```
+
+The DidAuth contract interacts with the DidRegistry for:
+
+- Verifying if DIDs exist and are active
+- Resolving addresses to their associated DIDs
+- Getting controller information for DIDs
+
+### DidVerifier Integration
+
+```mermaid
+sequenceDiagram
+    participant App
+    participant DidAuth
+    participant DidVerifier
+
+    App->>DidAuth: authenticate(did, role)
+    DidAuth->>DidAuth: Check DID Active
+    DidAuth->>DidAuth: Check Role Assignment
+
+    App->>DidAuth: verifyCredentialForAction(did, type, id)
+    DidAuth->>DidVerifier: Verify Credential
+    DidVerifier-->>DidAuth: Verification Result
+    DidAuth-->>App: Authentication Result
+```
+
+The DidAuth contract uses DidVerifier for:
+
+- Validating credentials presented for authentication
+- Checking credential validity and status
+- Verifying credential-role mapping
+
+### DidIssuer Integration
+
+```mermaid
+flowchart TD
+    A[DidAuth] -->|"Issue Credential"| B[DidIssuer]
+    A -->|"Check Credential Validity"| B
+    C[Owner] -->|"Add Trusted Issuer"| A
+    A -->|"Check Trusted Status"| D{Issuer Trusted?}
+    D -->|"Yes"| E[Accept Credential]
+    D -->|"No"| F[Reject Credential]
+```
+
+The DidAuth contract integrates with DidIssuer for:
+
+- Issuing new credentials to DIDs
+- Checking if credentials are valid
+- Managing trusted issuers for credential types
+
+## Authentication Flow
+
+The following diagram illustrates the authentication flow in the DidAuth contract:
+
+```mermaid
+stateDiagram-v2
+    [*] --> ReceiveAuthRequest
+
+    ReceiveAuthRequest --> CheckDIDActive
+    CheckDIDActive --> CheckDIDHasRole
+
+    CheckDIDActive --> AuthFailed: DID Inactive
+    CheckDIDHasRole --> AuthFailed: Role Not Assigned
+    CheckDIDHasRole --> AuthSuccess: Role Verified
+
+    state CheckCredentials {
+        CredentialRequired --> VerifyCredential
+        VerifyCredential --> CheckIssuerTrusted
+        CheckIssuerTrusted --> CredentialValid: Trusted Issuer
+        CheckIssuerTrusted --> CredentialInvalid: Untrusted Issuer
+    }
+
+    AuthSuccess --> [*]
+    AuthFailed --> [*]
+```
+
+## Authorization Patterns
+
+The DidAuth contract supports several authorization patterns:
+
+1. **Simple Role Check**
+
+   ```solidity
+   require(didAuth.authenticate(did, didAuth.PRODUCER_ROLE()), "Not authorized");
+   ```
+
+2. **Multiple Role Verification**
+
+   ```solidity
+   bytes32[] memory roles = new bytes32[](2);
+   roles[0] = didAuth.PRODUCER_ROLE();
+   roles[1] = didAuth.PROVIDER_ROLE();
+
+   bytes32[] memory credentialIds = new bytes32[](2);
+   credentialIds[0] = producerCredentialId;
+   credentialIds[1] = providerCredentialId;
+
+   require(didAuth.hasRequiredRolesAndCredentials(did, roles, credentialIds), "Not authorized");
+   ```
+
+3. **Credential-Specific Authorization**
+   ```solidity
+   require(didAuth.verifyCredentialForAction(did, "ProducerCredential", credentialId), "Invalid credential");
+   ```
+
+## Contract Events
+
+The DidAuth contract emits the following events:
+
+- **RoleGranted**: When a role is granted to a DID
+- **RoleRevoked**: When a role is revoked from a DID
+- **AuthenticationSuccessful**: When a DID successfully authenticates for a role
+- **AuthenticationFailed**: When authentication fails for a DID and role
+- **CredentialVerified**: When a credential is successfully verified
+- **CredentialVerificationFailed**: When credential verification fails
+
+## Administrative Functions
+
+The DidAuth contract includes administrative functions accessible only to the contract owner:
+
+- **setTrustedIssuer**: Manage trusted issuers for credential types
+- **setRoleRequirement**: Define credential requirements for roles
+- **revokeDidRole**: Remove roles from DIDs
+- **issueCredential**: Issue credentials to DIDs
+
+## Integration Patterns
+
+### For Smart Contracts
+
+Other contracts can integrate with DidAuth using:
+
+```solidity
+// In contract constructor
+DidAuth public didAuth;
+
+constructor(address _didAuthAddress) {
+    didAuth = DidAuth(_didAuthAddress);
+}
+
+// In function that requires authentication
+modifier onlyProducer() {
+    string memory callerDid = didAuth.getDidFromAddress(msg.sender);
+    if (!didAuth.authenticate(callerDid, didAuth.PRODUCER_ROLE())) {
+        revert Unauthorized();
+    }
+    _;
+}
+```
+
+### For Applications
+
+Applications can integrate with DidAuth through contract calls:
+
+```typescript
+// Check if user has producer role
+const didAuthContract = new ethers.Contract(didAuthAddress, DidAuthABI, provider);
+
+const userDid = await didAuthContract.getDidFromAddress(userAddress);
+const hasProducerRole = await didAuthContract.authenticate(userDid, await didAuthContract.PRODUCER_ROLE());
+
+if (hasProducerRole) {
+  // Allow producer-specific actions
+}
+```
+
+## Security Considerations
+
+The DidAuth contract implements several security measures:
+
+1. **Role Separation**: Clear separation of concerns between different roles
+2. **Credential Verification**: Multi-factor authentication through credentials
+3. **Trusted Issuers**: Only trusted entities can issue valid credentials
+4. **Active DID Check**: Verifies DIDs are active before authentication
+5. **Owner Safeguards**: Administrative functions restricted to contract owner
+
+## Summary
+
+The DidAuth contract is the identity backbone of the LEDUP platform, providing:
+
+1. **Secure Authentication**: Based on decentralized identifiers
+2. **Fine-Grained Authorization**: Through role-based access control
+3. **Credential Verification**: Additional security layer beyond basic authentication
+4. **Platform-Wide Integration**: Central authentication for all LEDUP contracts
+5. **Flexible Role Management**: Adaptable to various access patterns
+
+This contract ensures that the LEDUP ecosystem maintains strong identity guarantees while enabling appropriate access to health data according to well-defined roles and permissions.
+
+---
+
+**© 2025 LEDUP - All rights reserved.**

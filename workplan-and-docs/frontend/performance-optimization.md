@@ -1,0 +1,231 @@
+# Performance Optimization
+
+This document outlines the performance optimization techniques implemented in the LEDUP frontend application to ensure efficient user experiences, fast load times, and responsive interactions.
+
+## Code Splitting
+
+The LEDUP application uses several code splitting techniques to reduce initial bundle sizes and improve load times:
+
+### React Lazy Loading
+
+Components that aren't immediately needed on page load are lazy-loaded using React's `lazy` and `Suspense` components. This approach is particularly useful for feature-specific components that may not be needed on the initial render.
+
+```tsx
+// Example from the PatientRecordsContainer.tsx
+const ConsentManager = React.lazy(() =>
+  import('./ConsentManager').then((mod) => ({
+    default: mod.ConsentManager,
+  }))
+);
+```
+
+In this example, the ConsentManager component is loaded only when needed, reducing the initial bundle size.
+
+### Suspense and Loading States
+
+The application uses React Suspense for handling loading states gracefully:
+
+```tsx
+// Example from patient-records/page.tsx
+<Suspense fallback={<LoadingFallback />}>
+  <ErrorBoundary>
+    <PatientRecordsPage />
+  </ErrorBoundary>
+</Suspense>
+```
+
+This pattern provides a smooth user experience by displaying loading indicators while components are being loaded.
+
+## Image Optimization
+
+The application leverages Next.js built-in image optimization capabilities:
+
+### Next.js Image Configuration
+
+The Next.js configuration includes support for optimized image delivery:
+
+```js
+// next.config.mjs
+const nextConfig = {
+  images: {
+    domains: ['gateway.pinata.cloud'],
+  },
+  // other configuration
+};
+```
+
+This configuration enables automatic image optimization for images served from IPFS via Pinata, resulting in:
+
+- Automatic responsive images with appropriate sizes
+- Improved loading performance with modern image formats
+- Automatic lazy loading of images
+- Reduced image payload sizes
+
+## Data Fetching and Caching
+
+The LEDUP application uses React Query for efficient data fetching and caching, significantly improving performance for data-heavy operations.
+
+### React Query Caching Strategies
+
+Different caching strategies are applied based on data requirements:
+
+```tsx
+// Example of infrequently changing data in use-ipfs-queries.ts
+export function useInfrequentQuery<TData = unknown, TError = unknown>(
+  queryKey: QueryKey,
+  queryFn: () => Promise<TData>,
+  options?: UseQueryOptions<TData, TError, TData, QueryKey>
+) {
+  return useQuery<TData, TError>({
+    queryKey,
+    queryFn,
+    // Apply aggressive caching defaults
+    staleTime: 120 * 60 * 1000, // 2 hours
+    gcTime: 240 * 60 * 1000, // 4 hours
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: 1, // Only retry once to reduce API load
+    ...options,
+  });
+}
+```
+
+This custom hook provides optimized caching for data that changes infrequently, reducing unnecessary network requests.
+
+### Bulk Data Fetching
+
+For performance-critical operations, the application implements bulk data fetching patterns:
+
+```tsx
+// Example from useProducerRecordsWithIPFSData
+export function useProducerRecordsWithIPFSData(
+  producer: string | undefined,
+  options: { enabled?: boolean; fetchIPFS?: boolean } = {}
+) {
+  // Get blockchain records with optimized caching
+  const producerRecordsQuery = useProducerBlockchainRecords(producer);
+
+  // Create a stable key for the CIDs query - use a hash of the CIDs if possible
+  const cidsString = useMemo(() => {
+    if (!fetchIPFS) return '';
+    return records.map((record) => record.cid).join(',');
+  }, [records, fetchIPFS]);
+
+  // Additional implementation details...
+}
+```
+
+This approach fetches multiple records in a single request rather than making separate network requests for each record.
+
+### Smart Cache Invalidation
+
+The application implements targeted cache invalidation strategies to ensure data consistency while minimizing unnecessary refetches:
+
+```tsx
+// Example from data-registry/utils/query-helpers.ts
+export function getInvalidationKeysForMutation(
+  mutationId: DataRegistryMutationId,
+  params: Record<string, any> = {}
+): string[] {
+  const keysToInvalidate: string[] = [];
+
+  // Operation-specific cache invalidation
+  switch (mutationId) {
+    case DataRegistryMutationId.RegisterRecord:
+      if (params.recordId) {
+        keysToInvalidate.push(getRecordCacheKey(params.recordId));
+      }
+      if (params.address) {
+        keysToInvalidate.push(getProducerCacheKey(params.address as Address));
+        keysToInvalidate.push(getProducerRecordsCacheKey(params.address as Address));
+      }
+      keysToInvalidate.push(CACHE_KEYS.ALL_RECORDS);
+      // Additional cases...
+      break;
+    // Other cases...
+  }
+
+  return keysToInvalidate;
+}
+```
+
+This function determines which cache keys to invalidate after specific mutations, ensuring that only relevant data is refreshed.
+
+## Client-Side Performance Optimizations
+
+The application incorporates several client-side performance optimizations:
+
+### Memoization
+
+React's useMemo and useCallback hooks are used extensively throughout the application to prevent unnecessary re-renders:
+
+```tsx
+// Example of memoization in data-registry hooks
+const records = useMemo(() => {
+  return producerRecordsQuery.data?.healthRecords || [];
+}, [producerRecordsQuery.data?.healthRecords]);
+```
+
+### Error Boundaries
+
+Error boundaries are used to isolate errors and prevent entire application crashes:
+
+```tsx
+<ErrorBoundary>
+  <PatientRecordsPage />
+</ErrorBoundary>
+```
+
+## Server-Side Performance Optimizations
+
+The application leverages Next.js server-side capabilities for improved performance:
+
+### Static Path Exclusion
+
+The Next.js configuration includes optimizations for dynamic paths:
+
+```js
+// next.config.mjs (middleware.ts)
+export const config = {
+  matcher: [
+    // Match all routes except static files, api routes we want to bypass, and _next
+    '/((?!_next/static|_next/image|favicon.ico).*)',
+  ],
+};
+```
+
+This configuration excludes static assets from middleware processing, improving delivery speed for these resources.
+
+## Performance Monitoring
+
+The application includes React Query DevTools for monitoring and debugging performance issues:
+
+```tsx
+// app/layout.tsx
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
+
+// And in the provider component
+<QueryClientProvider client={queryClient}>
+  {children}
+  <ReactQueryDevtools initialIsOpen={false} />
+</QueryClientProvider>;
+```
+
+This tool provides insights into query performance, caching behavior, and potential optimization opportunities.
+
+## Best Practices
+
+The LEDUP application follows these performance best practices:
+
+1. **Component Structure**: Components are designed to minimize re-renders and optimize rendering performance
+2. **Network Requests**: Requests are batched and cached where possible to reduce API calls
+3. **Client-Server Separation**: Clear separation between client and server code to optimize bundle sizes
+4. **Loading States**: Comprehensive loading state management for a smooth user experience
+5. **Error Handling**: Robust error handling to prevent performance degradation due to errors
+
+---
+
+**Last Updated:** March 2025
+
+**Contact:** LED-UP Development Team
