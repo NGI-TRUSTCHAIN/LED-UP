@@ -1,0 +1,83 @@
+{
+  "name": "led-up-sc-az-api",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "clean": "rimraf dist",
+    "prestart": "npm run clean && npm run build",
+    "start": "tsc && func start",
+    "dev": "tsc && func start",
+    "test": "jest --detectOpenHandles",
+    "test:coverage": "jest --coverage",
+    "typedoc": "typedoc --plugin typedoc-plugin-markdown",
+    "lint": "eslint \"src/**/*.ts\"",
+    "lint:fix": "eslint \"src/**/*.ts\" --fix",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "build:prod": "npm run clean && npm run build",
+    "deploy:dev": "func azure functionapp publish ledup-sc-api-dev",
+    "deploy:prod": "func azure functionapp publish ledup-sc-api-prod",
+    "setup-husky": "husky install",
+    "db:start": "docker run -d --name sqlserver -e 'ACCEPT_EULA=Y' -e 'SA_PASSWORD=DataSharing_P@ssw0rd' -e 'MSSQL_PID=Express' -p 1433:1433 mcr.microsoft.com/mssql/server:latest",
+    "db:stop": "docker stop sqlserver && docker rm sqlserver",
+    "db:setup": "node scripts/setup-database.mjs",
+    "db:prepare": "npm run db:stop && npm run db:start && npm run db:setup"
+  },
+  "dependencies": {
+    "@azure/data-tables": "^13.2.2",
+    "@azure/functions": "^4.0.0",
+    "@azure/identity": "^4.8.0",
+    "@azure/keyvault-keys": "^4.9.0",
+    "@azure/keyvault-secrets": "^4.9.0",
+    "@azure/storage-blob": "^12.26.0",
+    "@helia/unixfs": "^5.0.0",
+    "axios": "^1.7.2",
+    "elliptic": "^6.6.1",
+    "ethers": "^6.13.1",
+    "form-data": "^4.0.2",
+    "helia": "^5.3.0",
+    "jsonwebtoken": "^9.0.2",
+    "mssql": "^11.0.1",
+    "pinata": "^2.1.0",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-ethers": "^3.0.8",
+    "@types/elliptic": "^6.4.18",
+    "@types/jest": "^29.5.13",
+    "@types/jsonwebtoken": "^9.0.5",
+    "@types/mssql": "^9.1.7",
+    "@types/node": "^20.17.19",
+    "@types/supertest": "^6.0.3",
+    "@typescript-eslint/eslint-plugin": "^6.9.1",
+    "@typescript-eslint/parser": "^6.9.1",
+    "eslint": "^8.52.0",
+    "eslint-config-prettier": "^9.0.0",
+    "eslint-plugin-import": "^2.29.0",
+    "eslint-plugin-jest": "^27.6.0",
+    "eslint-plugin-prettier": "^5.0.1",
+    "husky": "^8.0.3",
+    "jest": "^29.7.0",
+    "jest-mock-extended": "^3.0.5",
+    "lint-staged": "^15.0.2",
+    "prettier": "^3.0.3",
+    "rimraf": "^5.0.0",
+    "supertest": "^6.3.4",
+    "ts-jest": "^29.2.6",
+    "ts-node": "^10.9.2",
+    "typedoc": "^0.26.8",
+    "typedoc-plugin-markdown": "^4.2.9",
+    "typescript": "^4.0.0"
+  },
+  "main": "dist/src/index.js",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "lint-staged": {
+    "*.ts": [
+      "eslint --fix",
+      "prettier --write"
+    ]
+  }
+}
