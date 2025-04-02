@@ -1,0 +1,116 @@
+import HeaderTitle from '@/components/title';
+
+<HeaderTitle title="Azure Function: Unpause Compensation" source="https://github.com/your-repo-path-to-timerTrigger" />
+
+---
+
+This Azure Function that unpauses a specified service:
+
+## Overview
+
+This Azure Function allows for the unpausing of a specified service. It processes HTTP requests to change the state of the service from paused to active.
+
+## Table of Contents
+
+- [Function Description](#function-description)
+- [Handler Function](#handler-function)
+- [Request and Response](#request-and-response)
+- [Error Handling](#error-handling)
+- [Route Configuration](#route-configuration)
+- [Summary](#summary)
+
+## Function Description
+
+The function handles `POST` requests to unpause a service. Upon successful execution, it returns a receipt indicating the operation's completion.
+
+### Dependencies
+
+- **unpauseService**: A helper function that executes the unpausing operation.
+
+```typescript
+import { unpauseService } from '../helpers/update-query';
+```
+
+## Handler Function
+
+The handler function logs the request URL, attempts to unpause the service, and returns the appropriate HTTP response based on the outcome.
+
+### Key Logic
+
+1. **Unpausing the Service**:
+   ```typescript
+   const receipt = await unpauseService();
+   ```
+
+## Request and Response
+
+### Request
+
+The function expects a `POST` request at the `/unpauseCompensation` route.
+
+#### Request Example
+
+```http
+POST /unpauseCompensation
+```
+
+### Response
+
+#### Successful Response (200 OK)
+
+On success, the function returns a `200 OK` status with a JSON object containing the receipt of the unpause operation.
+
+```json
+{
+  "receipt": "transaction_receipt_here"
+}
+```
+
+#### Error Response (500 Internal Server Error)
+
+If an error occurs during the unpausing process, the function returns a `500 Internal Server Error` status with details about the error.
+
+```json
+{
+  "error": "Detailed error message",
+  "message": "Failed to retrieve data from IPFS"
+}
+```
+
+## Error Handling
+
+The function logs any errors encountered during the unpausing process and returns a `500` response with the error details.
+
+### Error Snippet
+
+```typescript
+catch (error) {
+  context.error(`Error unpausing service: ${error}`);
+  return {
+    status: 500,
+    jsonBody: {
+      error: error instanceof Error ? error.message : error,
+      message: 'Failed to retrieve data from IPFS',
+    },
+  };
+}
+```
+
+## Route Configuration
+
+The function is configured to respond to `POST` requests at the `/unpauseCompensation` route and allows anonymous access.
+
+### Route Setup
+
+```typescript
+app.http('unpauseCompensation', {
+  methods: ['POST'],
+  route: 'unpauseCompensation',
+  authLevel: 'anonymous',
+  handler,
+});
+```
+
+## Summary
+
+This Azure Function efficiently handles the unpausing of a specified service, ensuring any potential errors are managed gracefully and providing clear feedback to users.

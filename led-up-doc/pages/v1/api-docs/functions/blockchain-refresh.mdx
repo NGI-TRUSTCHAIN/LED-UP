@@ -1,0 +1,64 @@
+import HeaderTitle from '@/components/title';
+
+<HeaderTitle
+  title="Function: refreshEvents()"
+  source="https://github.com/your-repo-path-to-refreshEvents"
+/>
+
+---
+
+## Overview
+
+The `refreshEvents` function is an Azure Function designed to be triggered via HTTP requests. It queries past events from the blockchain and writes them to the database. This function is useful for refreshing event data when needed, allowing for up-to-date information retrieval without requiring scheduled executions.
+
+### Concepts
+
+1. **HTTP Trigger**:
+
+   - Azure Functions can be triggered via HTTP requests, enabling flexible interaction with the function. The `refreshEvents` function responds to GET requests, making it accessible for manual refresh operations.
+
+2. **Logging**:
+
+   - The `InvocationContext` object provides essential logging capabilities, allowing the function to log information about incoming requests and any errors that may occur during execution.
+
+3. **Asynchronous Operations**:
+
+   - The function utilizes asynchronous operations, enabling it to query data from the blockchain and write to the database without blocking other operations.
+
+4. **Database Interactions**:
+
+   - The function retrieves the last processed block height from persistent storage, queries the blockchain for events, and updates the database accordingly.
+
+### Function Signature
+
+```ts
+const refreshEvents = async function (req: HttpRequest, context: InvocationContext): Promise<HttpResponseInit>
+```
+
+### Parameters
+
+- **req**: HttpRequest The HTTP request object that contains information about the incoming request, including the request URL.
+
+- **context**: InvocationContext The context object provides information about the execution of the function, including logging capabilities (context.log).
+
+### Returns
+
+A promise that resolves to an HttpResponseInit object containing the latest event data.
+Throws
+Throws an error if querying past events fails.
+Function Implementation
+The main functionality of the function is split into several parts:
+
+1. **Querying Past Events**:
+   The queryPastEvents function retrieves past events from the blockchain based on the last processed block height. 2.**Updating Last Processed Block**:
+   The updateLastProcessedBlock function updates the database with the latest processed block information.
+2. **Writing to Database**:
+   The writeToDatabase function takes care of writing the fetched logs to the database, ensuring that all relevant data is captured.
+
+### Best Practices and Considerations
+
+- Ensure that the function handles errors gracefully, providing informative responses in case of failures.
+
+- Utilize logging effectively to monitor the execution and identify potential issues.
+
+- Consider implementing rate limiting for the HTTP trigger to prevent abuse and ensure reliable operation.

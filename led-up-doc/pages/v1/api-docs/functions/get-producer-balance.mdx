@@ -1,0 +1,120 @@
+import HeaderTitle from '@/components/title';
+
+<HeaderTitle title="Azure Function:Get Producer Balance" source="https://github.com/your-repo-path-to-timerTrigger" />
+
+---
+
+This Azure Function that retrieves the producer balance by owner address:
+
+## Overview
+
+This Azure Function retrieves the producer balance associated with a specific owner address. It processes HTTP `GET` requests and returns the balance data or an error message if the retrieval fails.
+
+## Table of Contents
+
+- [Function Description](#function-description)
+- [Handler Function](#handler-function)
+- [Request and Response](#request-and-response)
+- [Error Handling](#error-handling)
+- [Route Configuration](#route-configuration)
+- [Summary](#summary)
+
+## Function Description
+
+The function is designed to handle `GET` requests and return the balance associated with a specified producer address. It utilizes the `getProducerBalanceByOwner` helper function to fetch the balance data.
+
+### Dependencies
+
+- **getProducerBalanceByOwner**: Helper function for retrieving the producer balance by owner address.
+
+```typescript
+import { getProducerBalanceByOwner } from '../helpers/view-query';
+```
+
+## Handler Function
+
+The handler function logs the request URL, retrieves the producer balance for the specified owner address, and sends the appropriate HTTP response.
+
+### Key Logic
+
+```typescript
+const address = (await request.query.get('address')) as string;
+const balance = await getProducerBalanceByOwner(address);
+return {
+  status: 200,
+  jsonBody: balance,
+};
+```
+
+## Request and Response
+
+### Request
+
+The function expects a `GET` request at the `/getProducerBalance` route, with the owner address passed as a query parameter.
+
+#### Request Example
+
+```
+GET /getProducerBalance?address=0x1234567890abcdef1234567890abcdef12345678
+```
+
+### Response
+
+#### Successful Response (200 OK)
+
+On success, the function returns a `200 OK` status with the producer balance in the response body.
+
+```json
+{
+  "balance": "1000"
+}
+```
+
+#### Error Response (500 Internal Server Error)
+
+If there is an error during the balance retrieval process:
+
+```json
+{
+  "error": "Detailed error message",
+  "message": "Failed to get producer balance"
+}
+```
+
+## Error Handling
+
+The function logs any errors encountered during the retrieval process and returns a `500` response with an error message.
+
+### Error Snippet
+
+```typescript
+catch (error) {
+  context.error(`Error getting producer balance: ${error}`);
+  return {
+    status: 500,
+    jsonBody: {
+      error: error,
+      message: 'Failed to get producer balance',
+    },
+  };
+}
+```
+
+## Route Configuration
+
+The function is set up to respond to `GET` requests at the `/getProducerBalance` route and allows anonymous access.
+
+### Route Setup
+
+```typescript
+app.http('getProducerBalance', {
+  methods: ['GET'],
+  route: 'getProducerBalance',
+  authLevel: 'anonymous',
+  handler,
+});
+```
+
+## Summary
+
+This Azure Function provides an efficient way to retrieve the producer balance by owner address. It returns the balance in a structured format and handles errors gracefully, ensuring that users receive clear feedback in case of issues.

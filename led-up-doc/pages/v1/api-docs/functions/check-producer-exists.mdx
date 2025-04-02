@@ -1,0 +1,117 @@
+Here's the markdown documentation for the Azure Function that checks if a producer exists, reflecting the updated code you provided:
+
+````markdown
+## Overview
+
+This Azure Function checks whether a specified producer exists in the system. It handles HTTP `GET` requests and returns a JSON object indicating the existence of the producer.
+
+## Table of Contents
+
+- [Function Description](#function-description)
+- [Handler Function](#handler-function)
+- [Request and Response](#request-and-response)
+- [Error Handling](#error-handling)
+- [Route Configuration](#route-configuration)
+- [Summary](#summary)
+
+## Function Description
+
+The function processes requests to verify the existence of a producer based on a provided address. It retrieves the producer's address from the query parameters and checks its existence in the database.
+
+### Dependencies
+
+- **producerExists**: Helper function that queries the database to determine if a producer exists.
+
+```typescript
+import { producerExists } from '../helpers/view-query';
+```
+````
+
+## Handler Function
+
+The handler function logs the request URL, retrieves the producer address from the query parameters, checks if the producer exists, and sends the appropriate HTTP response.
+
+### Key Logic
+
+```typescript
+const producer = (await request.query.get('producer')) as string;
+const isProducerExist = await producerExists(producer);
+```
+
+## Request and Response
+
+### Request
+
+The function expects a `GET` request at the `/producerExists` route with the following query parameter:
+
+#### Request Example
+
+```
+GET /producerExists?producer=0xProducerAddress
+```
+
+### Response
+
+#### Successful Response (200 OK)
+
+On success, the function returns a `200 OK` status with a JSON object indicating the existence of the producer.
+
+```json
+{
+  "isProducerExist": true // or false
+}
+```
+
+#### Error Response (500 Internal Server Error)
+
+If there is an error during the process:
+
+```json
+{
+  "error": "Detailed error message",
+  "message": "Failed to retrieve data from IPFS"
+}
+```
+
+## Error Handling
+
+The function logs any errors encountered during the existence check and returns a `500` response with an error message.
+
+### Error Snippet
+
+```typescript
+catch (error) {
+  context.error(`Error fetching data: ${error}`);
+  return {
+    status: 500,
+    jsonBody: {
+      error: error,
+      message: 'Failed to retrieve data from IPFS',
+    },
+  };
+}
+```
+
+## Route Configuration
+
+The function is configured to respond to `GET` requests at the `/producerExists` route and allows anonymous access.
+
+### Route Setup
+
+```typescript
+app.http('CheckProducerExists', {
+  methods: ['GET'],
+  route: 'producerExists',
+  authLevel: 'anonymous',
+  handler,
+});
+```
+
+## Summary
+
+This Azure Function efficiently verifies the existence of a producer in the system based on the provided address, returning a clear JSON response and error reporting for any issues that may arise.
+
+```
+
+This documentation provides a clear and concise reference for developers who need to understand the purpose and functionality of the Azure Function. It covers the essential aspects, including request format, expected responses, and error handling.
+```

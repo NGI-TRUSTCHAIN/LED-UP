@@ -1,0 +1,136 @@
+import HeaderTitle from '@/components/title';
+
+<HeaderTitle title="Azure Function: Change Token Address" source="https://github.com/your-repo-path-to-timerTrigger" />
+
+---
+
+This Azure Function responsible for handling HTTP requests to change the token address.
+
+## Overview
+
+This Azure Function accepts HTTP `POST` requests to update the token address. The function processes the requests using Azure's Functions framework and returns appropriate responses.
+
+## Table of Contents
+
+- [Function Description](#function-description)
+- [Handler Function](#handler-function)
+- [Request and Response](#request-and-response)
+- [Error Handling](#error-handling)
+- [Route Configuration](#route-configuration)
+
+## Function Description
+
+The Azure Function listens to incoming HTTP `POST` requests at the route `/changeTokenAddress`. It expects the request body to include an `address` parameter, which represents the new token address.
+
+### Dependencies
+
+- **Azure Functions SDK**: Handles HTTP requests and responses.
+- **Custom helper**: `changeTokenAddress` from `../helpers/update-query` to update the token address in the system.
+- **Types**: `AddressParam` defines the structure of the request body.
+
+### Snippet
+
+```typescript
+import { changeTokenAddress } from '../helpers/update-query';
+import { AddressParam } from '../types';
+```
+
+## Handler Function
+
+The handler function processes the incoming request to modify the token address. It:
+
+1. Extracts the `address` parameter from the request body.
+2. Calls `changeTokenAddress` to update the token address in the system.
+3. Returns a response containing the result (receipt).
+
+### Key Logic
+
+```typescript
+const { address } = (await request.json()) as AddressParam;
+const receipt = await changeTokenAddress(address);
+return {
+  status: 200,
+  jsonBody: {
+    receipt,
+  },
+};
+```
+
+## Request and Response
+
+### Request
+
+The function expects a `POST` request with a JSON body structured as follows:
+
+#### Request Body Example
+
+```json
+{
+  "address": "0x1234567890abcdef1234567890abcdef12345678"
+}
+```
+
+#### Parameter
+
+- **address**: A string representing the new token address (in hexadecimal format).
+
+### Response
+
+#### Successful Response (200 OK)
+
+On success, the function returns HTTP status code `200` with the result of the operation:
+
+```json
+{
+  "receipt": "Success message or operation ID"
+}
+```
+
+#### Error Response (500 Internal Server Error)
+
+If an error occurs, the function returns status code `500`:
+
+```json
+{
+  "error": "Error message",
+  "message": "Failed to change token address"
+}
+```
+
+## Error Handling
+
+The function logs any errors that occur during the process of changing the token address and responds with a 500 status code, including an error message.
+
+### Error Snippet
+
+```typescript
+catch (error) {
+  context.error(`Error fetching data: ${error}`);
+  return {
+    status: 500,
+    jsonBody: {
+      error: error,
+      message: 'Failed to change token address',
+    },
+  };
+}
+```
+
+## Route Configuration
+
+The function listens to the `POST` method at the `/changeTokenAddress` route and allows anonymous access (`authLevel: 'anonymous'`).
+
+### Route Setup
+
+```typescript
+app.http('changeTokenAddress', {
+  methods: ['POST'],
+  route: 'changeTokenAddress',
+  authLevel: 'anonymous',
+  handler,
+});
+```
+
+## Summary
+
+This Azure Function allows users to change the token address using HTTP `POST` requests. It integrates custom business logic via the `changeTokenAddress` helper function and includes error handling to manage potential failures during the request process.

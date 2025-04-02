@@ -1,0 +1,549 @@
+import HeaderTitle from '@/components/title';
+
+<HeaderTitle
+  title="Compensation Smart Contract"
+  source="https://github.com/LED-UP/LED-UP-SMART-CONTRACTS/blob/46bc8208caaf3c05f42bbf95751a615170476620/src/contracts/Compensation.sol"
+/>
+
+**Inherits:**
+[ICompensation](/src/interface/ICompensation.sol/interface.ICompensation.md), Ownable, Pausable
+
+The Compensation contract provides functionalities for processing payments,
+withdrawing balances, adjusting service fees, and administrative actions.
+It inherits from OpenZeppelin's Ownable and Pausable contracts for enhanced security and control.
+
+_This contract manages the compensation payments to producers for the services rendered,
+as well as service fees associated with these transactions._
+
+## Functions
+
+### constructor
+
+_Initializes the Compensation contract._
+
+```solidity
+constructor(
+    address _provider,
+    address _tokenAddress,
+    address payable _leveaWallet,
+    uint256 _serviceFeePercent,
+    uint256 _unitPrice
+) Ownable(_provider);
+```
+
+**Parameters**
+
+| Name                 | Type              | Description                                                |
+| -------------------- | ----------------- | ---------------------------------------------------------- |
+| `_provider`          | `address`         | The address of the provider who owns the contract.         |
+| `_tokenAddress`      | `address`         | The address of the ERC20 token used for compensation.      |
+| `_leveaWallet`       | `address payable` | The address of the wallet that will receive service fees.  |
+| `_serviceFeePercent` | `uint256`         | The percentage of the service fee applied to transactions. |
+| `_unitPrice`         | `uint256`         | The unit price for the services provided by the contract.  |
+
+### processPayment
+
+This function requires that the caller has previously approved the transfer of
+tokens to this contract. If the token transfer fails, the transaction will revert.
+
+It emits a [PaymentProcessed](/src/contracts/Compensation.sol/contract.Compensation.md#paymentprocessed) event upon successful payment processing,
+containing details such as the producer's address, the sender's address, the
+amount paid, and the service fee deducted.
+
+_It processes a payment from the caller to the specified producer for the given record.
+This function calculates the total payment amount based on the size of the data being
+processed and the unit price defined in the contract. It ensures that the producer address
+is valid and that the token transfer from the caller is successful. The function also
+deducts a service fee from the payment amount, which is accumulated in the service fee balance.
+Upon successful payment processing, it updates the producer's balance and records the
+payment status for the specified record ID. An event is emitted to log the details of
+the payment transaction._
+
+_The service fee is calculated as a percentage of the total payment amount, and
+the remaining balance after deducting the fee is credited to the producer's balance.
+The payment status is recorded for the specified record ID, ensuring transparency
+in payment transactions._
+
+```solidity
+function processPayment(address _producer, string memory _recordId, uint256 dataSize) public;
+```
+
+**Parameters**
+
+| Name        | Type      | Description                                                                                                                                                                  |
+| ----------- | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `_producer` | `address` | The address of the producer receiving the payment. Must not be a zero address.                                                                                               |
+| `_recordId` | `string`  | The ID of the record for which the payment is being made. This ID will be used to track the payment status.                                                                  |
+| `dataSize`  | `uint256` | The size of the data being processed, which determines the total payment amount to be transferred to the producer. The total amount is calculated as `dataSize * unitPrice`. |
+
+### verifyPayment
+
+This function is a view function, meaning it does not modify the state of the contract
+and can be called for free without gas costs.
+
+_This function verifies the payment status for a specified record.
+It allows users to check if a payment has been successfully processed
+for a given record ID. It retrieves the payment information from the internal
+`payments` mapping and returns a boolean indicating whether the payment has been
+marked as paid._
+
+_It is important to ensure that the `_recordId` provided corresponds to a valid record
+within the contract's payment system for accurate verification._
+
+```solidity
+function verifyPayment(string memory _recordId) public view returns (bool);
+```
+
+**Parameters**
+
+| Name        | Type     | Description                                                             |
+| ----------- | -------- | ----------------------------------------------------------------------- |
+| `_recordId` | `string` | The ID of the record for which payment verification is being requested. |
+
+**Returns**
+
+| Name     | Type   | Description                                                                                                                                              |
+| -------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `<none>` | `bool` | bool A boolean value indicating the payment status. Returns `true` if the payment for the specified record ID has been processed, and `false` otherwise. |
+
+### withdrawProducerBalance
+
+Allows a producer to withdraw a specified amount from their balance held in the contract.
+This function ensures that the withdrawal meets the minimum withdrawal amount
+and that the producer has sufficient balance. The operation is paused if the contract
+is in a paused state.
+
+_This function checks that the requested amount is above the minimum withdrawal threshold
+and that the producer has enough balance to cover the withdrawal. If both conditions are met,
+the function proceeds to transfer the tokens to the producer's address._
+
+```solidity
+function withdrawProducerBalance(uint256 _amount) public whenNotPaused;
+```
+
+**Parameters**
+
+| Name      | Type      | Description                                           |
+| --------- | --------- | ----------------------------------------------------- |
+| `_amount` | `uint256` | The amount of tokens the producer wishes to withdraw. |
+
+### withdrawServiceFee
+
+Allows the contract owner to withdraw a specified amount of service fees from the contract.
+The function checks that the requested withdrawal amount does not exceed the available service fee balance
+and ensures that the contract is not paused before proceeding with the withdrawal.
+
+_The call to this function is restricted to the contract owner. It validates that the requested amount
+does not exceed the current service fee balance. If validation passes, the service fee amount is
+deducted from the balance and transferred to the designated wallet._
+
+```solidity
+function withdrawServiceFee(uint256 _amount) public override onlyOwner whenNotPaused;
+```
+
+**Parameters**
+
+| Name      | Type      | Description                                              |
+| --------- | --------- | -------------------------------------------------------- |
+| `_amount` | `uint256` | The amount of service fees the owner wishes to withdraw. |
+
+### removeProducer
+
+Removes the specified producer's balance from the contract.
+This function deletes the producer's balance and emits an event to
+signify the removal. It can only be called by the contract owner and
+cannot be executed while the contract is paused.
+
+```solidity
+function removeProducer(address _producer) public override onlyOwner whenNotPaused;
+```
+
+**Parameters**
+
+| Name        | Type      | Description                                                 |
+| ----------- | --------- | ----------------------------------------------------------- |
+| `_producer` | `address` | The address of the producer whose balance is to be removed. |
+
+### changeServiceFee
+
+Changes the service fee percentage for the contract.
+This function allows the contract owner to update the service fee.
+The new service fee must be greater than zero. The old service fee
+is stored before the update for reference, and an event is emitted
+to log the change.
+
+```solidity
+function changeServiceFee(uint256 _newServiceFee) public override onlyOwner;
+```
+
+**Parameters**
+
+| Name             | Type      | Description                                                          |
+| ---------------- | --------- | -------------------------------------------------------------------- |
+| `_newServiceFee` | `uint256` | The new service fee percentage to be set. Must be greater than zero. |
+
+### changeUnitPrice
+
+Changes the unit price for the contract.
+This function allows the contract owner to update the unit price.
+The new unit price must be greater than zero. The old unit price
+is stored before the update for reference, and an event is emitted
+to log the change.
+
+```solidity
+function changeUnitPrice(uint256 _newUnitPrice) public override onlyOwner;
+```
+
+**Parameters**
+
+| Name            | Type      | Description                                              |
+| --------------- | --------- | -------------------------------------------------------- |
+| `_newUnitPrice` | `uint256` | The new unit price to be set. Must be greater than zero. |
+
+### setMinimumWithdrawAmount
+
+Sets the minimum withdraw amount for producers.
+This function allows the contract owner to specify the minimum
+amount that producers are required to withdraw.
+
+```solidity
+function setMinimumWithdrawAmount(uint256 _amount) public override onlyOwner;
+```
+
+**Parameters**
+
+| Name      | Type      | Description                                |
+| --------- | --------- | ------------------------------------------ |
+| `_amount` | `uint256` | The new minimum withdraw amount to be set. |
+
+### changeTokenAddress
+
+Changes the address of the token used for payments.
+This function allows the contract owner to update the token address.
+The new token address must be a valid, non-zero address.
+
+```solidity
+function changeTokenAddress(address _tokenAddress) public onlyOwner;
+```
+
+**Parameters**
+
+| Name            | Type      | Description                            |
+| --------------- | --------- | -------------------------------------- |
+| `_tokenAddress` | `address` | The address of the new token contract. |
+
+### pauseService
+
+```solidity
+function pauseService() public override onlyOwner whenNotPaused;
+```
+
+### unpauseService
+
+```solidity
+function unpauseService() public override onlyOwner whenPaused;
+```
+
+### getServiceFee
+
+Retrieves the current service fee percentage.
+This function returns the percentage of service fees applied to payments.
+
+```solidity
+function getServiceFee() public view override returns (uint256);
+```
+
+**Returns**
+
+| Name     | Type      | Description                                            |
+| -------- | --------- | ------------------------------------------------------ |
+| `<none>` | `uint256` | The current service fee percentage as a uint256 value. |
+
+### getLeveaWallet
+
+Retrieves the address of the Levea wallet.
+This function provides the address where service fees are collected.
+
+```solidity
+function getLeveaWallet() public view override returns (address);
+```
+
+**Returns**
+
+| Name     | Type      | Description                      |
+| -------- | --------- | -------------------------------- |
+| `<none>` | `address` | The address of the Levea wallet. |
+
+### getLeveaWalletBalance
+
+Retrieves the current balance of the Levea wallet.
+This function checks the token balance held by the Levea wallet.
+
+```solidity
+function getLeveaWalletBalance() public view override returns (uint256);
+```
+
+**Returns**
+
+| Name     | Type      | Description                                                   |
+| -------- | --------- | ------------------------------------------------------------- |
+| `<none>` | `uint256` | The balance of the Levea wallet in tokens as a uint256 value. |
+
+### getProducerBalance
+
+Retrieves the balance of the caller (producer).
+This function returns the current balance of the producer calling the function.
+
+```solidity
+function getProducerBalance() public view override returns (uint256);
+```
+
+**Returns**
+
+| Name     | Type      | Description                                                       |
+| -------- | --------- | ----------------------------------------------------------------- |
+| `<none>` | `uint256` | The balance of the calling producer in tokens as a uint256 value. |
+
+### getProducerBalance
+
+Retrieves the balance of a specified producer.
+This overloaded function allows the owner to check the balance of any producer.
+
+```solidity
+function getProducerBalance(address _producer) public view override onlyOwner returns (uint256);
+```
+
+**Parameters**
+
+| Name        | Type      | Description                                                 |
+| ----------- | --------- | ----------------------------------------------------------- |
+| `_producer` | `address` | The address of the producer whose balance is being queried. |
+
+**Returns**
+
+| Name     | Type      | Description                                                         |
+| -------- | --------- | ------------------------------------------------------------------- |
+| `<none>` | `uint256` | The balance of the specified producer in tokens as a uint256 value. |
+
+### getMinimumWithdrawAmount
+
+Retrieves the minimum amount required for withdrawal.
+This function provides the minimum withdrawal amount set for producers.
+
+```solidity
+function getMinimumWithdrawAmount() public view override returns (uint256);
+```
+
+**Returns**
+
+| Name     | Type      | Description                                       |
+| -------- | --------- | ------------------------------------------------- |
+| `<none>` | `uint256` | The minimum withdrawal amount as a uint256 value. |
+
+### producerExist
+
+Checks if a specified producer exists.
+This function verifies whether the specified producer has a balance greater than zero.
+
+```solidity
+function producerExist(address _producer) public view returns (bool);
+```
+
+**Parameters**
+
+| Name        | Type      | Description                           |
+| ----------- | --------- | ------------------------------------- |
+| `_producer` | `address` | The address of the producer to check. |
+
+**Returns**
+
+| Name     | Type   | Description                                                   |
+| -------- | ------ | ------------------------------------------------------------- |
+| `<none>` | `bool` | True if the producer exists (has a balance), otherwise false. |
+
+### getUnitPrice
+
+Retrieves the current unit price for data.
+This function returns the price per unit for services rendered.
+
+```solidity
+function getUnitPrice() public view override returns (uint256);
+```
+
+**Returns**
+
+| Name     | Type      | Description                                |
+| -------- | --------- | ------------------------------------------ |
+| `<none>` | `uint256` | The current unit price as a uint256 value. |
+
+### getPaymentTokenAddress
+
+Retrieves the address of the payment token.
+This function returns the address of the ERC20 token used for payments.
+
+```solidity
+function getPaymentTokenAddress() public view returns (address);
+```
+
+**Returns**
+
+| Name     | Type      | Description                                          |
+| -------- | --------- | ---------------------------------------------------- |
+| `<none>` | `address` | The address of the payment token as an address type. |
+
+## Events
+
+### ProducerRemoved
+
+```solidity
+event ProducerRemoved(address indexed producer, uint256 timestamp);
+```
+
+### ProducerPaid
+
+```solidity
+event ProducerPaid(address indexed producer, uint256 indexed amount, uint256 indexed timestamp);
+```
+
+### ServiceFeeWithdrawn
+
+```solidity
+event ServiceFeeWithdrawn(address indexed wallet, uint256 indexed amount, uint256 indexed timestamp);
+```
+
+### ServiceFeeChanged
+
+```solidity
+event ServiceFeeChanged(address indexed initiator, uint256 oldServiceFee, uint256 indexed newServiceFee);
+```
+
+### PaymentProcessed
+
+```solidity
+event PaymentProcessed(
+    address indexed _producer, address indexed _consumer, uint256 indexed amount, uint256 serviceFee
+);
+```
+
+### UnitPriceChanged
+
+```solidity
+event UnitPriceChanged(address initiator, uint256 oldUnitPrice, uint256 newUnitPrice);
+```
+
+## Errors
+
+### Compensation\_\_ProducerAlreadyExists
+
+```solidity
+error Compensation__ProducerAlreadyExists();
+```
+
+### Compensation\_\_InsufficientBalance
+
+```solidity
+error Compensation__InsufficientBalance();
+```
+
+### Compensation\_\_NoBalanceToWithdraw
+
+```solidity
+error Compensation__NoBalanceToWithdraw();
+```
+
+### Compensation\_\_TokenTransferFailed
+
+```solidity
+error Compensation__TokenTransferFailed();
+```
+
+### Compensation\_\_OnlyOwnerCanWithdraw
+
+```solidity
+error Compensation__OnlyOwnerCanWithdraw();
+```
+
+### Compensation\_\_LowDepositAmount
+
+```solidity
+error Compensation__LowDepositAmount();
+```
+
+### Compensation\_\_MinimumWithdrawAmount
+
+```solidity
+error Compensation__MinimumWithdrawAmount();
+```
+
+### Compensation\_\_InvalidAddress
+
+```solidity
+error Compensation__InvalidAddress();
+```
+
+### Compensation\_\_InvalidInputParam
+
+```solidity
+error Compensation__InvalidInputParam();
+```
+
+## Structs
+
+### Payment
+
+```solidity
+struct Payment {
+    uint256 amount;
+    bool isPayed;
+}
+```
+
+## State Variables
+
+### token
+
+```solidity
+IERC20 public token;
+```
+
+### leveaWallet
+
+```solidity
+address payable private leveaWallet;
+```
+
+### serviceFeePercent
+
+```solidity
+uint256 private serviceFeePercent;
+```
+
+### minimumWithdrawAmount
+
+```solidity
+uint256 private minimumWithdrawAmount = 10e18;
+```
+
+### unitPrice
+
+```solidity
+uint256 private unitPrice = 1e18;
+```
+
+### serviceFeeBalance
+
+```solidity
+uint256 public serviceFeeBalance = 0;
+```
+
+### producerBalances
+
+```solidity
+mapping(address => uint256) private producerBalances;
+```
+
+### payments
+
+```solidity
+mapping(string => Payment) public payments;
+```

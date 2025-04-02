@@ -1,0 +1,123 @@
+import HeaderTitle from '@/components/title';
+
+<HeaderTitle title="Azure Function: Get Record Schema" source="https://github.com/your-repo-path-to-timerTrigger" />
+
+---
+
+This Azure Function that retrieves the record schema:
+
+## Overview
+
+This Azure Function retrieves the schema associated with records. It processes HTTP `GET` requests and returns the record schema or an error message if the retrieval fails.
+
+## Table of Contents
+
+- [Function Description](#function-description)
+- [Handler Function](#handler-function)
+- [Request and Response](#request-and-response)
+- [Error Handling](#error-handling)
+- [Route Configuration](#route-configuration)
+- [Summary](#summary)
+
+## Function Description
+
+The function is designed to handle `GET` requests and return the schema related to records. It utilizes the `getRecordSchema` helper function to fetch the record schema.
+
+### Dependencies
+
+- **getRecordSchema**: Helper function for retrieving the record schema.
+
+```typescript
+import { getRecordSchema } from '../helpers/view-query';
+```
+
+## Handler Function
+
+The handler function logs the request URL, retrieves the record schema, and sends the appropriate HTTP response.
+
+### Key Logic
+
+```typescript
+const schema = await getRecordSchema();
+return {
+  status: 200,
+  jsonBody: {
+    schema,
+  },
+};
+```
+
+## Request and Response
+
+### Request
+
+The function expects a `GET` request at the `/getRecordSchema` route.
+
+#### Request Example
+
+```
+GET /getRecordSchema
+```
+
+### Response
+
+#### Successful Response (200 OK)
+
+On success, the function returns a `200 OK` status with the record schema in the response body.
+
+```json
+{
+  "schema": {
+    // Schema details here
+  }
+}
+```
+
+#### Error Response (500 Internal Server Error)
+
+If there is an error during the schema retrieval process:
+
+```json
+{
+  "error": "Detailed error message",
+  "message": "Failed to retrieve data from IPFS"
+}
+```
+
+## Error Handling
+
+The function logs any errors encountered during the retrieval process and returns a `500` response with an error message.
+
+### Error Snippet
+
+```typescript
+catch (error) {
+  context.error(`Error fetching data: ${error}`);
+  return {
+    status: 500,
+    jsonBody: {
+      error: error,
+      message: 'Failed to retrieve data from IPFS',
+    },
+  };
+}
+```
+
+## Route Configuration
+
+The function is set up to respond to `GET` requests at the `/getRecordSchema` route and allows anonymous access.
+
+### Route Setup
+
+```typescript
+app.http('getRecordSchema', {
+  methods: ['GET'],
+  route: 'getRecordSchema',
+  authLevel: 'anonymous',
+  handler,
+});
+```
+
+## Summary
+
+This Azure Function provides a straightforward way to retrieve the schema associated with records. It returns the schema in a structured format and handles errors gracefully, ensuring that users receive clear feedback in case of issues.

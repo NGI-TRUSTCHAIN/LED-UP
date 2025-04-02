@@ -1,0 +1,135 @@
+import HeaderTitle from '@/components/title';
+
+<HeaderTitle title="Azure Function:Delete IPFS File" source="https://github.com/your-repo-path-to-timerTrigger" />
+
+---
+
+## Overview
+
+This Azure Function handles HTTP `DELETE` requests to remove data from IPFS based on a provided Content Identifier (CID). It processes the requests using Azure's Functions framework and responds accordingly.
+
+## Table of Contents
+
+- [Function Description](#function-description)
+- [Handler Function](#handler-function)
+- [Request and Response](#request-and-response)
+- [Error Handling](#error-handling)
+- [Route Configuration](#route-configuration)
+- [Summary](#summary)
+
+## Function Description
+
+The Azure Function listens to incoming HTTP `DELETE` requests at the route `/ipfs/:cid`. It expects the request to contain the CID parameter in the query string, which specifies the data to be deleted from IPFS.
+
+### Dependencies
+
+- **Azure Functions SDK**: Handles HTTP requests and responses.
+- **Custom helper**: `fetchFromIPFS` from `../utils/fetch-ipfs` to delete data from IPFS.
+
+### Snippet
+
+```typescript
+import { fetchFromIPFS } from '../utils/fetch-ipfs';
+```
+
+## Handler Function
+
+The handler function processes the incoming request by extracting the `cid` from the query parameters. It calls `fetchFromIPFS` to delete the data from IPFS. Based on the outcome, it returns an appropriate response.
+
+### Key Logic
+
+```typescript
+const cid = await request.query.get('cid');
+
+if (!cid) {
+  return {
+    status: 400,
+    jsonBody: 'Please provide a cid',
+  };
+}
+```
+
+## Request and Response
+
+### Request
+
+The function expects a `DELETE` request with the `cid` parameter in the query string.
+
+#### Request Example
+
+```
+DELETE /ipfs/QmYwAPJzv5CZsnAzt8auVZRnD4v1tYqM2ULw3qG3B8Bf6Q
+```
+
+#### Query Parameter
+
+- **cid**: The Content Identifier (CID) for the IPFS data to be deleted.
+
+### Response
+
+#### Successful Response (200 OK)
+
+On success, the function returns HTTP status code `200` with the result:
+
+```json
+{
+  "message": "Data deleted successfully."
+}
+```
+
+#### Error Response (400 Bad Request)
+
+If the `cid` is not provided:
+
+```json
+"Please provide a cid"
+```
+
+#### Error Response (500 Internal Server Error)
+
+If an error occurs during the deletion process:
+
+```json
+{
+  "error": "Detailed error message",
+  "message": "Failed to delete data from IPFS"
+}
+```
+
+## Error Handling
+
+The function logs any errors that occur during the deletion process and responds with a 500 status code, including an error message.
+
+### Error Snippet
+
+```typescript
+catch (error) {
+  context.error(`Error deleting data: ${error}`);
+  return {
+    status: 500,
+    jsonBody: {
+      error: error,
+      message: 'Failed to delete data from IPFS',
+    },
+  };
+}
+```
+
+## Route Configuration
+
+The function listens to the `DELETE` method at the `/ipfs/:cid` route and allows anonymous access (`authLevel: 'anonymous'`).
+
+### Route Setup
+
+```typescript
+app.http('DeleteIPFS', {
+  methods: ['DELETE'],
+  route: 'ipfs/:cid',
+  authLevel: 'anonymous',
+  handler: deleteIPFS,
+});
+```
+
+## Summary
+
+This Azure Function provides an API to delete data from IPFS using a CID provided via query parameters. It returns a 400 error if the CID is not included, and handles any errors that occur during the deletion process with a 500 error response. The route is accessible anonymously and responds with either a success message or detailed error information.

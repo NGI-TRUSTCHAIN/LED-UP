@@ -1,0 +1,356 @@
+import HeaderTitle from '@/components/title';
+
+<HeaderTitle
+  title="Data Registry Interface"
+  source="https://github.com/LED-UP/LED-UP-SMART-CONTRACTS/blob/46bc8208caaf3c05f42bbf95751a615170476620/src/interface/IDataRegistry.sol"
+/>
+
+## Functions
+
+### registerProducerRecord
+
+```solidity
+function registerProducerRecord(
+    string memory _recordId,
+    address _producer,
+    bytes memory _signature,
+    string memory _resourceType,
+    DataTypes.ConsentStatus _consent,
+    DataTypes.RecordMetadata memory _metadata
+) external;
+```
+
+**Parameters**
+
+| Name            | Type                       | Description                                                                   |
+| --------------- | -------------------------- | ----------------------------------------------------------------------------- |
+| `_recordId`     | `string`                   | The unique identifier for the medical resource record.                        |
+| `_producer`     | `address`                  | The address of the producer (creator/owner of the record).                    |
+| `_signature`    | `bytes`                    | A cryptographic signature to authenticate the medical resource.               |
+| `_resourceType` | `string`                   | The type of medical resource being registered (e.g., report, document, etc.). |
+| `_consent`      | `DataTypes.ConsentStatus`  | The consent status for the record, defining the usage rights.                 |
+| `_metadata`     | `DataTypes.RecordMetadata` | Metadata associated with the medical resource, including CID, URL, hash, etc. |
+
+### removeProducerRecord
+
+```solidity
+function removeProducerRecord(address _producer) external;
+```
+
+**Parameters**
+
+| Name        | Type      | Description                       |
+| ----------- | --------- | --------------------------------- |
+| `_producer` | `address` | The address of the data provider. |
+
+### shareData
+
+```solidity
+function shareData(address _producer, address _consumer, string memory _recordId) external;
+```
+
+**Parameters**
+
+| Name        | Type      | Description                                                                   |
+| ----------- | --------- | ----------------------------------------------------------------------------- |
+| `_producer` | `address` | The address of the producer (data provider) of the medical record.            |
+| `_consumer` | `address` | The address of the consumer (data recipient) requesting access to the record. |
+| `_recordId` | `string`  | The unique identifier of the medical record to be shared.                     |
+
+### updateProducerRecord
+
+```solidity
+function updateProducerRecord(
+    string memory _recordId,
+    address _producer,
+    bytes memory _signature,
+    string memory _resourceType,
+    DataTypes.RecordStatus _status,
+    DataTypes.ConsentStatus _consent,
+    DataTypes.RecordMetadata memory _metadata
+) external;
+```
+
+**Parameters**
+
+| Name            | Type                       | Description                                                                   |
+| --------------- | -------------------------- | ----------------------------------------------------------------------------- |
+| `_recordId`     | `string`                   | The unique identifier for the medical resource record.                        |
+| `_producer`     | `address`                  | The address of the producer (owner of the record).                            |
+| `_signature`    | `bytes`                    | A cryptographic signature to authenticate the updated medical resource.       |
+| `_resourceType` | `string`                   | The type of medical resource being updated (e.g., report, document, etc.).    |
+| `_status`       | `DataTypes.RecordStatus`   | The new status of the record (e.g., active, inactive).                        |
+| `_consent`      | `DataTypes.ConsentStatus`  | The updated consent status for the record, defining the usage rights.         |
+| `_metadata`     | `DataTypes.RecordMetadata` | Updated metadata associated with the medical resource (e.g., CID, URL, hash). |
+
+### updateProducerRecordMetadata
+
+```solidity
+function updateProducerRecordMetadata(
+    address _producer,
+    string memory _recordId,
+    DataTypes.RecordMetadata memory _metadata
+) external;
+```
+
+**Parameters**
+
+| Name        | Type                       | Description                                                      |
+| ----------- | -------------------------- | ---------------------------------------------------------------- |
+| `_producer` | `address`                  | The address of the producer (owner of the record).               |
+| `_recordId` | `string`                   | The unique identifier for the medical resource record.           |
+| `_metadata` | `DataTypes.RecordMetadata` | The new metadata for the record, containing CID, URL, hash, etc. |
+
+### updateProducerRecordStatus
+
+```solidity
+function updateProducerRecordStatus(address _producer, DataTypes.RecordStatus _status) external;
+```
+
+**Parameters**
+
+| Name        | Type                     | Description                                         |
+| ----------- | ------------------------ | --------------------------------------------------- |
+| `_producer` | `address`                | The address of the producer (owner of the records). |
+| `_status`   | `DataTypes.RecordStatus` | The new status to assign to the producer's records. |
+
+### updateProducerConsent
+
+```solidity
+function updateProducerConsent(address _producer, DataTypes.ConsentStatus _status) external;
+```
+
+**Parameters**
+
+| Name        | Type                      | Description                                                 |
+| ----------- | ------------------------- | ----------------------------------------------------------- |
+| `_producer` | `address`                 | The address of the producer (owner of the records).         |
+| `_status`   | `DataTypes.ConsentStatus` | The new consent status to assign to the producer's records. |
+
+### updateProviderMetadata
+
+```solidity
+function updateProviderMetadata(DataTypes.Metadata memory _metadata) external;
+```
+
+**Parameters**
+
+| Name        | Type                 | Description                                                     |
+| ----------- | -------------------- | --------------------------------------------------------------- |
+| `_metadata` | `DataTypes.Metadata` | The new metadata for the provider, containing the URL and hash. |
+
+### updateProviderRecordSchema
+
+```solidity
+function updateProviderRecordSchema(DataTypes.Schema memory _schemaRef) external;
+```
+
+**Parameters**
+
+| Name         | Type               | Description                                                             |
+| ------------ | ------------------ | ----------------------------------------------------------------------- |
+| `_schemaRef` | `DataTypes.Schema` | The new schema reference for the provider, containing the URL and hash. |
+
+### changePauseState
+
+```solidity
+function changePauseState(bool _pause) external;
+```
+
+**Parameters**
+
+| Name     | Type   | Description                                                              |
+| -------- | ------ | ------------------------------------------------------------------------ |
+| `_pause` | `bool` | A boolean indicating the desired state: true to pause, false to unpause. |
+
+### changeTokenAddress
+
+```solidity
+function changeTokenAddress(address _tokenAddress) external;
+```
+
+**Parameters**
+
+| Name            | Type      | Description                                  |
+| --------------- | --------- | -------------------------------------------- |
+| `_tokenAddress` | `address` | The new address of the ERC20 token contract. |
+
+### getProducerRecordInfo
+
+```solidity
+function getProducerRecordInfo(address _producer) external view returns (DataTypes.RecordInfo memory);
+```
+
+**Parameters**
+
+| Name        | Type      | Description                                                              |
+| ----------- | --------- | ------------------------------------------------------------------------ |
+| `_producer` | `address` | The address of the producer whose record information is to be retrieved. |
+
+**Returns**
+
+| Name     | Type                   | Description                                                                                         |
+| -------- | ---------------------- | --------------------------------------------------------------------------------------------------- |
+| `<none>` | `DataTypes.RecordInfo` | DataTypes.RecordInfo A struct containing the producer's address, status, consent status, and nonce. |
+
+### getProducerRecord
+
+```solidity
+function getProducerRecord(address _producer, string memory _recordId)
+    external
+    view
+    returns (DataTypes.Record memory);
+```
+
+**Parameters**
+
+| Name        | Type      | Description                                                  |
+| ----------- | --------- | ------------------------------------------------------------ |
+| `_producer` | `address` | The address of the producer whose record is being retrieved. |
+| `_recordId` | `string`  | The unique identifier of the medical record to retrieve.     |
+
+**Returns**
+
+| Name     | Type               | Description                                                                               |
+| -------- | ------------------ | ----------------------------------------------------------------------------------------- |
+| `<none>` | `DataTypes.Record` | DataTypes.Record The medical record associated with the specified producer and record ID. |
+
+### getProducerConsent
+
+```solidity
+function getProducerConsent(address _address) external view returns (DataTypes.ConsentStatus);
+```
+
+**Parameters**
+
+| Name       | Type      | Description                                                          |
+| ---------- | --------- | -------------------------------------------------------------------- |
+| `_address` | `address` | The address of the producer whose consent status is being retrieved. |
+
+**Returns**
+
+| Name     | Type                      | Description                                                                   |
+| -------- | ------------------------- | ----------------------------------------------------------------------------- |
+| `<none>` | `DataTypes.ConsentStatus` | DataTypes.ConsentStatus The current consent status of the specified producer. |
+
+### getProducerRecordCount
+
+```solidity
+function getProducerRecordCount(address _producer) external view returns (uint256);
+```
+
+**Parameters**
+
+| Name        | Type      | Description                                                        |
+| ----------- | --------- | ------------------------------------------------------------------ |
+| `_producer` | `address` | The address of the producer whose record count is being retrieved. |
+
+**Returns**
+
+| Name     | Type      | Description                                                                          |
+| -------- | --------- | ------------------------------------------------------------------------------------ |
+| `<none>` | `uint256` | uint256 The current count of records (nonce) associated with the specified producer. |
+
+### getTotalRecordsCount
+
+```solidity
+function getTotalRecordsCount() external view returns (uint256);
+```
+
+**Returns**
+
+| Name     | Type      | Description                                                |
+| -------- | --------- | ---------------------------------------------------------- |
+| `<none>` | `uint256` | uint256 The total count of records stored in the registry. |
+
+### getProducerRecordStatus
+
+```solidity
+function getProducerRecordStatus(address _producer) external view returns (DataTypes.RecordStatus);
+```
+
+**Parameters**
+
+| Name        | Type      | Description                                                         |
+| ----------- | --------- | ------------------------------------------------------------------- |
+| `_producer` | `address` | The address of the producer whose record status is being retrieved. |
+
+**Returns**
+
+| Name     | Type                     | Description                                                                                      |
+| -------- | ------------------------ | ------------------------------------------------------------------------------------------------ |
+| `<none>` | `DataTypes.RecordStatus` | DataTypes.RecordStatus The current status of the records associated with the specified producer. |
+
+### getProviderMetadata
+
+```solidity
+function getProviderMetadata() external view returns (DataTypes.Metadata memory);
+```
+
+**Returns**
+
+| Name     | Type                 | Description                                                                   |
+| -------- | -------------------- | ----------------------------------------------------------------------------- |
+| `<none>` | `DataTypes.Metadata` | DataTypes.Metadata The metadata of the provider, containing the URL and hash. |
+
+### getRecordSchema
+
+```solidity
+function getRecordSchema() external view returns (DataTypes.Schema memory);
+```
+
+**Returns**
+
+| Name     | Type               | Description                                                                         |
+| -------- | ------------------ | ----------------------------------------------------------------------------------- |
+| `<none>` | `DataTypes.Schema` | DataTypes.Schema The schema reference for the records, containing the URL and hash. |
+
+### producerExists
+
+```solidity
+function producerExists(address _producer) external view returns (bool);
+```
+
+**Parameters**
+
+| Name        | Type      | Description                                   |
+| ----------- | --------- | --------------------------------------------- |
+| `_producer` | `address` | The address of the data provider or producer. |
+
+## Events
+
+### RecordAdded
+
+```solidity
+event RecordAdded(string recordId, bytes producerKey);
+```
+
+### RecordUpated
+
+```solidity
+event RecordUpated(string recordId, bytes producerKey);
+```
+
+### RecordPaused
+
+```solidity
+event RecordPaused(bool pause, bytes providerKey);
+```
+
+### ProviderInfoUpdated
+
+```solidity
+event ProviderInfoUpdated(address provider, bytes providerKey);
+```
+
+### NewProviderAddeed
+
+```solidity
+event NewProviderAddeed(address newProvider, bytes newProviderKey);
+```
+
+### ProviderRemoved
+
+```solidity
+event ProviderRemoved(address provider);
+```

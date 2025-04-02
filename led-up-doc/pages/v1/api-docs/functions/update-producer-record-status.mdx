@@ -1,0 +1,130 @@
+Here’s the markdown documentation for the Azure Function that updates a producer's record status:
+
+````markdown
+## Overview
+
+This Azure Function updates the status of a producer's record by processing incoming HTTP requests. It supports both PUT and POST methods.
+
+## Table of Contents
+
+- [Function Description](#function-description)
+- [Handler Function](#handler-function)
+- [Request and Response](#request-and-response)
+- [Error Handling](#error-handling)
+- [Route Configuration](#route-configuration)
+- [Summary](#summary)
+
+## Function Description
+
+The function processes incoming requests to update the status associated with a specific producer record. It receives data from the request body, performs the update operation, and returns the updated receipt or an error message if the operation fails.
+
+### Dependencies
+
+- **updateProducerRecordStatus**: A helper function to handle the status update process.
+
+```typescript
+import { updateProducerRecordStatus } from '../helpers/update-query';
+```
+````
+
+## Handler Function
+
+The `handler` function logs the incoming request and processes the data to update the producer's record status.
+
+### Key Logic
+
+1. **Processing the Request**:
+   The function expects a JSON body structured with the producer's identifier and the new status.
+
+   ```typescript
+   const data = (await request.json()) as {
+     producer: string;
+     status: number;
+   };
+   ```
+
+2. **Updating Producer Record Status**:
+   The function calls `updateProducerRecordStatus` with the provided data.
+
+   ```typescript
+   const receipt = await updateProducerRecordStatus(data.producer, data.status);
+   ```
+
+## Request and Response
+
+### Request
+
+The function expects a `PUT` or `POST` request at the `/updateProducerRecordStatus` route with a JSON body structured as follows:
+
+#### Request Example
+
+```http
+PUT /updateProducerRecordStatus
+Content-Type: application/json
+
+{
+  "producer": "producer_identifier",
+  "status": 1 // New status value
+}
+```
+
+### Response
+
+#### Successful Response (200 OK)
+
+On a successful update, the function returns a `200 OK` status with the updated receipt.
+
+```json
+{
+  "receipt": "updated_receipt_here"
+}
+```
+
+#### Error Response (500 Internal Server Error)
+
+If an error occurs during the update process, the function returns a `500 Internal Server Error` status with the error details.
+
+```json
+{
+  "error": "Detailed error message",
+  "message": "Failed to update producer record status"
+}
+```
+
+## Error Handling
+
+The function logs any errors encountered during the update process and returns a `500` response with the error details.
+
+### Error Snippet
+
+```typescript
+catch (error: any) {
+  context.error(`Error updating producer record status: ${error}`);
+  return {
+    status: 500,
+    jsonBody: {
+      error: error.message || 'An unexpected error occurred',
+      message: 'Failed to update producer record status',
+    },
+  };
+}
+```
+
+## Route Configuration
+
+The function is configured to respond to both `PUT` and `POST` requests at the `/updateProducerRecordStatus` route and allows anonymous access.
+
+### Route Setup
+
+```typescript
+app.http('updateProducerRecordStatus', {
+  methods: ['PUT', 'POST'],
+  route: 'updateProducerRecordStatus',
+  authLevel: 'anonymous',
+  handler,
+});
+```
+
+## Summary
+
+This Azure Function efficiently updates the status of a producer's record, handling potential errors gracefully and providing informative feedback to users.

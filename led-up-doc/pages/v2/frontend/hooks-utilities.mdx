@@ -1,0 +1,617 @@
+import HeaderTitle from '@/components/title';
+
+<HeaderTitle
+  title="Hooks & Utilities Documentation"
+  source="https://github.com/LED-UP/LED-UP/tree/main/frontend"
+/>
+---
+
+
+
+## Overview
+
+This document details the custom React hooks, utility functions, and helper methods used throughout the LEDUP frontend application. These reusable pieces of code encapsulate common functionality and patterns to improve code maintainability and consistency.
+
+## Custom Hooks
+
+### Authentication Hooks
+
+#### `useDidAuth`
+
+A hook for DID-based authentication and identity management in the LEDUP ecosystem.
+
+```tsx
+import { useDidAuth } from '@/hooks/use-did-auth';
+
+function MyComponent() {
+  const { authenticateDid, verifyDidSignature, isAuthenticated, did, logout } = useDidAuth();
+
+  const handleLogin = async () => {
+    try {
+      const result = await authenticateDid({
+        did: 'did:ledup:123',
+        signature: '0x...',
+        address: '0x...',
+      });
+      console.log('Authentication successful:', result);
+    } catch (error) {
+      console.error('Authentication failed:', error);
+    }
+  };
+}
+```
+
+**Returns**:
+
+- `authenticateDid(params)`: Function to authenticate a user with their DID
+- `verifyDidSignature(params)`: Function to verify a DID signature
+- `isAuthenticated`: Boolean indicating if a user is authenticated
+- `did`: The authenticated DID
+- `logout()`: Function to log out the current user
+- `isLoading`: Boolean indicating if an authentication operation is in progress
+
+### Data Hooks
+
+#### `useQuery`
+
+[Hook description, parameters, return values, and usage examples]
+
+#### `useMutation`
+
+[Hook description, parameters, return values, and usage examples]
+
+### Blockchain Hooks
+
+#### `useWallet`
+
+A hook for connecting to and managing wallet interactions.
+
+```tsx
+import { useWallet } from '@/hooks/use-blockchain-services';
+
+function MyComponent() {
+  const { connect, disconnect, isConnected, address, chainId } = useWallet();
+
+  // Usage example
+  const handleConnect = async () => {
+    try {
+      await connect();
+    } catch (error) {
+      console.error('Failed to connect wallet:', error);
+    }
+  };
+}
+```
+
+**Returns**:
+
+- `connect()`: Function to connect to a wallet
+- `disconnect()`: Function to disconnect the current wallet
+- `isConnected`: Boolean indicating if a wallet is connected
+- `address`: The connected wallet address
+- `chainId`: The current blockchain network ID
+- `isLoading`: Boolean indicating if a wallet operation is in progress
+
+#### `useContractQuery`
+
+A hook for reading data from blockchain contracts using React Query for data fetching and caching.
+
+```tsx
+import { createContractQuery } from '@/hooks/use-contract-query';
+
+// Example of creating a custom contract query hook
+const useGetDidInfo = createContractQuery({
+  queryFn: async (did: string) => {
+    // Contract interaction logic
+    return { success: true, data: didInfo };
+  },
+  getQueryKey: (did) => ['did-info', did],
+  contractName: ContractName.DIDRegistry,
+});
+
+// Usage
+function MyComponent() {
+  const { data, isLoading, error } = useGetDidInfo('did:ledup:123');
+}
+```
+
+**Parameters**:
+
+- `queryFn`: Function that performs the contract call
+- `getQueryKey`: Function that generates a unique query key
+- `contractName`: Name of the contract to interact with
+- `enabled`: Optional function to determine if query should run
+
+#### `useContractMutation`
+
+A hook for writing data to blockchain contracts with proper error handling and state management.
+
+```tsx
+import { createContractMutation } from '@/hooks/use-contract-mutation';
+
+// Example of creating a custom contract mutation hook
+const useRegisterDid = createContractMutation({
+  mutationFn: async ({ did, address }) => {
+    // Contract interaction logic
+    return { success: true, data: transactionResult };
+  },
+  contractName: ContractName.DIDRegistry,
+});
+
+// Usage
+function MyComponent() {
+  const { mutate, isLoading, error } = useRegisterDid();
+
+  const handleRegister = () => {
+    mutate({ did: 'did:ledup:123', address: '0x...' });
+  };
+}
+```
+
+**Parameters**:
+
+- `mutationFn`: Function that performs the contract transaction
+- `contractName`: Name of the contract to interact with
+- `onError`: Optional error handling function
+- `onSuccess`: Optional success handling function
+
+#### `useContractEvents`
+
+A hook for subscribing to blockchain contract events with auto-cleanup on component unmount.
+
+```tsx
+import { useContractEvents } from '@/hooks/use-contract-events';
+
+function MyComponent() {
+  useContractEvents({
+    contractName: 'DataRegistry',
+    eventName: 'RecordCreated',
+    listener: (event) => {
+      console.log('New record created:', event);
+    },
+    once: false,
+  });
+}
+```
+
+**Parameters**:
+
+- `contractName`: Name of the contract to listen to
+- `eventName`: Name of the event to subscribe to
+- `listener`: Callback function for handling events
+- `once`: Boolean to determine if listener should trigger only once
+
+#### `useDataRegistry`
+
+A comprehensive hook for interacting with the Data Registry contract, handling all CRUD operations.
+
+```tsx
+import { useDataRegistry } from '@/hooks/useDataRegistry';
+
+function MyComponent() {
+  const { createRecord, updateRecord, getRecord, isLoading } = useDataRegistry();
+
+  const handleCreateRecord = async () => {
+    try {
+      await createRecord({
+        cid: 'ipfs://cid',
+        producer: '0x123...',
+        dataSize: 1024,
+      });
+    } catch (error) {
+      console.error('Failed to create record:', error);
+    }
+  };
+}
+```
+
+**Returns**:
+
+- Functions for creating, updating, and retrieving records
+- Loading and error states for each operation
+- Helper functions for IPFS integration
+
+#### `useViemClients`
+
+A hook that provides access to configured Viem clients for blockchain interactions.
+
+```tsx
+import { useViemClients } from '@/hooks/use-viem-clients';
+
+function MyComponent() {
+  const { publicClient, walletClient } = useViemClients();
+
+  const getBlockNumber = async () => {
+    const blockNumber = await publicClient.getBlockNumber();
+    console.log('Current block number:', blockNumber);
+  };
+}
+```
+
+**Returns**:
+
+- `publicClient`: Viem public client for read operations
+- `walletClient`: Viem wallet client for write operations
+- `setChainId(chainId)`: Function to switch the network
+
+### UI Hooks
+
+#### `useMediaQuery`
+
+[Hook description, parameters, return values, and usage examples]
+
+#### `useModal`
+
+[Hook description, parameters, return values, and usage examples]
+
+#### `useToast`
+
+[Hook description, parameters, return values, and usage examples]
+
+#### `useSonner`
+
+A hook for displaying styled toast notifications with consistent theming across the application.
+
+```tsx
+import { useSonner } from '@/hooks/use-sonner';
+
+function MyComponent() {
+  const { toast } = useSonner();
+
+  const handleAction = () => {
+    try {
+      // Perform action
+      toast.success('Operation completed successfully', {
+        description: 'Your changes have been saved.',
+      });
+    } catch (error) {
+      toast.error('Operation failed', {
+        description: error.message,
+      });
+    }
+  };
+}
+```
+
+**Returns**:
+
+- `toast.success(title, options)`: Display a success toast
+- `toast.error(title, options)`: Display an error toast
+- `toast.info(title, options)`: Display an info toast
+- `toast.warning(title, options)`: Display a warning toast
+- `toast.loading(title, options)`: Display a loading toast
+- `toast.dismiss(id)`: Dismiss a specific toast
+
+**Options**:
+
+- `description`: Additional description text
+- `duration`: Display duration in milliseconds
+- `action`: Action button configuration
+- `classNames`: Custom styling classes
+
+### Form Hooks
+
+#### `useForm`
+
+[Hook description, parameters, return values, and usage examples]
+
+#### `useFormField`
+
+[Hook description, parameters, return values, and usage examples]
+
+## Utility Functions
+
+### String Utilities
+
+#### `formatAddress`
+
+Formats a blockchain address for display by truncating the middle part.
+
+```tsx
+import { formatAddress } from '@/utils/string';
+
+// Usage example
+const displayAddress = formatAddress('0x1234567890abcdef1234567890abcdef12345678');
+// Returns: '0x1234...5678'
+```
+
+**Parameters**:
+
+- `address: string`: The full blockchain address
+- `options?: { start?: number, end?: number }`: Optional formatting options
+
+**Returns**: `string` - The formatted address
+
+#### `truncateString`
+
+[Function description, parameters, return values, and usage examples]
+
+### Date Utilities
+
+#### `formatDate`
+
+[Function description, parameters, return values, and usage examples]
+
+#### `relativeTime`
+
+[Function description, parameters, return values, and usage examples]
+
+### Number Utilities
+
+#### `formatCurrency`
+
+[Function description, parameters, return values, and usage examples]
+
+#### `formatPercentage`
+
+[Function description, parameters, return values, and usage examples]
+
+### Validation Utilities
+
+#### `validateEmail`
+
+[Function description, parameters, return values, and usage examples]
+
+#### `validatePassword`
+
+[Function description, parameters, return values, and usage examples]
+
+### Object Utilities
+
+#### `deepMerge`
+
+[Function description, parameters, return values, and usage examples]
+
+#### `omit`
+
+[Function description, parameters, return values, and usage examples]
+
+#### `pick`
+
+[Function description, parameters, return values, and usage examples]
+
+### API Utilities
+
+#### `handleApiError`
+
+[Function description, parameters, return values, and usage examples]
+
+#### `createQueryString`
+
+[Function description, parameters, return values, and usage examples]
+
+### Blockchain Utilities
+
+#### `getErrorHandler`
+
+Gets an error handler for a specific contract with custom error mapping and user-friendly messages.
+
+```tsx
+import { getErrorHandler } from '@/utils/contract-interaction';
+
+// Usage example
+const errorHandler = getErrorHandler(ContractName.DataRegistry);
+const parsedError = errorHandler.parseError(error);
+console.log('User-friendly error:', parsedError.message);
+```
+
+**Parameters**:
+
+- `contractName: ContractName`: The name of the contract
+
+**Returns**: An error handler object with methods for parsing contract errors
+
+#### `parseDataRegistryError`
+
+Parses errors from the Data Registry contract into user-friendly messages with specific error codes.
+
+```tsx
+import { parseDataRegistryError } from '@/utils/error-handlers';
+
+// Usage example
+try {
+  // Contract interaction
+} catch (error) {
+  const parsedError = parseDataRegistryError(error);
+  if (parsedError) {
+    console.error(parsedError.message);
+  }
+}
+```
+
+**Parameters**:
+
+- `error: any`: The error from the contract interaction
+
+**Returns**: A parsed error object or null if not recognized
+
+## Helper Functions
+
+### Blockchain Helpers
+
+#### `connectWallet`
+
+[Function description, parameters, return values, and usage examples]
+
+#### `signMessage`
+
+[Function description, parameters, return values, and usage examples]
+
+### Authentication Helpers
+
+#### `parseJwt`
+
+[Function description, parameters, return values, and usage examples]
+
+#### `isTokenExpired`
+
+[Function description, parameters, return values, and usage examples]
+
+### Testing Helpers
+
+#### `renderWithProviders`
+
+[Function description, parameters, return values, and usage examples]
+
+#### `createMockUser`
+
+[Function description, parameters, return values, and usage examples]
+
+## Feature-Specific Hooks
+
+### Data Registry Hooks
+
+#### `useIPFSUpload`
+
+A hook for uploading data to IPFS and optionally registering it on the blockchain with integrated error handling.
+
+```tsx
+import { useIPFSUpload } from '@/features/data-registry/hooks';
+
+function MyComponent() {
+  const { uploadToIPFS, uploadAndRegister, uploading, uploadedCid } = useIPFSUpload();
+
+  const handleUpload = async () => {
+    try {
+      const result = await uploadToIPFS(data, producerAddress);
+      console.log('Uploaded CID:', result.cid);
+    } catch (error) {
+      console.error('Upload failed:', error);
+    }
+  };
+}
+```
+
+**Returns**:
+
+- `uploadToIPFS(data, producer)`: Upload data to IPFS only
+- `uploadAndRegister(data, producer, privateKey)`: Upload to IPFS and register on blockchain
+- `uploadAndUpdate(data, producer, privateKey)`: Upload to IPFS and update existing record
+- `uploading`: Boolean indicating if an upload is in progress
+- `uploadedCid`: The CID of the last successfully uploaded data
+- `uploadedData`: The content of the last uploaded data
+- `reset()`: Reset upload state
+
+#### `useDataRegistryQueries`
+
+A collection of hooks for querying data registry records with caching and automatic refetching.
+
+```tsx
+import { useGetRecord, useGetProducerRecords } from '@/features/data-registry/hooks';
+
+function MyComponent() {
+  // Query a specific record
+  const { data: record, isLoading } = useGetRecord('recordId');
+
+  // Query all records for a producer
+  const { data: records, isLoading: loadingRecords } = useGetProducerRecords('0x123...');
+}
+```
+
+#### `useProducerDashboard`
+
+A hook for managing the producer dashboard state and data.
+
+```tsx
+import { useProducerDashboard } from '@/features/data-registry/hooks';
+
+function DashboardComponent() {
+  const { producerRecords, isLoading, totalRecords, recordsStats } = useProducerDashboard('0x123...');
+
+  if (isLoading) return <Loading />;
+
+  return (
+    <div>
+      <h1>Total Records: {totalRecords}</h1>
+      {/* Render dashboard UI */}
+    </div>
+  );
+}
+```
+
+### Compensation Hooks
+
+#### `useCompensation`
+
+A hook for managing compensation-related operations with integrated payment processing.
+
+```tsx
+import { useCompensation } from '@/hooks/useCompensation';
+
+function MyComponent() {
+  const { calculatePayment, processPayment, getPaymentHistory, isProcessing } = useCompensation();
+
+  const handlePay = async () => {
+    try {
+      await processPayment({
+        recipient: '0x123...',
+        amount: '0.5',
+        recordId: 'record123',
+      });
+    } catch (error) {
+      console.error('Payment failed:', error);
+    }
+  };
+}
+```
+
+**Functions**:
+
+- `calculatePayment(params)`: Calculate payment amount based on record usage
+- `processPayment(params)`: Process a payment transaction
+- `getPaymentHistory(address)`: Get the payment history for an address
+- `getCompensationRules()`: Get the current compensation rules
+- `updateCompensationRules(params)`: Update compensation rules (admin only)
+
+## Creating Custom Hooks and Utilities
+
+### Best Practices
+
+When creating new hooks and utilities for the LEDUP application, follow these best practices:
+
+1. **Separation of Concerns**: Keep hooks focused on a single responsibility.
+2. **Error Handling**: Implement comprehensive error handling in all hooks.
+3. **TypeScript**: Use proper TypeScript typing for parameters and return values.
+4. **Loading States**: Include loading states for asynchronous operations.
+5. **Reusability**: Design hooks to be reusable across different components.
+6. **Documentation**: Document the purpose, parameters, and return values.
+7. **Testing**: Create unit tests for hooks to verify their behavior.
+
+### Testing Guidelines
+
+When testing hooks and utilities, follow these guidelines:
+
+1. **Isolated Testing**: Test hooks in isolation from components.
+2. **Mock Dependencies**: Mock external dependencies like API calls and contract interactions.
+3. **Test Error Cases**: Verify that hooks handle errors properly.
+4. **Test Loading States**: Ensure loading states are set correctly during async operations.
+5. **Custom Render Function**: Use a custom render function with necessary providers.
+
+```tsx
+// Example test for a custom hook
+import { renderHook, act } from '@testing-library/react-hooks';
+import { useMyCustomHook } from './my-custom-hook';
+
+describe('useMyCustomHook', () => {
+  it('should return initial state', () => {
+    const { result } = renderHook(() => useMyCustomHook());
+    expect(result.current.value).toBe(initialValue);
+  });
+
+  it('should handle operations correctly', async () => {
+    const { result, waitForNextUpdate } = renderHook(() => useMyCustomHook());
+
+    act(() => {
+      result.current.performAction();
+    });
+
+    await waitForNextUpdate();
+    expect(result.current.value).toBe(expectedValue);
+  });
+});
+```
+
+---
+
+**Last Updated:** March 2025
+**Contact:** LED-UP Development Team

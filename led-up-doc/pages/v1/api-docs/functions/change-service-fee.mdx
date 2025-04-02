@@ -1,0 +1,138 @@
+import HeaderTitle from '@/components/title';
+
+<HeaderTitle title=" Azure Function: Change Service Fee" source="https://github.com/your-repo-path-to-timerTrigger" />
+
+---
+
+This is an Azure Function to change the service fee, written in Markdown format.
+
+This document provides a detailed description of the Azure Function responsible for handling HTTP requests to change the service fee.
+
+## Overview
+
+This Azure Function accepts HTTP `POST` requests to update the service fee value. It leverages Azure's Functions framework to process the requests and return responses accordingly.
+
+## Table of Contents
+
+- [Function Description](#function-description)
+- [Handler Function](#handler-function)
+- [Request and Response](#request-and-response)
+- [Error Handling](#error-handling)
+- [Route Configuration](#route-configuration)
+
+## Function Description
+
+The Azure Function listens to incoming HTTP `POST` requests at the route `/changeServiceFee`. It expects the request body to include a `value` parameter, representing the new service fee value.
+
+### Dependencies
+
+- **Azure Functions SDK**: Handles HTTP requests and responses.
+- **Custom helper**: `changeServiceFee` from `../helpers/update-query` to update the service fee.
+- **Types**: `ValueParam` defines the structure of the request body.
+
+### Snippet
+
+```typescript
+import { changeServiceFee } from '../helpers/update-query';
+import { ValueParam } from '../types';
+```
+
+## Handler Function
+
+The handler function is an asynchronous function that processes the incoming request to modify the service fee. It:
+
+1. Extracts the `value` parameter from the request body.
+2. Calls `changeServiceFee` to update the fee in the system.
+3. Returns a response containing the result (receipt).
+
+### Key Logic
+
+```typescript
+const { value } = (await request.json()) as ValueParam;
+const receipt = await changeServiceFee(value);
+return {
+  status: 200,
+  jsonBody: {
+    receipt,
+  },
+};
+```
+
+## Request and Response
+
+### Request
+
+The function expects a `POST` request with a JSON body structured as follows:
+
+#### Request Body Example
+
+```json
+{
+  "value": 100
+}
+```
+
+#### Parameter
+
+- **value**: A numeric value representing the new service fee.
+
+### Response
+
+#### Successful Response (200 OK)
+
+On success, the function returns HTTP status code `200` with the result of the operation:
+
+```json
+{
+  "receipt": "Success message or operation ID"
+}
+```
+
+#### Error Response (500 Internal Server Error)
+
+If an error occurs, the function returns status code `500`:
+
+```json
+{
+  "error": "Error message",
+  "message": "Failed to change service fee"
+}
+```
+
+## Error Handling
+
+The function includes error handling that logs any errors during the process of changing the service fee. If something goes wrong, the function responds with a 500 status code and an error message.
+
+### Error Snippet
+
+```typescript
+catch (error) {
+  context.error(`Error fetching data: ${error}`);
+  return {
+    status: 500,
+    jsonBody: {
+      error: error,
+      message: 'Failed to change service fee',
+    },
+  };
+}
+```
+
+## Route Configuration
+
+The function is mapped to the `POST` method at the `/changeServiceFee` route. It allows anonymous access (`authLevel: 'anonymous'`).
+
+### Route Setup
+
+```typescript
+app.http('changeServiceFee', {
+  methods: ['POST'],
+  route: 'changeServiceFee',
+  authLevel: 'anonymous',
+  handler,
+});
+```
+
+## Summary
+
+This Azure Function provides a way to change the service fee using HTTP `POST` requests. The function integrates custom business logic via the `changeServiceFee` helper function and includes error handling to manage potential failures.

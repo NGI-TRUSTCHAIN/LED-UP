@@ -1,0 +1,176 @@
+import HeaderTitle from '@/components/title';
+
+<HeaderTitle
+  title="LED-UP Error Handling and Event Parsing"
+  source="https://github.com/LED-UP/LED-UP/tree/main/frontend"
+/>
+---
+
+
+
+This directory contains utilities for handling contract errors and parsing events in a consistent way across the application.
+
+## Overview
+
+The error handling and event parsing system consists of:
+
+1. **Error Handlers**: Contract-specific error handlers that decode and format error messages
+2. **Event Parsers**: Contract-specific event parsers that decode and format event data
+3. **ContractHandlerFactory**: A factory class that creates the appropriate error handler and event parser for a given contract
+
+## Error Handlers
+
+Error handlers are responsible for:
+
+- Decoding error data from contract revert reasons
+- Formatting error messages in a user-friendly way
+- Providing consistent error handling across the application
+
+Each contract has its own error handler that extends the `BaseErrorHandler` class:
+
+```typescript
+import { Contract } from 'ethers';
+import { BaseErrorHandler } from './BaseErrorHandler';
+
+export class ContractNameErrorHandler extends BaseErrorHandler {
+  constructor(contract: Contract) {
+    super(contract);
+  }
+
+  protected formatErrorMessage(errorName: string, args: Record<string, any>): string {
+    // Format contract-specific errors
+    switch (errorName) {
+      case 'ContractName__ErrorName':
+        return `User-friendly error message for ${args.someArg}`;
+      // ... other error cases
+      default:
+        return super.formatErrorMessage(errorName, args);
+    }
+  }
+}
+```
+
+## Event Parsers
+
+Event parsers are responsible for:
+
+- Decoding event data from transaction logs
+- Formatting event data in a user-friendly way
+- Providing consistent event parsing across the application
+
+Each contract has its own event parser that extends the `BaseEventParser` class:
+
+```typescript
+import { Contract } from 'ethers';
+import { BaseEventParser, ParsedEvent } from './BaseEventParser';
+
+export class ContractNameEventParser extends BaseEventParser {
+  constructor(contract: Contract) {
+    super(contract);
+  }
+
+  protected processEventData(event: ParsedEvent): Record<string, any> {
+    // Process contract-specific events
+    switch (event.name) {
+      case 'EventName':
+        return {
+          ...event.args,
+          description: `User-friendly description of ${event.args.someArg}`,
+        };
+      // ... other event cases
+      default:
+        return event.args;
+    }
+  }
+}
+```
+
+## ContractHandlerFactory
+
+The `ContractHandlerFactory` is a utility class that creates the appropriate error handler and event parser for a given contract:
+
+```typescript
+import { Contract } from 'ethers';
+import { BaseErrorHandler } from './error-handler/BaseErrorHandler';
+import { BaseEventParser } from './event-parser/BaseEventParser';
+
+export enum ContractType {
+  CONTRACT_NAME = 'ContractName',
+  // ... other contract types
+}
+
+export class ContractHandlerFactory {
+  public static createErrorHandler(contractType: ContractType, contract: Contract): BaseErrorHandler {
+    switch (contractType) {
+      case ContractType.CONTRACT_NAME:
+        return new ContractNameErrorHandler(contract);
+      // ... other contract types
+      default:
+        throw new Error(`Unsupported contract type: ${contractType}`);
+    }
+  }
+
+  public static createEventParser(contractType: ContractType, contract: Contract): BaseEventParser {
+    switch (contractType) {
+      case ContractType.CONTRACT_NAME:
+        return new ContractNameEventParser(contract);
+      // ... other contract types
+      default:
+        throw new Error(`Unsupported contract type: ${contractType}`);
+    }
+  }
+}
+```
+
+## Usage in Actions
+
+The error handlers and event parsers are used in the server actions to provide consistent error handling and event parsing:
+
+```typescript
+import { Contract, ethers } from 'ethers';
+import { DataRegistryErrorHandler } from '../../helpers/error-handler/DataRegistryErrorHandler';
+import { DataRegistryEventParser } from '../../helpers/event-parser/DataRegistryEventParser';
+
+// In a mutation function
+try {
+  // ... contract interaction
+} catch (error) {
+  const provider = new ethers.JsonRpcProvider(rpcUrl);
+  const contract = new Contract(contractAddress, ContractABI, provider);
+  const errorHandler = new DataRegistryErrorHandler(contract);
+  const errorMessage = errorHandler.getUserFriendlyMessage(error);
+  return { success: false, error: errorMessage };
+}
+
+// In a query function
+try {
+  // ... contract interaction
+} catch (error) {
+  return handleQueryError(error, 'functionName');
+}
+```
+
+## Usage in Hooks
+
+The error handlers and event parsers are used in the React hooks to provide consistent error handling and event parsing:
+
+```typescript
+// In a mutation hook
+return useMutation({
+  mutationFn: async (params) => {
+    // ... contract interaction
+    const response = await processTransactionResponse(hash, '/path');
+    if (!response.success) {
+      throw new Error(response.error || 'Transaction failed');
+    }
+    return { hash, events: response.events };
+  },
+  onSuccess: () => {
+    // ... invalidate queries
+  },
+  onError: (error) => {
+    console.error('Error:', error);
+    // ... handle error
+  },
+});
+```

@@ -1,0 +1,136 @@
+import HeaderTitle from '@/components/title';
+
+<HeaderTitle
+  title="Azure Function: Update Provider Record Schema"
+  source="https://github.com/your-repo-path-to-timerTrigger"
+/>
+
+---
+
+This Azure Function that updates the provider record schema:
+
+## Overview
+
+This Azure Function updates the provider record schema by processing incoming HTTP requests. It supports both PUT and POST methods.
+
+## Table of Contents
+
+- [Function Description](#function-description)
+- [Handler Function](#handler-function)
+- [Request and Response](#request-and-response)
+- [Error Handling](#error-handling)
+- [Route Configuration](#route-configuration)
+- [Summary](#summary)
+
+## Function Description
+
+The function processes incoming requests to update the schema associated with a specific provider record. It receives data from the request body, performs the update operation, and returns the updated receipt or an error message if the operation fails.
+
+### Dependencies
+
+- **updateProviderRecordSchema**: A helper function to handle the schema update process.
+
+```typescript
+import { updateProviderRecordSchema } from '../helpers/update-query';
+```
+
+## Handler Function
+
+The `handler` function logs the incoming request and processes the data to update the provider's record schema.
+
+### Key Logic
+
+1. **Processing the Request**:
+   The function expects a JSON body structured according to the `RecordSchema` type.
+
+   ```typescript
+   const schema = (await request.json()) as RecordSchema;
+   ```
+
+2. **Updating Provider Record Schema**:
+   The function calls `updateProviderRecordSchema` with the provided schema data.
+
+   ```typescript
+   const receipt = await updateProviderRecordSchema(schema);
+   ```
+
+## Request and Response
+
+### Request
+
+The function expects a `PUT` or `POST` request at the `/updateProviderRecordSchema` route with a JSON body structured according to the `RecordSchema` type.
+
+#### Request Example
+
+```http
+PUT /updateProviderRecordSchema
+Content-Type: application/json
+
+{
+  "providerId": "provider_id",
+  "schema": {
+    // Define the schema fields here
+  }
+}
+```
+
+### Response
+
+#### Successful Response (200 OK)
+
+On a successful update, the function returns a `200 OK` status with the updated receipt.
+
+```json
+{
+  "receipt": "updated_receipt_here"
+}
+```
+
+#### Error Response (500 Internal Server Error)
+
+If an error occurs during the update process, the function returns a `500 Internal Server Error` status with the error details.
+
+```json
+{
+  "error": "Detailed error message",
+  "message": "Failed to update the provider record schema"
+}
+```
+
+## Error Handling
+
+The function logs any errors encountered during the update process and returns a `500` response with the error details.
+
+### Error Snippet
+
+```typescript
+catch (error: any) {
+  context.error(`Error Updating Provider Record Schema: ${error}`);
+  return {
+    status: 500,
+    jsonBody: {
+      error: error.message || 'An unexpected error occurred',
+      message: 'Failed to update the provider record schema',
+    },
+  };
+}
+```
+
+## Route Configuration
+
+The function is configured to respond to both `PUT` and `POST` requests at the `/updateProviderRecordSchema` route and allows anonymous access.
+
+### Route Setup
+
+```typescript
+app.http('updateProviderRecordSchema', {
+  methods: ['PUT', 'POST'],
+  route: 'updateProviderRecordSchema',
+  authLevel: 'anonymous',
+  handler,
+});
+```
+
+## Summary
+
+This Azure Function efficiently updates the schema for a specific provider record, handling potential errors gracefully and providing informative feedback to users.

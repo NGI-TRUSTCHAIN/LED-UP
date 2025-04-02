@@ -1,0 +1,123 @@
+import HeaderTitle from '@/components/title';
+
+<HeaderTitle title="Azure Function: Get Provider Wallet" source="https://github.com/your-repo-path-to-timerTrigger" />
+
+---
+
+This Azure Function that retrieves the provider wallet:
+
+## Overview
+
+This Azure Function retrieves the wallet associated with a provider. It processes HTTP `GET` requests and returns the wallet information or an error message if the retrieval fails.
+
+## Table of Contents
+
+- [Function Description](#function-description)
+- [Handler Function](#handler-function)
+- [Request and Response](#request-and-response)
+- [Error Handling](#error-handling)
+- [Route Configuration](#route-configuration)
+- [Summary](#summary)
+
+## Function Description
+
+The function is designed to handle `GET` requests and return the wallet associated with a provider. It utilizes the `getLeveaWallet` helper function to fetch the wallet information.
+
+### Dependencies
+
+- **getLeveaWallet**: Helper function for retrieving the provider wallet.
+
+```typescript
+import { getLeveaWallet } from '../helpers/view-query';
+```
+
+## Handler Function
+
+The handler function logs the request URL, retrieves the provider wallet, and sends the appropriate HTTP response.
+
+### Key Logic
+
+```typescript
+const wallet = await getLeveaWallet();
+return {
+  status: 200,
+  jsonBody: wallet,
+};
+```
+
+## Request and Response
+
+### Request
+
+The function expects a `GET` request at the `/getProviderWallet` route.
+
+#### Request Example
+
+```
+GET /getProviderWallet
+```
+
+### Response
+
+#### Successful Response (200 OK)
+
+On success, the function returns a `200 OK` status with the wallet data in the response body.
+
+```json
+{
+  "wallet": {
+    "address": "0x1234567890abcdef",
+    "balance": "1000"
+    // Additional wallet details
+  }
+}
+```
+
+#### Error Response (500 Internal Server Error)
+
+If there is an error during the wallet retrieval process:
+
+```json
+{
+  "error": "Detailed error message",
+  "message": "Failed to get provider wallet"
+}
+```
+
+## Error Handling
+
+The function logs any errors encountered during the retrieval process and returns a `500` response with an error message.
+
+### Error Snippet
+
+```typescript
+catch (error) {
+  context.error(`Error getting provider wallet: ${error}`);
+  return {
+    status: 500,
+    jsonBody: {
+      error: error,
+      message: 'Failed to get provider wallet',
+    },
+  };
+}
+```
+
+## Route Configuration
+
+The function is set up to respond to `GET` requests at the `/getProviderWallet` route and allows anonymous access.
+
+### Route Setup
+
+```typescript
+app.http('GetProviderWallet', {
+  methods: ['GET'],
+  route: 'getProviderWallet',
+  authLevel: 'anonymous',
+  handler,
+});
+```
+
+## Summary
+
+This Azure Function provides a straightforward way to retrieve the wallet associated with a provider. It returns the wallet information in a structured format and handles errors gracefully, ensuring that users receive clear feedback in case of issues.

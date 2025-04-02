@@ -1,0 +1,125 @@
+import HeaderTitle from '@/components/title';
+
+<HeaderTitle title="Azure Function: Get Provider Metadata" source="https://github.com/your-repo-path-to-timerTrigger" />
+
+---
+
+This Azure Function that retrieves provider metadata:
+
+## Overview
+
+This Azure Function retrieves metadata about a provider. It processes HTTP `GET` requests and returns the provider metadata or an error message if the retrieval fails.
+
+## Table of Contents
+
+- [Function Description](#function-description)
+- [Handler Function](#handler-function)
+- [Request and Response](#request-and-response)
+- [Error Handling](#error-handling)
+- [Route Configuration](#route-configuration)
+- [Summary](#summary)
+
+## Function Description
+
+The function is designed to handle `GET` requests and return metadata about a provider. It utilizes the `getProviderMetadata` helper function to fetch the metadata information.
+
+### Dependencies
+
+- **getProviderMetadata**: Helper function for retrieving provider metadata.
+
+```typescript
+import { getProviderMetadata } from '../helpers/view-query';
+```
+
+## Handler Function
+
+The handler function logs the request URL, retrieves the provider metadata, and sends the appropriate HTTP response.
+
+### Key Logic
+
+```typescript
+const metadata = await getProviderMetadata();
+return {
+  status: 200,
+  jsonBody: {
+    metadata,
+  },
+};
+```
+
+## Request and Response
+
+### Request
+
+The function expects a `GET` request at the `/getProviderMetadata` route.
+
+#### Request Example
+
+```
+GET /getProviderMetadata
+```
+
+### Response
+
+#### Successful Response (200 OK)
+
+On success, the function returns a `200 OK` status with the provider metadata in the response body.
+
+```json
+{
+  "metadata": {
+    "name": "Provider Name",
+    "version": "1.0"
+    // Additional metadata details
+  }
+}
+```
+
+#### Error Response (500 Internal Server Error)
+
+If there is an error during the metadata retrieval process:
+
+```json
+{
+  "error": "Detailed error message",
+  "message": "Failed to retrieve provider metadata"
+}
+```
+
+## Error Handling
+
+The function logs any errors encountered during the retrieval process and returns a `500` response with an error message.
+
+### Error Snippet
+
+```typescript
+catch (error) {
+  context.error(`Error fetching data: ${error}`);
+  return {
+    status: 500,
+    jsonBody: {
+      error: error,
+      message: 'Failed to retrieve provider metadata',
+    },
+  };
+}
+```
+
+## Route Configuration
+
+The function is set up to respond to `GET` requests at the `/getProviderMetadata` route and allows anonymous access.
+
+### Route Setup
+
+```typescript
+app.http('getProviderMetadata', {
+  methods: ['GET'],
+  route: 'getProviderMetadata',
+  authLevel: 'anonymous',
+  handler,
+});
+```
+
+## Summary
+
+This Azure Function provides a straightforward way to retrieve metadata about a provider. It returns the metadata in a structured format and handles errors gracefully, ensuring that users receive clear feedback in case of issues.

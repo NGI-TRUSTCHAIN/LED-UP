@@ -1,0 +1,132 @@
+import HeaderTitle from '@/components/title';
+
+<HeaderTitle title="Azure Function: Change Unit Price" source="https://github.com/your-repo-path-to-timerTrigger" />
+
+---
+
+This Azure Function responsible for handling HTTP requests to change the unit price.
+
+## Overview
+
+This Azure Function accepts HTTP `POST` requests to update the unit price of a resource. It processes the requests using Azure's Functions framework and returns appropriate responses.
+
+## Table of Contents
+
+- [Function Description](#function-description)
+- [Handler Function](#handler-function)
+- [Request and Response](#request-and-response)
+- [Error Handling](#error-handling)
+- [Route Configuration](#route-configuration)
+
+## Function Description
+
+The Azure Function listens to incoming HTTP `POST` requests at the route `/changeUnitPrice`. It expects the request body to include a `value` parameter, which represents the new unit price.
+
+### Dependencies
+
+- **Azure Functions SDK**: Handles HTTP requests and responses.
+- **Custom helper**: `changeUnitPrice` from `../helpers/update-query` to update the unit price in the system.
+- **Types**: `ValueParam` defines the structure of the request body.
+
+### Snippet
+
+```typescript
+import { changeUnitPrice } from '../helpers/update-query';
+import { ValueParam } from '../types';
+```
+
+## Handler Function
+
+The handler function processes the incoming request to modify the unit price. It:
+
+1. Extracts the `value` parameter from the request body.
+2. Calls `changeUnitPrice` to update the unit price in the system.
+3. Returns a response containing the result (receipt).
+
+### Key Logic
+
+```typescript
+const { value } = (await request.json()) as ValueParam;
+const receipt = await changeUnitPrice(value);
+return {
+  status: 200,
+  jsonBody: {
+    receipt,
+  },
+};
+```
+
+## Request and Response
+
+### Request
+
+The function expects a `POST` request with a JSON body structured as follows:
+
+#### Request Body Example
+
+```json
+{
+  "value": 150
+}
+```
+
+#### Parameter
+
+- **value**: A numeric value representing the new unit price.
+
+### Response
+
+#### Successful Response (200 OK)
+
+On success, the function returns HTTP status code `200` with the result of the operation:
+
+```json
+{
+  "receipt": "Success message or operation ID"
+}
+```
+
+#### Error Response (500 Internal Server Error)
+
+If an error occurs, the function returns status code `500`:
+
+```json
+{
+  "error": "Error message",
+  "message": "Failed to change unit price"
+}
+```
+
+## Error Handling
+
+The function logs any errors that occur during the process of changing the unit price and responds with a 500 status code, including an error message.
+
+### Error Snippet
+
+```typescript
+catch (error) {
+  context.error(`Error fetching data: ${error}`);
+  return {
+    status: 500,
+    jsonBody: {
+      error: error,
+      message: 'Failed to change unit price',
+    },
+  };
+}
+```
+
+## Route Configuration
+
+The function listens to the `POST` method at the `/changeUnitPrice` route and allows anonymous access (`authLevel: 'anonymous'`).
+
+### Route Setup
+
+```typescript
+app.http('changeUnitPrice', {
+  methods: ['POST'],
+  route: 'changeUnitPrice',
+  authLevel: 'anonymous',
+  handler,
+});
+```

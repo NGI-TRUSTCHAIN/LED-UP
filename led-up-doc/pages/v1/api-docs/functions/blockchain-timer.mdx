@@ -1,0 +1,71 @@
+import HeaderTitle from '@/components/title';
+
+<HeaderTitle
+  title="Function: timerTrigger()"
+  source="https://github.com/your-repo-path-to-timerTrigger"
+/>
+
+---
+
+## Overview
+
+The `timerTrigger` function is an Azure Function designed to run on a schedule, allowing for periodic execution of tasks such as querying data from a blockchain. This type of function is ideal for scenarios where tasks need to be executed at regular intervals without direct user interaction.
+
+### Concepts
+
+1. **Timer Trigger**:
+
+   - Azure Functions can be triggered based on a time schedule, which is defined using a CRON expression. In this case, the `timerTrigger` function runs every 20 minutes, as specified in the function configuration.
+
+2. **Invocation Context**:
+
+   - The `InvocationContext` object provides essential information about the execution environment of the function, including logging capabilities. This context can be used to log information or errors during function execution.
+
+3. **Promise-based Execution**:
+
+   - The function returns a `Promise<void>`, allowing for asynchronous operations. This means that you can perform tasks such as querying data or updating a database without blocking the function's execution.
+
+4. **Error Handling**:
+   - Proper error handling is implemented in the function to catch and log errors that may occur during the execution of queries or database operations.
+
+### Function Signature
+
+```ts
+timerTrigger(myTimer: Timer, context: InvocationContext): Promise<void>
+```
+
+### Parameters
+
+- **myTimer**: `Timer`
+  The timer object that provides information about the current timer execution. It contains properties such as scheduleStatus to indicate whether the timer is running as expected.
+
+- **context**: InvocationContext
+  The context object provides information about the execution of the function, including logging capabilities (context.log and context.error).
+
+### Returns
+
+- A promise that resolves when the function execution is complete.
+
+### Throws
+
+- Throws an error if querying past events fails.
+
+### Timer Configuration
+
+The timer configuration is specified using a CRON expression:
+
+```ts
+app.timer('timerTrigger', {
+  schedule: '0 */20 * * * *',
+  handler: timerTrigger,
+  runOnStartup: true,
+});
+```
+
+### Best Practices and Considerations
+
+- Ensure that the function is idempotent, meaning repeated executions with the same input will not produce side effects. This is important for functions that may run multiple times due to scheduling issues or retries.
+
+- Use logging to capture relevant information about the execution, which helps in monitoring and debugging the function.
+
+- Leverage Azure Application Insights to monitor the performance of your timer-triggered functions.

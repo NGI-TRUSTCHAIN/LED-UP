@@ -1,0 +1,126 @@
+import HeaderTitle from '@/components/title';
+
+<HeaderTitle
+  title="Azure Function:Get Compensation Contract Address"
+  source="https://github.com/your-repo-path-to-timerTrigger"
+/>
+
+---
+
+## Overview
+
+This Azure Function handles HTTP `GET` requests to retrieve the compensation contract address from the database or a service. It processes the request and responds with the contract address or an error if the retrieval fails.
+
+## Table of Contents
+
+- [Function Description](#function-description)
+- [Handler Function](#handler-function)
+- [Request and Response](#request-and-response)
+- [Error Handling](#error-handling)
+- [Route Configuration](#route-configuration)
+- [Summary](#summary)
+
+## Function Description
+
+The Azure Function listens for incoming HTTP `GET` requests at the route `/getCompensationContractAddress`. It invokes the helper function `getCompensationContractAddress` to obtain the contract address.
+
+### Dependencies
+
+- **Azure Functions SDK**: Handles HTTP requests and responses.
+- **Custom helper**: `getCompensationContractAddress` from `../helpers/view-query` to retrieve the compensation contract address.
+
+### Snippet
+
+```typescript
+import { getCompensationContractAddress } from '../helpers/view-query';
+```
+
+## Handler Function
+
+The handler function processes the incoming request by calling `getCompensationContractAddress`. If successful, it responds with the contract address. In case of an error, it returns a 500 error response.
+
+### Key Logic
+
+```typescript
+const compensationContractAddress = await getCompensationContractAddress();
+
+return {
+  status: 200,
+  jsonBody: {
+    compensationContractAddress,
+  },
+};
+```
+
+## Request and Response
+
+### Request
+
+The function expects a `GET` request with no parameters.
+
+#### Request Example
+
+```
+GET /getCompensationContractAddress
+```
+
+### Response
+
+#### Successful Response (200 OK)
+
+On success, the function returns HTTP status code `200` with the contract address:
+
+```json
+{
+  "compensationContractAddress": "0x1234567890abcdef1234567890abcdef12345678"
+}
+```
+
+#### Error Response (500 Internal Server Error)
+
+If an error occurs during the retrieval process:
+
+```json
+{
+  "error": "Detailed error message",
+  "message": "Failed to get compensation contract address"
+}
+```
+
+## Error Handling
+
+The function logs any errors that occur during the retrieval process and responds with a 500 status code, including an error message.
+
+### Error Snippet
+
+```typescript
+catch (error) {
+  context.error(`Error getting compensation contract address: ${error}`);
+  return {
+    status: 500,
+    jsonBody: {
+      error: error,
+      message: 'Failed to get compensation contract address',
+    },
+  };
+}
+```
+
+## Route Configuration
+
+The function listens to the `GET` method at the `/getCompensationContractAddress` route and allows anonymous access (`authLevel: 'anonymous'`).
+
+### Route Setup
+
+```typescript
+app.http('getCompensationContractAddress', {
+  methods: ['GET'],
+  route: 'getCompensationContractAddress',
+  authLevel: 'anonymous',
+  handler,
+});
+```
+
+## Summary
+
+This Azure Function provides an API to retrieve the compensation contract address from a database or service. It responds with a 200 status and the address if successful, or returns a 500 error with details if the operation fails. The route is accessible anonymously and allows `GET` requests.

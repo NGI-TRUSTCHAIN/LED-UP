@@ -1,0 +1,296 @@
+# DidRegistry
+
+## Purpose and Responsibilities
+
+The DidRegistry contract serves as the foundation for decentralized identity management in the data sharing system. It provides a secure way to register, update, and manage Decentralized Identifiers (DIDs) on the blockchain. The contract maintains the relationship between Ethereum addresses and their associated DIDs, enabling identity verification and authentication throughout the system.
+
+Key responsibilities include:
+- Registering new DIDs with associated documents and public keys
+- Updating DID documents and public keys
+- Managing DID lifecycle (activation/deactivation)
+- Resolving DIDs to retrieve associated information
+- Mapping between blockchain addresses and DIDs
+
+## Contract Architecture
+
+The DidRegistry implements a gas-optimized storage model for DIDs using hash-based mappings. It follows a straightforward approach where:
+
+1. DIDs are stored as string representations (e.g., `did:method:network:address`)
+2. For efficiency, the contract hashes DIDs and uses these hashes as keys in mappings
+3. Each DID has an associated document containing identity information
+4. The contract maintains bidirectional mappings between addresses and DIDs
+5. The contract enforces that only the controller (owning address) of a DID can modify it
+
+The design prioritizes gas efficiency and security while maintaining the standard DID format and capabilities.
+
+## Key Data Structures
+
+### DIDDocument
+
+The primary data structure that holds DID information:
+
+```solidity
+struct DIDDocument {
+    address subject;   // The controller/subject address
+    uint40 lastUpdated; // Timestamp of last update
+    bool active;       // Active status flag
+    string publicKey;  // Public key string
+    string document;   // Document string
+}
+```
+
+### Storage Mappings
+
+The contract uses the following mappings for efficient DID management:
+
+```solidity
+mapping(bytes32 => DIDDocument) internal didData;        // DID hash to document
+mapping(address => bytes32) internal addressToDidHash;    // Address to DID hash
+mapping(string => bytes32) internal didToHash;            // DID string to hash
+mapping(bytes32 => string) internal hashToDid;            // DID hash to string
+```
+
+## Public Interface
+
+### Functions
+
+#### `registerDid(string calldata did, string calldata document, string calldata publicKey)`
+
+- **Purpose**: Registers a new DID with the provided document and public key
+- **Access Control**: Anyone can call this function to register a DID
+- **Parameters**:
+  - `did`: The DID string (should follow format did:method:network:address)
+  - `document`: The document to register with the DID
+  - `publicKey`: The public key for the DID
+- **Events Emitted**: `DIDRegistered(did, msg.sender)`
+- **Errors**:
+  - `DidRegistry__DIDAlreadyRegistered()`: Thrown if the DID already exists
+  - `DidRegistry__Unauthorized()`: Thrown if caller already has a different DID
+
+#### `updateDidDocument(string calldata did, string calldata newDocument)`
+
+- **Purpose**: Updates the document associated with a DID
+- **Access Control**: Only the controller of the DID can update the document
+- **Parameters**:
+  - `did`: The DID to update
+  - `newDocument`: The new document to store
+- **Events Emitted**: `DIDUpdated(did, block.timestamp)`
+- **Errors**:
+  - `DidRegistry__Unauthorized()`: Thrown if caller is not the controller
+  - `DidRegistry__DeactivatedDID()`: Thrown if the DID is not active
+  - `DidRegistry__InvalidDID()`: Thrown if the DID does not exist
+
+#### `updateDidPublicKey(string calldata did, string calldata newPublicKey)`
+
+- **Purpose**: Updates the public key associated with a DID
+- **Access Control**: Only the controller of the DID can update the public key
+- **Parameters**:
+  - `did`: The DID to update
+  - `newPublicKey`: The new public key to store
+- **Events Emitted**: `DIDUpdated(did, block.timestamp)`
+- **Errors**:
+  - `DidRegistry__Unauthorized()`: Thrown if caller is not the controller
+  - `DidRegistry__DeactivatedDID()`: Thrown if the DID is not active
+  - `DidRegistry__InvalidDID()`: Thrown if the DID does not exist
+
+#### `deactivateDid(string calldata did)`
+
+- **Purpose**: Deactivates a DID, making it unusable for authentication
+- **Access Control**: Only the controller of the DID can deactivate it
+- **Parameters**:
+  - `did`: The DID to deactivate
+- **Events Emitted**: `DIDDeactivated(did, block.timestamp)`
+- **Errors**:
+  - `DidRegistry__Unauthorized()`: Thrown if caller is not the controller
+  - `DidRegistry__DeactivatedDID()`: Thrown if the DID is already deactivated
+  - `DidRegistry__InvalidDID()`: Thrown if the DID does not exist
+
+#### `reactivateDid(string calldata did)`
+
+- **Purpose**: Reactivates a previously deactivated DID
+- **Access Control**: Only the controller of the DID can reactivate it
+- **Parameters**:
+  - `did`: The DID to reactivate
+- **Events Emitted**: `DIDUpdated(did, block.timestamp)`
+- **Errors**:
+  - `DidRegistry__Unauthorized()`: Thrown if caller is not the controller
+  - `DidRegistry__Unauthorized()`: Thrown if the DID is already active
+  - `DidRegistry__InvalidDID()`: Thrown if the DID does not exist
+
+#### `resolveDid(string calldata did)`
+
+- **Purpose**: Resolves a DID to retrieve its complete document
+- **Parameters**:
+  - `did`: The DID to resolve
+- **Returns**: The complete DIDDocument structure
+- **Errors**:
+  - `DidRegistry__InvalidDID()`: Thrown if the DID does not exist
+
+#### `addressToDID(address addr)`
+
+- **Purpose**: Retrieves the DID associated with an address
+- **Parameters**:
+  - `addr`: The address to look up
+- **Returns**: The DID string or empty string if none exists
+
+### View Functions
+
+The contract provides numerous view functions for accessing DID data:
+
+- `getPublicKeyForDid(string calldata did)`: Returns the public key
+- `getSubjectForDid(string calldata did)`: Returns the subject/controller address
+- `getDocumentForDid(string calldata did)`: Returns the document
+- `isActiveForDid(string calldata did)`: Returns the active status
+- `getLastUpdatedForDid(string calldata did)`: Returns last update timestamp
+- `isActive(string calldata did)`: Alias for isActiveForDid
+- `getLastUpdated(string calldata did)`: Alias for getLastUpdatedForDid
+- `getController(string calldata did)`: Alias for getSubjectForDid
+- `getDocument(string calldata did)`: Alias for getDocumentForDid
+- `getPublicKey(string calldata did)`: Alias for getPublicKeyForDid
+- `getSubject(string calldata did)`: Alias for getSubjectForDid
+
+### Events
+
+#### `DIDRegistered(string did, address indexed controller)`
+
+- **Purpose**: Emitted when a new DID is registered
+- **Parameters**:
+  - `did`: The registered DID string
+  - `controller`: The address that controls the DID
+
+#### `DIDUpdated(string did, uint256 indexed timestamp)`
+
+- **Purpose**: Emitted when a DID is updated
+- **Parameters**:
+  - `did`: The updated DID string
+  - `timestamp`: The timestamp of the update
+
+#### `DIDDeactivated(string did, uint256 indexed timestamp)`
+
+- **Purpose**: Emitted when a DID is deactivated
+- **Parameters**:
+  - `did`: The deactivated DID string
+  - `timestamp`: The timestamp of deactivation
+
+### Errors
+
+#### `DidRegistry__Unauthorized()`
+
+- **Cause**: Caller is not authorized to perform the operation on the DID
+- **Solution**: Ensure you are the controller of the DID
+
+#### `DidRegistry__InvalidDID()`
+
+- **Cause**: The DID does not exist or is improperly formatted
+- **Solution**: Check that the DID exists and is properly formatted
+
+#### `DidRegistry__DeactivatedDID()`
+
+- **Cause**: Attempting to use a deactivated DID
+- **Solution**: Reactivate the DID before performing operations on it
+
+#### `DidRegistry__DIDAlreadyRegistered()`
+
+- **Cause**: Attempting to register a DID that already exists
+- **Solution**: Use a different DID or check if you already own this DID
+
+## Implementation Details
+
+### Hash-Based Storage
+
+The contract uses keccak256 hashing of DID strings for efficient storage:
+
+```solidity
+bytes32 didHash = keccak256(bytes(did));
+```
+
+This approach saves gas when dealing with repeated operations on the same DID.
+
+### Bidirectional Mappings
+
+The contract maintains bidirectional mappings between:
+- DID strings and their hashes
+- Addresses and DID hashes
+
+This enables efficient lookups from either direction:
+- Finding a DID when given an address
+- Finding the controller when given a DID
+
+### Internal Helper Functions
+
+The contract uses internal helper functions to avoid code duplication:
+
+- `_getDidHash(string calldata did)`: Gets hash from DID string
+- `_getPublicKey(bytes32 didHash)`: Gets public key from hash
+- `_getDocument(bytes32 didHash)`: Gets document from hash
+- `_getSubject(bytes32 didHash)`: Gets subject from hash
+- `_isActive(bytes32 didHash)`: Checks active status
+- `_getLastUpdated(bytes32 didHash)`: Gets last update timestamp
+- `_isController(bytes32 didHash)`: Checks if caller is controller
+- `_exists(bytes32 didHash)`: Checks if DID exists
+
+### Gas Optimization
+
+The contract uses uint40 for timestamps to save storage space:
+
+```solidity
+uint40 lastUpdated; // Using 40 bits instead of 256 for timestamps
+```
+
+## Security Considerations
+
+### Access Control
+
+- Only the controller of a DID can modify or deactivate it
+- The contract verifies the caller against the registered controller address
+
+### Data Validation
+
+- The contract checks for DID existence before operations
+- It verifies DID active status before allowing updates
+
+### Potential Risks
+
+- No mechanism to transfer DID ownership to another address
+- If a controller loses access to their private key, they lose control of their DID
+- No way to recover a DID if the controller address is compromised
+
+## Integration Points
+
+The DidRegistry is a foundational contract that integrates with:
+
+1. **DidAuth**: Uses DidRegistry to authenticate DIDs and verify their active status
+2. **DidVerifier**: Uses DidRegistry to access DID information for verification
+3. **DataRegistry**: Uses DidRegistry indirectly through DidAuth for access control
+4. **Compensation**: Uses DidAuth which depends on DidRegistry for DID verification
+
+## Test Coverage
+
+The DidRegistry is extensively tested in several test files:
+
+1. `DidRegistry.reactivate.test.ts`: Tests deactivation and reactivation
+2. Various integration tests in other contract tests:
+   - `DidAuth1.test.ts`: Tests integration with authentication
+   - `data-registry/TestCommon.ts`: Tests DID setup for data sharing
+   - `DataRegistry1.test.ts`: Tests DID usage in data registry operations
+
+Key test scenarios include:
+- Registering new DIDs
+- Updating DID documents and public keys
+- Deactivating and reactivating DIDs
+- Resolving DIDs
+- Address to DID mapping
+
+## Upgrade Considerations
+
+The DidRegistry contract lacks explicit upgrade mechanisms. If upgrades are needed:
+
+1. Deploy a new DidRegistry contract
+2. Migrate DID data from the old contract to the new one
+3. Update dependent contracts like DidAuth to use the new registry
+
+Potential improvements in future versions:
+- Add DID ownership transfer capability
+- Add administrative recovery mechanisms
+- Implement proxy pattern for easier upgrades
+- Add batch operations for gas efficiency 

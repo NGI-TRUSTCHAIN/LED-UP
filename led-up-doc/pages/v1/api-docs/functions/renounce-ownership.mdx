@@ -1,0 +1,115 @@
+import HeaderTitle from '@/components/title';
+
+<HeaderTitle title="Azure Function: Renounce Ownership" source="https://github.com/your-repo-path-to-timerTrigger" />
+
+---
+
+This Azure Function that renounces ownership of a smart contract or resource:
+
+## Overview
+
+This Azure Function is responsible for renouncing ownership of a specified smart contract or resource.
+
+## Table of Contents
+
+- [Function Description](#function-description)
+- [Handler Function](#handler-function)
+- [Request and Response](#request-and-response)
+- [Error Handling](#error-handling)
+- [Route Configuration](#route-configuration)
+- [Summary](#summary)
+
+## Function Description
+
+The function processes requests to renounce ownership. It calls the `renounceOwnership` function to execute the renunciation and provides a receipt for the operation.
+
+### Dependencies
+
+- **renounceOwnership**: Helper function to execute the ownership renunciation process.
+
+```typescript
+import { renounceOwnership } from '../helpers/update-query';
+```
+
+## Handler Function
+
+The handler function logs the request URL, attempts to renounce ownership, and sends the appropriate HTTP response.
+
+### Key Logic
+
+```typescript
+const receipt = await renounceOwnership();
+```
+
+## Request and Response
+
+### Request
+
+The function expects a `POST` request at the `/renounceOwnership` route. There is no specific body requirement for this request.
+
+#### Request Example
+
+```http
+POST /renounceOwnership
+```
+
+### Response
+
+#### Successful Response (200 OK)
+
+On success, the function returns a `200 OK` status with a JSON object containing the receipt of the ownership renunciation operation.
+
+```json
+{
+  "receipt": "ownership_renunciation_receipt_here"
+}
+```
+
+#### Error Response (500 Internal Server Error)
+
+If there is an error during the ownership renunciation process:
+
+```json
+{
+  "error": "Detailed error message",
+  "message": "Failed to retrieve data from IPFS"
+}
+```
+
+## Error Handling
+
+The function logs any errors encountered during the ownership renunciation process and returns a `500` response with an error message.
+
+### Error Snippet
+
+```typescript
+catch (error) {
+  context.error(`Error fetching data: ${error}`);
+  return {
+    status: 500,
+    jsonBody: {
+      error: error,
+      message: 'Failed to retrieve data from IPFS',
+    },
+  };
+}
+```
+
+## Route Configuration
+
+The function is configured to respond to `POST` requests at the `/renounceOwnership` route and allows anonymous access.
+
+### Route Setup
+
+```typescript
+app.http('renounceOwnership', {
+  methods: ['POST'],
+  route: 'renounceOwnership',
+  authLevel: 'anonymous',
+  handler,
+});
+```
+
+## Summary
+
+This Azure Function efficiently renounces ownership of a smart contract or resource by securely handling the request and providing clear responses and error management.

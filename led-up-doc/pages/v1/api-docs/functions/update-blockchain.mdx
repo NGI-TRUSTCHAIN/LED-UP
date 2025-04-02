@@ -1,0 +1,138 @@
+import HeaderTitle from '@/components/title';
+
+<HeaderTitle title="Azure Function: Update Blockchain" source="https://github.com/your-repo-path-to-timerTrigger" />
+
+---
+
+This Azure Function that updates the blockchain by uploading encrypted data to IPFS:
+
+## Overview
+
+This Azure Function updates the blockchain by handling requests to upload encrypted data to IPFS. It supports both POST and PUT requests.
+
+## Table of Contents
+
+- [Function Description](#function-description)
+- [Handler Function](#handler-function)
+- [Request and Response](#request-and-response)
+- [Error Handling](#error-handling)
+- [Route Configuration](#route-configuration)
+- [Summary](#summary)
+
+## Function Description
+
+The function processes incoming HTTP requests, encrypts the data provided in the request, uploads it to IPFS, and returns the response from IPFS or an error message if the upload fails.
+
+### Dependencies
+
+- **uploadToIPFS**: A utility function to handle the upload process to IPFS.
+- **encrypt** and **toCipherKey**: Utility functions for encrypting the data.
+
+```typescript
+import { uploadToIPFS } from '../utils/pin-json';
+import { encrypt, toCipherKey } from '../utils/encrypt';
+```
+
+## Handler Function
+
+The `updateBlockchain` function logs the incoming request, processes the data, and attempts to upload it to IPFS.
+
+### Key Logic
+
+1. **Encrypting the Data**:
+
+   ```typescript
+   const encryptedData = encrypt(JSON.stringify(body.data), toCipherKey(key));
+   ```
+
+2. **Uploading to IPFS**:
+   ```typescript
+   const res = await uploadToIPFS({
+     pinataContent: encryptedData,
+     pinataMetadata: {
+       name: body.name,
+     },
+     pinataOptions: {
+       cidVersion: 1,
+     },
+   });
+   ```
+
+## Request and Response
+
+### Request
+
+The function expects a `POST` or `PUT` request at the `/pin` route with a JSON body structured as follows:
+
+#### Request Example
+
+```http
+POST /pin
+Content-Type: application/json
+
+{
+  "name": "data_name",
+  "data": { /* Your data here */ }
+}
+```
+
+### Response
+
+#### Successful Response (200 OK)
+
+On a successful upload, the function returns a `200 OK` status with the response from IPFS.
+
+```json
+{
+  // IPFS response details
+}
+```
+
+#### Error Response (500 Internal Server Error)
+
+If an error occurs during the upload process, the function returns a `500 Internal Server Error` status with the error details.
+
+```json
+{
+  "error": "Detailed error message",
+  "message": "Failed to create resource"
+}
+```
+
+## Error Handling
+
+The function logs any errors encountered during the upload process and returns a `500` response with the error details.
+
+### Error Snippet
+
+```typescript
+catch (error: any) {
+  context.error(`Error Uploading Data: ${error}`);
+  return {
+    status: 500,
+    jsonBody: {
+      error: error.response ? error.response.data : error.message,
+      message: 'Failed to create resource',
+    },
+  };
+}
+```
+
+## Route Configuration
+
+The function is configured to respond to both `POST` and `PUT` requests at the `/pin` route and allows anonymous access.
+
+### Route Setup
+
+```typescript
+app.http('UpdateBlockchain', {
+  methods: ['POST', 'PUT'],
+  route: 'pin',
+  authLevel: 'anonymous',
+  handler: updateBlockchain,
+});
+```
+
+## Summary
+
+This Azure Function securely uploads encrypted data to IPFS, enabling blockchain updates while managing potential errors gracefully and providing informative feedback to users.

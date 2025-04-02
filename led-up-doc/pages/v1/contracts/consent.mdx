@@ -1,0 +1,72 @@
+import HeaderTitle from '@/components/title';
+
+<HeaderTitle
+  title="Consent Management"
+  source="https://github.com/LED-UP/LED-UP-SMART-CONTRACTS/blob/46bc8208caaf3c05f42bbf95751a615170476620/src/contracts/Consent.sol"
+/>
+---
+
+## State Variables
+
+### consents
+
+```solidity
+mapping(address => mapping(address => Consent)) private consents;
+```
+
+## Functions
+
+### grant
+
+```solidity
+function grant(address provider) external;
+```
+
+### revoke
+
+```solidity
+function revoke(address provider) external;
+```
+
+### queryConsent
+
+```solidity
+function queryConsent(address producer, address provider) external view returns (ConsentStatus);
+```
+
+## Events
+
+### ConsentGranted
+
+```solidity
+event ConsentGranted(address indexed producer, address indexed provider);
+```
+
+### ConsentRevoked
+
+```solidity
+event ConsentRevoked(address indexed producer, address indexed provider);
+```
+
+## Structs
+
+### Consent
+
+```solidity
+struct Consent {
+    address producer;
+    address provider;
+    ConsentStatus status;
+}
+```
+
+## Enums
+
+### ConsentStatus
+
+```solidity
+enum ConsentStatus {
+    Granted,
+    Revoked
+}
+```

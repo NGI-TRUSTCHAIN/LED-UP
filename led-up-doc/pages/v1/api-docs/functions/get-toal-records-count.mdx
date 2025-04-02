@@ -1,0 +1,124 @@
+import HeaderTitle from '@/components/title';
+
+<HeaderTitle
+  title="Azure Function: Get Total Records Count"
+  source="https://github.com/your-repo-path-to-timerTrigger"
+/>
+
+---
+
+This Azure Function that retrieves the total count of records:
+
+## Overview
+
+This Azure Function retrieves the total count of records stored in the system. It processes HTTP `GET` requests and returns the count or an error message if the retrieval fails.
+
+## Table of Contents
+
+- [Function Description](#function-description)
+- [Handler Function](#handler-function)
+- [Request and Response](#request-and-response)
+- [Error Handling](#error-handling)
+- [Route Configuration](#route-configuration)
+- [Summary](#summary)
+
+## Function Description
+
+The function is designed to handle `GET` requests and return the total count of records. It utilizes the `getTotalRecordsCount` helper function to fetch this information.
+
+### Dependencies
+
+- **getTotalRecordsCount**: Helper function for retrieving the total records count.
+
+```typescript
+import { getTotalRecordsCount } from '../helpers/view-query';
+```
+
+## Handler Function
+
+The handler function logs the request URL, retrieves the total records count, and sends the appropriate HTTP response.
+
+### Key Logic
+
+```typescript
+const totalCount = await getTotalRecordsCount();
+return {
+  status: 200,
+  jsonBody: {
+    totalCount,
+  },
+};
+```
+
+## Request and Response
+
+### Request
+
+The function expects a `GET` request at the `/getTotalRecordsCount` route.
+
+#### Request Example
+
+```
+GET /getTotalRecordsCount
+```
+
+### Response
+
+#### Successful Response (200 OK)
+
+On success, the function returns a `200 OK` status with the total records count in the response body.
+
+```json
+{
+  "totalCount": 1234 // The total number of records
+}
+```
+
+#### Error Response (500 Internal Server Error)
+
+If there is an error during the total records count retrieval process:
+
+```json
+{
+  "error": "Detailed error message",
+  "message": "Failed to retrieve data from IPFS"
+}
+```
+
+## Error Handling
+
+The function logs any errors encountered during the retrieval process and returns a `500` response with an error message.
+
+### Error Snippet
+
+```typescript
+catch (error) {
+  context.error(`Error fetching data: ${error}`);
+  return {
+    status: 500,
+    jsonBody: {
+      error: error,
+      message: 'Failed to retrieve data from IPFS',
+    },
+  };
+}
+```
+
+## Route Configuration
+
+The function is set up to respond to `GET` requests at the `/getTotalRecordsCount` route and allows anonymous access.
+
+### Route Setup
+
+```typescript
+app.http('getTotalRecordsCount', {
+  methods: ['GET'],
+  route: 'getTotalRecordsCount',
+  authLevel: 'anonymous',
+  handler,
+});
+```
+
+## Summary
+
+This Azure Function provides a straightforward way to retrieve the total count of records stored in the system. It returns the count in a structured format and handles errors gracefully, ensuring that users receive clear feedback in case of issues.

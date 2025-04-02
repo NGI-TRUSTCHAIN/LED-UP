@@ -1,0 +1,118 @@
+import HeaderTitle from '@/components/title';
+
+<HeaderTitle title="Azure Function: Remove Producer" source="https://github.com/your-repo-path-to-timerTrigger" />
+
+---
+
+This Azure Function that removes a producer based on the provided address, based on the provided code:
+
+## Overview
+
+This Azure Function is responsible for removing a producer from the database based on the provided address.
+
+## Table of Contents
+
+- [Function Description](#function-description)
+- [Handler Function](#handler-function)
+- [Request and Response](#request-and-response)
+- [Error Handling](#error-handling)
+- [Route Configuration](#route-configuration)
+- [Summary](#summary)
+
+## Function Description
+
+The function processes requests to remove a producer. It takes the producer's address from the request body and calls the `removeProducer` function to execute the removal.
+
+### Dependencies
+
+- **removeProducer**: Helper function for removing the producer from the database.
+
+```typescript
+import { removeProducer } from '../helpers/update-query';
+```
+
+## Handler Function
+
+The handler function logs the request URL, retrieves the producer's address from the request body, attempts to remove the producer, and sends the appropriate HTTP response.
+
+### Key Logic
+
+```typescript
+const { address } = (await request.json()) as AddressParam;
+const receipt = await removeProducer(address);
+```
+
+## Request and Response
+
+### Request
+
+The function expects a `POST` request at the `/removeProducer` route with the following body:
+
+#### Request Example
+
+```json
+{
+  "address": "0xProducerAddress"
+}
+```
+
+### Response
+
+#### Successful Response (200 OK)
+
+On success, the function returns a `200 OK` status with a JSON object containing the receipt of the removal operation.
+
+```json
+{
+  "receipt": "removal_receipt_here"
+}
+```
+
+#### Error Response (500 Internal Server Error)
+
+If there is an error during the removal process:
+
+```json
+{
+  "error": "Detailed error message",
+  "message": "Failed to remove producer/patient"
+}
+```
+
+## Error Handling
+
+The function logs any errors encountered during the removal process and returns a `500` response with an error message.
+
+### Error Snippet
+
+```typescript
+catch (error) {
+  context.error(`Error removing producer/patient: ${error}`);
+  return {
+    status: 500,
+    jsonBody: {
+      error: error,
+      message: 'Failed to remove producer/patient',
+    },
+  };
+}
+```
+
+## Route Configuration
+
+The function is configured to respond to `POST` requests at the `/removeProducer` route and allows anonymous access.
+
+### Route Setup
+
+```typescript
+app.http('removeProducer', {
+  methods: ['POST'],
+  route: 'removeProducer',
+  authLevel: 'anonymous',
+  handler,
+});
+```
+
+## Summary
+
+This Azure Function efficiently removes a producer by securely handling their address and providing clear responses and error management.

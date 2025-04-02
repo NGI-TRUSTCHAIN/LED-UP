@@ -1,0 +1,132 @@
+Here’s the markdown documentation for the Azure Function that updates the consent status of a producer:
+
+````markdown
+## Overview
+
+This Azure Function updates the consent status of a producer by handling incoming HTTP requests. It supports both PUT and POST methods.
+
+## Table of Contents
+
+- [Function Description](#function-description)
+- [Handler Function](#handler-function)
+- [Request and Response](#request-and-response)
+- [Error Handling](#error-handling)
+- [Route Configuration](#route-configuration)
+- [Summary](#summary)
+
+## Function Description
+
+The function processes incoming requests to update the consent status of a producer. It receives data from the request body, performs the update operation, and returns the updated receipt or an error message if the operation fails.
+
+### Dependencies
+
+- **updateProducerConsent**: A helper function to handle the consent update process.
+- **stringifyBigInt**: A helper function to ensure the receipt is returned in a string format if it contains BigInt values.
+
+```typescript
+import { updateProducerConsent } from '../helpers/update-query';
+import { stringifyBigInt } from '../helpers/bigIntStringify';
+```
+````
+
+## Handler Function
+
+The `handler` function logs the incoming request and processes the data to update the producer's consent status.
+
+### Key Logic
+
+1. **Processing the Request**:
+   The function expects a JSON body with the producer's identifier and the consent status.
+
+   ```typescript
+   const data = (await request.json()) as {
+     producer: string;
+     status: number;
+   };
+   ```
+
+2. **Updating Producer Consent**:
+   The function calls `updateProducerConsent` with the producer's identifier and the new status.
+
+   ```typescript
+   const receipt = await updateProducerConsent(data.producer, data.status);
+   ```
+
+## Request and Response
+
+### Request
+
+The function expects a `PUT` or `POST` request at the `/updateProducerConsent` route with a JSON body structured as follows:
+
+#### Request Example
+
+```http
+PUT /updateProducerConsent
+Content-Type: application/json
+
+{
+  "producer": "producer_identifier",
+  "status": 1
+}
+```
+
+### Response
+
+#### Successful Response (200 OK)
+
+On a successful update, the function returns a `200 OK` status with the updated receipt.
+
+```json
+{
+  "receipt": "updated_receipt_here"
+}
+```
+
+#### Error Response (500 Internal Server Error)
+
+If an error occurs during the update process, the function returns a `500 Internal Server Error` status with the error details.
+
+```json
+{
+  "error": "Detailed error message",
+  "message": "Failed to update producer consent"
+}
+```
+
+## Error Handling
+
+The function logs any errors encountered during the update process and returns a `500` response with the error details.
+
+### Error Snippet
+
+```typescript
+catch (error: any) {
+  context.error(`Error updating producer consent: ${error}`);
+  return {
+    status: 500,
+    jsonBody: {
+      error: error.message || 'An unexpected error occurred',
+      message: 'Failed to update producer consent',
+    },
+  };
+}
+```
+
+## Route Configuration
+
+The function is configured to respond to both `PUT` and `POST` requests at the `/updateProducerConsent` route and allows anonymous access.
+
+### Route Setup
+
+```typescript
+app.http('updateProducerConsent', {
+  methods: ['PUT', 'POST'],
+  route: 'updateProducerConsent',
+  authLevel: 'anonymous',
+  handler,
+});
+```
+
+## Summary
+
+This Azure Function efficiently updates the consent status of a producer, handling potential errors gracefully and providing informative feedback to users.

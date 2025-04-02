@@ -1,0 +1,160 @@
+# DidIssuer
+
+## Purpose and Responsibilities
+
+The DidIssuer contract is responsible for issuing and tracking verifiable credentials within the decentralized identity system. It provides a simple mechanism for creating credentials associated with DIDs (Decentralized Identifiers) and verifying their validity.
+
+Key responsibilities include:
+- Issuing credentials to DIDs that are registered and active
+- Tracking which credentials have been issued
+- Verifying the validity of credentials
+- Preventing duplicate credentials from being issued
+
+## Contract Architecture
+
+The DidIssuer implements a basic credential management system:
+
+1. It maintains a registry of issued credentials using a mapping
+2. It ensures that credentials are only issued to active DIDs
+3. It prevents the same credential ID from being issued more than once
+4. It emits events when credentials are issued for off-chain tracking
+
+The design is intentionally minimal, focusing on basic credential management while relying on the DidRegistry for DID validation.
+
+## Key Data Structures
+
+### Storage Mappings
+
+The contract uses a mapping to track issued credentials:
+
+```solidity
+mapping(bytes32 => bool) private issuedCredentials;
+```
+
+This maps a credential ID (bytes32 hash) to a boolean indicating whether the credential has been issued.
+
+## Public Interface
+
+### Functions
+
+#### `constructor(address _didRegistryAddress)`
+
+- **Purpose**: Initializes the DidIssuer with a reference to the DidRegistry contract
+- **Parameters**:
+  - `_didRegistryAddress`: The address of the deployed DidRegistry contract
+
+#### `issueCredential(string calldata credentialType, string calldata subject, bytes32 credentialId)`
+
+- **Purpose**: Issues a new credential to a subject DID
+- **Access Control**: Public function without explicit restrictions
+- **Parameters**:
+  - `credentialType`: The type of credential being issued (e.g., "ProducerCredential")
+  - `subject`: The DID of the subject receiving the credential
+  - `credentialId`: Unique identifier for the credential
+- **Events Emitted**: `CredentialIssued(credentialType, subject, credentialId, block.timestamp)`
+- **Errors**:
+  - `DidIssuer__InvalidSubject()`: Thrown if the subject DID is not active
+  - `DidIssuer__CredentialAlreadyIssued()`: Thrown if the credential ID has already been used
+
+#### `isCredentialValid(bytes32 credentialId)`
+
+- **Purpose**: Checks if a credential has been issued and is valid
+- **Parameters**:
+  - `credentialId`: The unique identifier of the credential to check
+- **Returns**: Boolean indicating if the credential is valid
+
+### Events
+
+#### `CredentialIssued(string credentialType, string subject, bytes32 credentialId, uint256 timestamp)`
+
+- **Purpose**: Emitted when a new credential is issued
+- **Parameters**:
+  - `credentialType`: The type of credential issued
+  - `subject`: The DID of the subject receiving the credential
+  - `credentialId`: The unique identifier of the credential
+  - `timestamp`: When the credential was issued
+
+### Errors
+
+#### `DidIssuer__InvalidSubject()`
+
+- **Cause**: Attempting to issue a credential to an inactive or nonexistent DID
+- **Solution**: Ensure the subject DID exists and is active in the DidRegistry
+
+#### `DidIssuer__CredentialAlreadyIssued()`
+
+- **Cause**: Attempting to issue a credential with an ID that has already been used
+- **Solution**: Use a unique credential ID for each credential
+
+## Implementation Details
+
+The DidIssuer implements a simple credential issuance system with these key features:
+
+1. **DID Validation**: Ensures credentials are only issued to active DIDs by checking with DidRegistry
+2. **Unique Credential IDs**: Prevents duplicate credentials by tracking issuance status
+3. **Event Logging**: Records credential issuance through events for off-chain systems
+
+The implementation currently stores only the issuance status of credentials, with a comment indicating a future improvement to store credential content in IPFS with only the hash on-chain.
+
+## Security Considerations
+
+### Access Control
+
+- The `issueCredential` function lacks access control
+- In a production system, this should be restricted to trusted issuers
+- Without access control, any address can issue credentials
+
+### Credential Content
+
+- The contract only tracks whether a credential has been issued, not its content
+- Credential content must be managed off-chain or via another mechanism
+- A TODO comment indicates future plans to store credential content in IPFS
+
+### Potential Risks
+
+- No credential revocation mechanism
+- No expiration mechanism for credentials
+- No verification of issuer authority to issue specific credential types
+
+## Integration Points
+
+The DidIssuer integrates with:
+
+1. **DidRegistry**: To verify if DIDs are active
+2. **DidAuth**: Uses DidIssuer to track and verify credentials during authentication
+
+In the test environment, we see the following usage pattern:
+- DidIssuer is deployed with a reference to DidRegistry
+- DidAuth is deployed with references to DidRegistry, DidVerifier, and DidIssuer
+- Credentials are issued in tests before granting roles to DIDs
+- Credential verification is performed by DidAuth using DidIssuer
+
+## Test Coverage
+
+The DidIssuer is primarily tested through its integration with DidAuth:
+
+- Basic deployment in multiple test setups
+- Credential issuance in test environment
+- Credential validation through DidAuth
+
+Key test scenarios include:
+- Deployment and initialization with DidRegistry
+- Issuing credentials to DIDs
+- Verifying credentials through DidAuth
+
+## Upgrade Considerations
+
+The DidIssuer has several limitations that might require upgrades:
+
+1. **Limited Access Control**: Add proper access controls for credential issuance
+2. **Basic Credential Storage**: Implement IPFS integration as suggested in the TODO comment
+3. **Missing Revocation**: Add capability to revoke issued credentials
+4. **Missing Expiration**: Add expiration timestamps to credentials
+
+For a production version, consider:
+- Adding AccessControl for credential issuance
+- Implementing credential expiration
+- Adding credential revocation capabilities
+- Storing credential content in IPFS as mentioned in the TODO comment
+- Adding more detailed credential metadata
+- Supporting different credential formats (e.g., W3C Verifiable Credentials) 

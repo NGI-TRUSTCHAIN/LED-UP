@@ -1,0 +1,119 @@
+import HeaderTitle from '@/components/title';
+
+<HeaderTitle title="Azure Function: Get Unit Price" source="https://github.com/your-repo-path-to-timerTrigger" />
+
+---
+
+This Azure Function that retrieves the unit price:
+
+## Overview
+
+This Azure Function retrieves the current unit price from the system. It processes HTTP `GET` requests and returns the unit price or an error message if the retrieval fails.
+
+## Table of Contents
+
+- [Function Description](#function-description)
+- [Handler Function](#handler-function)
+- [Request and Response](#request-and-response)
+- [Error Handling](#error-handling)
+- [Route Configuration](#route-configuration)
+- [Summary](#summary)
+
+## Function Description
+
+The function is designed to handle `GET` requests and return the current unit price. It utilizes the `getUnitPrice` helper function to fetch this information.
+
+### Dependencies
+
+- **getUnitPrice**: Helper function for retrieving the current unit price.
+
+```typescript
+import { getUnitPrice } from '../helpers/view-query';
+```
+
+## Handler Function
+
+The handler function logs the request URL, retrieves the unit price, and sends the appropriate HTTP response.
+
+### Key Logic
+
+```typescript
+const unitPrice = await getUnitPrice();
+return {
+  status: 200,
+  jsonBody: unitPrice,
+};
+```
+
+## Request and Response
+
+### Request
+
+The function expects a `GET` request at the `/getUnitPrice` route.
+
+#### Request Example
+
+```
+GET /getUnitPrice
+```
+
+### Response
+
+#### Successful Response (200 OK)
+
+On success, the function returns a `200 OK` status with the unit price in the response body.
+
+```json
+{
+  "unitPrice": 9.99 // The current unit price
+}
+```
+
+#### Error Response (500 Internal Server Error)
+
+If there is an error during the unit price retrieval process:
+
+```json
+{
+  "error": "Detailed error message",
+  "message": "Failed to retrieve unit price"
+}
+```
+
+## Error Handling
+
+The function logs any errors encountered during the retrieval process and returns a `500` response with an error message.
+
+### Error Snippet
+
+```typescript
+catch (error) {
+  context.error(`Error fetching unit price: ${error}`);
+  return {
+    status: 500,
+    jsonBody: {
+      error: error,
+      message: 'Failed to retrieve unit price',
+    },
+  };
+}
+```
+
+## Route Configuration
+
+The function is set up to respond to `GET` requests at the `/getUnitPrice` route and allows anonymous access.
+
+### Route Setup
+
+```typescript
+app.http('GetUnitPrice', {
+  methods: ['GET'],
+  route: 'getUnitPrice',
+  authLevel: 'anonymous',
+  handler,
+});
+```
+
+## Summary
+
+This Azure Function provides a straightforward way to retrieve the current unit price from the system. It returns the price in a structured format and handles errors gracefully, ensuring that users receive clear feedback in case of issues.
