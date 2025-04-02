@@ -1,0 +1,165 @@
+// enhanced_age_verifier.zok
+// Enhanced age verification circuit with support for:
+// 1. Simple age verification (age > threshold)
+// 2. Birth date verification (calculated age > threshold)
+// 3. Age bracket verification (child, adult, senior)
+// Returns detailed verification results
+
+// Convert boolean to field (1 for true, 0 for false)
+def bool_to_field(bool value) -> field {
+    return if value { 1 } else { 0 };
+}
+
+// Enhanced age validation
+def validate_age_range(field age) -> field {
+    // More realistic maximum age
+    return bool_to_field(age >= 0 && age <= 120);
+}
+
+// Age bracket validation
+def check_age_bracket(field age) -> field {
+    // 0: Invalid, 1: Child (0-17), 2: Adult (18-64), 3: Senior (65+)
+    field mut bracket = 0;
+    
+    // Use conditional expressions with braces
+    bracket = if age >= 0 && age <= 17 { 1 } else { bracket };
+    bracket = if age >= 18 && age <= 64 { 2 } else { bracket };
+    bracket = if age >= 65 && age <= 120 { 3 } else { bracket };
+    
+    return bracket;
+}
+
+// Extract year from date (YYYYMMDD format)
+def extract_year(field date) -> field {
+    return date / 10000;
+}
+
+// Extract month from date (YYYYMMDD format)
+def extract_month(field date) -> field {
+    field year = date / 10000;
+    return (date / 100) - (year * 100);
+}
+
+// Extract day from date (YYYYMMDD format)
+def extract_day(field date) -> field {
+    field year = date / 10000;
+    field month = (date / 100) - (year * 100);
+    return date - (year * 10000) - (month * 100);
+}
+
+// Date validation
+def validate_date(field date) -> field {
+    field year = extract_year(date);
+    field month = extract_month(date);
+    field day = extract_day(date);
+    
+    // Basic validation
+    field validYear = bool_to_field(year >= 1900 && year <= 2100);
+    field validMonth = bool_to_field(month >= 1 && month <= 12);
+    field validDay = bool_to_field(day >= 1 && day <= 31);
+    
+    // Simplified month length check (could be expanded)
+    field mut validDayInMonth = 1;
+    
+    // February check
+    validDayInMonth = if month == 2 { bool_to_field(day <= 29) } else { validDayInMonth };
+    
+    // April, June, September, November check
+    validDayInMonth = if month == 4 || month == 6 || month == 9 || month == 11 { bool_to_field(day <= 30) } else { validDayInMonth };
+    
+    return validYear * validMonth * validDay * validDayInMonth;
+}
+
+// Calculate age from birth date and current date
+def calculate_age(field birthDate, field currentDate) -> field {
+    field birthYear = extract_year(birthDate);
+    field birthMonth = extract_month(birthDate);
+    field birthDay = extract_day(birthDate);
+    
+    field currentYear = extract_year(currentDate);
+    field currentMonth = extract_month(currentDate);
+    field currentDay = extract_day(currentDate);
+    
+    field mut age = currentYear - birthYear;
+    
+    // Adjust age if birthday hasn't occurred yet this year
+    age = if currentMonth < birthMonth || (currentMonth == birthMonth && currentDay < birthDay) { age - 1 } else { age };
+    
+    return age;
+}
+
+// Simple age verification result
+def simple_age_result(field age, field threshold) -> field {
+    field ageValid = validate_age_range(age);
+    field aboveThreshold = bool_to_field(age > threshold);
+    
+    // 1 = success, 2 = invalid age, 3 = below threshold
+    return (1 * ageValid * aboveThreshold) + 
+           (2 * (1 - ageValid)) + 
+           (3 * ageValid * (1 - aboveThreshold));
+}
+
+// Birth date verification result
+def birth_date_result(field birthDate, field currentDate, field threshold) -> field {
+    field birthDateValid = validate_date(birthDate);
+    field currentDateValid = validate_date(currentDate);
+    field calculatedAge = calculate_age(birthDate, currentDate);
+    field aboveThreshold = bool_to_field(calculatedAge > threshold);
+    
+    // 1 = success, 4 = invalid date, 5 = below threshold
+    return (1 * birthDateValid * currentDateValid * aboveThreshold) + 
+           (4 * (1 - (birthDateValid * currentDateValid))) + 
+           (5 * birthDateValid * currentDateValid * (1 - aboveThreshold));
+}
+
+// Age bracket verification result
+def age_bracket_result(field age) -> field {
+    field ageValid = validate_age_range(age);
+    field bracket = check_age_bracket(age);
+    
+    // 10 + bracket = bracket result, 2 = invalid age
+    return (10 + bracket) * ageValid + 
+           (2 * (1 - ageValid));
+}
+
+// Enhanced main function with improved error handling
+def main(
+    private field age, 
+    private field birthDate, 
+    field currentDate, 
+    field threshold, 
+    field verificationType
+) -> field {
+    // verificationType: 
+    // 1 = simple age check
+    // 2 = birth date check
+    // 3 = age bracket check
+    
+    // Error codes:
+    // 0 = invalid verification type
+    // 1 = success (verification passed)
+    // 2 = invalid age range
+    // 3 = age below threshold
+    // 4 = invalid date format
+    // 5 = calculated age below threshold
+    // 10, 11, 12, 13 = age bracket results (10 + bracket)
+    
+    // Calculate all possible results
+    field simpleResult = simple_age_result(age, threshold);
+    field birthDateResult = birth_date_result(birthDate, currentDate, threshold);
+    field bracketResult = age_bracket_result(calculate_age(birthDate, currentDate));
+    
+    // Select the appropriate result based on verificationType
+    field isType1 = bool_to_field(verificationType == 1);
+    field isType2 = bool_to_field(verificationType == 2);
+    field isType3 = bool_to_field(verificationType == 3);
+    field isValidType = isType1 + isType2 + isType3;
+    
+    // Combine results
+    field result = (simpleResult * isType1) + 
+                   (birthDateResult * isType2) + 
+                   (bracketResult * isType3) + 
+                   (0 * (1 - isValidType));
+    
+    return result;
+} 

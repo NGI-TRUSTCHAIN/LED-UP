@@ -1,6 +1,7 @@
 'use client';
 import ResourceCard from '@/components/ResourceCard';
 import ResourceModal from '@/components/ResourceModal';
+import { HealthRecord } from '@/features/data-registry';
 import { useState } from 'react';
 
 export type DataType = [string, string, [string, string, string]];
@@ -34,8 +35,7 @@ const emoji = (resourceType: string) => {
   }
 };
 
-export type RecordType = [number, number, DataType[], string[], number];
-export default function PatientFull({ records }: { records: RecordType }) {
+export default function PatientFull({ records }: { records: HealthRecord[] }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTracker, setSelectedTracker] = useState(null);
 

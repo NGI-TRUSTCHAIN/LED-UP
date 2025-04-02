@@ -1,0 +1,12 @@
+export { BaseEventParser } from './BaseEventParser';
+export type { ParsedContractEvent } from './BaseEventParser';
+export { DataRegistryEventParser } from './DataRegistryEventParser';
+export { CompensationEventParser } from './CompensationEventParser';
+export { TokenEventParser } from './TokenEventParser';
+export { ConsentEventParser } from './ConsentEventParser';
+export { DidRegistryEventParser } from './DidRegistryEventParser';
+export { DidAccessControlEventParser } from './DidAccessControlEventParser';
+export { DidAuthEventParser } from './DidAuthEventParser';
+export { DidIssuerEventParser } from './DidIssuerEventParser';
+export { DidVerifierEventParser } from './DidVerifierEventParser';
+export { ZKPEventParser } from './ZKPEventParser';

@@ -1,7 +1,20 @@
 [profile.default]
-src = "src"
+src = "src/contracts"
 out = "out"
 libs = ["lib"]
-remappings=["@chainlink/contracts/=lib/chainlink-brownie-contracts/contracts/"]
+
+remappings=[
+  "@chainlink/contracts/=lib/chainlink-brownie-contracts/contracts/",
+  "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
+  "forge-std/=lib/forge-std/src/"
+]
+via_ir = true
+optimizer = true
+optimizer_runs = 200
+
+[profile.coverage]
+via_ir = true
+optimizer = false
+# Disable optimizer for coverage runs
 
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options

@@ -1,14 +1,17 @@
 'use client';
 import { useState } from 'react';
-import { Bell, ChevronLeft, Home, LogOut, MessageSquare, Settings, X, Phone, Mail, MessageCircle } from 'lucide-react';
+import { Settings, Phone, Mail, MessageCircle } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
-import { Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Caveat } from 'next/font/google';
+import { useAuth } from '@/features/auth/contexts/auth-provider';
+import { toast } from 'sonner';
+import { useGetPublicKey, useUpdateDidPublicKey } from '@/features/did-registry/hooks';
+import { usePathname } from 'next/navigation';
 
 const caveat = Caveat({
   subsets: ['latin'],
@@ -50,144 +53,162 @@ function VerticalTimeline01({ items }: { items: TimelineItemProps[] }) {
 export default function HealthDashboard() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTracker, setSelectedTracker] = useState(null);
+  const { did, address } = useAuth();
+  const { mutate: updateDidPublicKey, isPending: isUpdating } = useUpdateDidPublicKey();
+  const { data: publicKey, isLoading: isPublicKeyLoading } = useGetPublicKey(did);
+  const pathname = usePathname();
+  // Check if current page is home page
+  const isHomePage = pathname === '/' || pathname === '/home';
 
   const openModal = (tracker: any) => {
     setSelectedTracker(tracker);
     setIsModalOpen(true);
   };
 
+  const handleUpdatePublicKey = () => {
+    updateDidPublicKey(
+      {
+        did,
+        newPublicKey: '0x' + Math.random().toString(16).substring(2, 30) + Date.now().toString(16),
+      },
+      {
+        onSuccess: () => {
+          toast.success('Public key updated successfully');
+        },
+        onError: (error) => {
+          toast.error(error.message);
+        },
+      }
+    );
+  };
+
   return (
-    <div className="flex h-screen bg-gray-100">
-      {/* Sidebar */}
-      <aside className="w-16 bg-[#2D2A3E] flex flex-col items-center py-4 space-y-8">
-        <div className="text-white font-bold">Md</div>
-        <nav className="flex flex-col items-center space-y-6">
-          <Button variant="ghost" size="icon" className="text-gray-400">
-            <Home className="h-6 w-6" />
-          </Button>
-          <Button variant="ghost" size="icon" className="text-gray-400">
-            <MessageSquare className="h-6 w-6" />
-          </Button>
-          <Button variant="ghost" size="icon" className="text-gray-400">
-            <Bell className="h-6 w-6" />
-          </Button>
-          <Button variant="ghost" size="icon" className="bg-indigo-600 text-white">
-            <Settings className="h-6 w-6" />
-          </Button>
-        </nav>
-        <Button variant="ghost" size="icon" className="text-gray-400 mt-auto">
-          <LogOut className="h-6 w-6" />
-        </Button>
-      </aside>
+    <div className="container max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 relative mb-12">
+      {/* Main content - adjust margin based on sidebar visibility */}
+      <div className={`flex-1 px-8 pt-3 ${!isHomePage ? 'ml-0' : ''}`}>
+        <div className="container mx-auto">
+          <h1 className="text-2xl font-bold mb-6">My Trackers</h1>
+          <div className="flex items-center gap-4 mb-6">
+            <div className="flex-1 p-4 border rounded-lg">
+              <div className="text-sm text-muted-foreground mb-1">Current Public Key</div>
+              <div className="font-mono text-xs break-all">
+                {isPublicKeyLoading ? 'Loading...' : publicKey || 'No public key found'}
+              </div>
+            </div>
+            <Button
+              onClick={handleUpdatePublicKey}
+              disabled={isUpdating || !did || !address}
+              className="whitespace-nowrap"
+            >
+              {isUpdating ? 'Updating...' : 'Update Public Key'}
+            </Button>
+          </div>
 
-      {/* Main content */}
-      <main className="flex-1 p-8">
-        <header className="flex justify-between items-center mb-8">
-          <Button variant="ghost" className="text-gray-600">
-            <ChevronLeft className="h-5 w-5 mr-2" />
-            Back
-          </Button>
-          <Input className="w-64" placeholder="Search" />
-          <Avatar>
-            <AvatarImage src="https://github.com/shadcn.png" />
-            <AvatarFallback>MJ</AvatarFallback>
-          </Avatar>
-        </header>
-
-        <h1 className="text-2xl font-bold mb-6">My Trackers</h1>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <TrackerCard
-            icon="🩸"
-            title="Blood Pressure"
-            value="120/80 mmHg"
-            source="iHealth"
-            iconBg="bg-red-100"
-            onClick={() => openModal({ title: 'Blood Pressure', value: '120/80 mmHg' })}
-          />
-          <TrackerCard
-            icon="❤️"
-            title="Heart Rate"
-            value="90 BPM"
-            source="Apple Health"
-            iconBg="bg-blue-100"
-            onClick={() => openModal({ title: 'Heart Rate', value: '90 BPM' })}
-          />
-          <TrackerCard
-            icon="💧"
-            title="Blood Glucose"
-            value="146 mg/dL"
-            source="Abbott"
-            iconBg="bg-yellow-100"
-            onClick={() => openModal({ title: 'Blood Glucose', value: '146 mg/dL' })}
-          />
-          <TrackerCard
-            icon="🔥"
-            title="Calories (Burned)"
-            value="1200 cal"
-            source="Google Fit"
-            iconBg="bg-purple-100"
-            progress={75}
-            total="/1600 cal"
-            onClick={() => openModal({ title: 'Calories (Burned)', value: '1200 cal' })}
-          />
-          <TrackerCard
-            icon="⏰"
-            title="Sleep"
-            value="09:15:00"
-            source="Manual Entry"
-            iconBg="bg-green-100"
-            progress={50}
-            onClick={() => openModal({ title: 'Sleep', value: '09:15:00' })}
-          />
-          <TrackerCard
-            icon="👣"
-            title="Steps"
-            value="6000"
-            source="fitbit"
-            iconBg="bg-orange-100"
-            progress={100}
-            label="Complete"
-            onClick={() => openModal({ title: 'Steps', value: '6000' })}
-          />
-          <TrackerCard
-            icon="🍊"
-            title="BMI"
-            value="20 (120 lbs)"
-            source="iHealth"
-            iconBg="bg-pink-100"
-            onClick={() => openModal({ title: 'BMI', value: '20 (120 lbs)' })}
-          />
-          <TrackerCard
-            icon="🌡️"
-            title="Temperature"
-            value="97.7 F"
-            source=""
-            iconBg="bg-blue-100"
-            onClick={() => openModal({ title: 'Temperature', value: '97.7 F' })}
-          />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 container mx-auto">
+            <TrackerCard
+              icon="🩸"
+              title="Blood Pressure"
+              value="120/80 mmHg"
+              source="iHealth"
+              iconBg="bg-red-100"
+              onClick={() => openModal({ title: 'Blood Pressure', value: '120/80 mmHg' })}
+            />
+            <TrackerCard
+              icon="❤️"
+              title="Heart Rate"
+              value="90 BPM"
+              source="Apple Health"
+              iconBg="bg-blue-100"
+              onClick={() => openModal({ title: 'Heart Rate', value: '90 BPM' })}
+            />
+            <TrackerCard
+              icon="💧"
+              title="Blood Glucose"
+              value="146 mg/dL"
+              source="Abbott"
+              iconBg="bg-yellow-100"
+              onClick={() => openModal({ title: 'Blood Glucose', value: '146 mg/dL' })}
+            />
+            <TrackerCard
+              icon="🔥"
+              title="Calories (Burned)"
+              value="1200 cal"
+              source="Google Fit"
+              iconBg="bg-purple-100"
+              progress={75}
+              total="/1600 cal"
+              onClick={() => openModal({ title: 'Calories (Burned)', value: '1200 cal' })}
+            />
+            <TrackerCard
+              icon="⏰"
+              title="Sleep"
+              value="09:15:00"
+              source="Manual Entry"
+              iconBg="bg-green-100"
+              progress={50}
+              onClick={() => openModal({ title: 'Sleep', value: '09:15:00' })}
+            />
+            <TrackerCard
+              icon="👣"
+              title="Steps"
+              value="6000"
+              source="fitbit"
+              iconBg="bg-orange-100"
+              progress={100}
+              label="Complete"
+              onClick={() => openModal({ title: 'Steps', value: '6000' })}
+            />
+            <TrackerCard
+              icon="🍊"
+              title="BMI"
+              value="20 (120 lbs)"
+              source="iHealth"
+              iconBg="bg-pink-100"
+              onClick={() => openModal({ title: 'BMI', value: '20 (120 lbs)' })}
+            />
+            <TrackerCard
+              icon="🌡️"
+              title="Temperature"
+              value="97.7 F"
+              source=""
+              iconBg="bg-blue-100"
+              onClick={() => openModal({ title: 'Temperature', value: '97.7 F' })}
+            />
+          </div>
         </div>
-      </main>
+      </div>
 
       <TrackerModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} tracker={selectedTracker} />
     </div>
   );
 }
 
-function TrackerCard({ icon, title, value, source, iconBg, progress, total, label, onClick }: any) {
+interface TrackerCardProps {
+  icon: string;
+  title: string;
+  value: string;
+  source: string;
+  iconBg: string;
+  progress?: number;
+  total?: string;
+  label?: string;
+  onClick?: () => void;
+}
+
+function TrackerCard({ icon, title, value, source, iconBg, progress, total, label, onClick }: TrackerCardProps) {
   return (
-    <Card className="cursor-pointer" onClick={onClick}>
+    <Card className="cursor-pointer bg-muted/5 dark:bg-primary/10" onClick={onClick}>
       <CardContent className="p-6">
         <div className="flex items-center justify-between mb-4">
           <div className={`w-10 h-10 rounded-full ${iconBg} flex items-center justify-center text-2xl`}>{icon}</div>
           <Button variant="ghost" size="icon">
-            <Settings className="h-4 w-4 text-gray-400" />
+            <Settings className="h-4 w-4 text-muted-foreground" />
           </Button>
         </div>
         <h3 className="font-semibold mb-1">{title}</h3>
         <div className="text-2xl font-bold mb-2">{value}</div>
         {progress !== undefined && <Progress value={progress} className="h-2 mb-2" />}
-        <div className="flex items-center justify-between text-sm text-gray-500">
+        <div className="flex items-center justify-between text-sm text-muted-foreground">
           <span>{source}</span>
           {total && <span>{total}</span>}
           {label && <span>{label}</span>}
@@ -244,14 +265,14 @@ function TrackerModal({ isOpen, onClose, tracker }: any) {
               </Avatar>
               <div>
                 <DialogTitle className="text-xl font-bold">Peter Williamson, 57Y, M</DialogTitle>
-                <p className="text-sm text-gray-500">Jul 23, 1967 | PID0023456</p>
+                <p className="text-sm text-muted-foreground">Jul 23, 1967 | PID0023456</p>
               </div>
             </div>
           </div>
         </DialogHeader>
         <div className="mt-4">
           <div className="flex justify-between items-center">
-            <span className="text-sm text-gray-500">Discharged on Nov 15, 2021</span>
+            <span className="text-sm text-muted-foreground">Discharged on Nov 15, 2021</span>
             <span className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
               Currently at home
             </span>
