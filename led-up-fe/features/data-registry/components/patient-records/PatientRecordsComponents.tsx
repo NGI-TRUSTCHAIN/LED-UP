@@ -172,9 +172,9 @@ export interface TabButtonProps {
 export const TabButton = ({ children, active, onClick, count, icon }: TabButtonProps) => {
   return (
     <Button
-      variant="ghost"
+      variant={active ? 'default' : 'outline'}
       className={`group rounded-full px-4 py-2 transition-all duration-300 border ${
-        active ? 'bg-primary shadow-md hover:text-primary' : 'hover:bg-muted'
+        active ? 'shadow-md hover:text-primary' : 'hover:bg-muted'
       }`}
       onClick={onClick}
     >
@@ -184,7 +184,7 @@ export const TabButton = ({ children, active, onClick, count, icon }: TabButtonP
         {count > 0 && (
           <Badge
             variant={active ? 'outline' : 'secondary'}
-            className={`ml-2 ${active ? 'bg-primary-foreground' : 'active:hover:bg-muted text-primary'}`}
+            className={`ml-2 ${active ? 'bg-primary-foreground' : 'active:hover:bg-muted'}`}
           >
             {count}
           </Badge>

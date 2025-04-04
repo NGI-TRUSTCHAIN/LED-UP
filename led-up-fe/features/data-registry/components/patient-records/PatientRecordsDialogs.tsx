@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Eye,
   EyeOff,
@@ -610,8 +610,6 @@ export const RevealDataDialog = ({
   copiedItem: { id: string; field: string } | null;
 }) => {
   if (!revealingRecord) return null;
-
-  console.log('===============revealingRecord', revealingRecord);
 
   // State to manage user-entered private key
   const [userPrivateKey, setUserPrivateKey] = useState('');

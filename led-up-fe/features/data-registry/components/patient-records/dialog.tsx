@@ -43,13 +43,14 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
-  Drawer,
-  DrawerClose,
-  DrawerContent,
-  DrawerDescription,
-  DrawerHeader,
-  DrawerTitle,
-} from '@/components/ui/drawer';
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogClose,
+} from '@/components/ui/dialog';
 import { PatientForm } from '@/features/data-registry/components/forms/patient';
 import { ProcedureForm } from '@/features/data-registry/components/forms/procedure';
 import { ObservationForm } from '@/features/data-registry/components/forms/observation';
@@ -150,7 +151,7 @@ export function AddRecordDropdown() {
 
 // The actual component content
 function AddRecordDropdownContent() {
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedResourceType, setSelectedResourceType] = useState<string>('');
   const { did: userDid, address } = useAuth();
   const { mutateAsync: registerProducerRecord } = useCreateRecordWithIPFS();
@@ -168,12 +169,12 @@ function AddRecordDropdownContent() {
     setErrorMessage('');
     setRecordId('');
     setSelectedResourceType(resourceType);
-    setIsDrawerOpen(true);
+    setIsDialogOpen(true);
   };
 
-  // Add drawer close handler
-  const handleDrawerClose = () => {
-    setIsDrawerOpen(false);
+  // Add dialog close handler
+  const handleDialogClose = () => {
+    setIsDialogOpen(false);
     setRegistrationStatus('idle');
     setErrorMessage('');
     setRecordId('');
@@ -255,9 +256,9 @@ function AddRecordDropdownContent() {
 
         toast.success(`Your ${selectedResourceType} record has been registered on the blockchain.`);
 
-        // Close the drawer after 3 seconds
+        // Close the dialog after 3 seconds
         setTimeout(() => {
-          setIsDrawerOpen(false);
+          setIsDialogOpen(false);
           setRegistrationStatus('idle');
         }, 3000);
       } catch (registerError) {
@@ -343,7 +344,7 @@ function AddRecordDropdownContent() {
     }
   };
 
-  // Get the title for the drawer based on the selected resource type
+  // Get the title for the dialog based on the selected resource type
   const getDrawerTitle = () => {
     const selectedResource = resourceTypes.find((type) => type.id === selectedResourceType);
     return selectedResource ? `Register ${selectedResource.label}` : 'Register Health Record';
@@ -411,7 +412,10 @@ function AddRecordDropdownContent() {
                   return resource ? (
                     <DropdownMenuItem
                       key={resource.id}
-                      onClick={() => handleResourceSelect(resource.id)}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleResourceSelect(resource.id);
+                      }}
                       className="flex items-center"
                     >
                       {resource.icon}
@@ -426,37 +430,25 @@ function AddRecordDropdownContent() {
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {/* Form Drawer */}
-
-      {isDrawerOpen && selectedResourceType && (
-        <Drawer
-          open={isDrawerOpen}
-          onOpenChange={(open) => {
-            if (!open) {
-              handleDrawerClose();
-            }
-          }}
-          direction="right"
-        >
-          <DrawerContent className="overflow-x-hidden rounded-none mt-0 h-screen overflow-y-auto sm:max-h-screen sm:inset-y-0 sm:right-0 sm:left-auto sm:rounded-none sm:rounded-l-[10px] sm:w-[400px] md:w-[500px] lg:w-[560px] xl:w-[640px] 2xl:w-[760px]">
-            <DrawerHeader>
-              <DrawerTitle>{getDrawerTitle()}</DrawerTitle>
-              <DrawerDescription>
-                Fill out the form below to register a new {selectedResourceType} record.
-              </DrawerDescription>
-            </DrawerHeader>
-            <div className="px-4 py-2">
+      {/* Form Dialog */}
+      {isDialogOpen && selectedResourceType && (
+        <Dialog open={isDialogOpen} onOpenChange={handleDialogClose}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader className="text-left">
+              <DialogTitle className="text-xl font-semibold mb-2">{getDrawerTitle()}</DialogTitle>
+              <DialogDescription>Fill out the details to create a new health record</DialogDescription>
+            </DialogHeader>
+            <div className="px-4 pb-4">
               {renderStatusMessage()}
               {renderForm()}
+              <DialogFooter className="mt-4 flex justify-end gap-2">
+                <Button type="button" variant="outline" onClick={handleDialogClose}>
+                  Close
+                </Button>
+              </DialogFooter>
             </div>
-
-            <DrawerClose asChild className="absolute right-4 top-4">
-              <Button variant="outline" onClick={handleDrawerClose}>
-                <X className="h-6 w-6" />
-              </Button>
-            </DrawerClose>
-          </DrawerContent>
-        </Drawer>
+          </DialogContent>
+        </Dialog>
       )}
     </>
   );

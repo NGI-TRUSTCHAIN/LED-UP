@@ -2,8 +2,7 @@
 
 import { PatientRecordsPage } from '@/features/data-registry/components/patient-records';
 import { ProtectedRoute } from '@/components/protected-route';
-import React, { Suspense, useEffect, useState } from 'react';
-import { Toaster } from 'sonner';
+import React, { Suspense } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 
 // Loading component
@@ -27,19 +26,7 @@ const ErrorFallback = ({ error, resetErrorBoundary }: { error: Error; resetError
   </div>
 );
 
-const ToasterWrapper = ({ children }: { children: React.ReactNode }) => {
-  return (
-    <>
-      <Toaster />
-      {children}
-    </>
-  );
-};
-
-// Wrapper for the PatientRecordsPage with simpler implementation to avoid hooks issues
 const PatientRecordsWrapper = () => {
-  // Don't conditionally render based on isReady state
-  // Instead, rely on loading state in the component itself
   return <PatientRecordsPage />;
 };
 
@@ -53,11 +40,9 @@ const PatientRecordsRoute = () => {
       }}
     >
       <ProtectedRoute redirectTo="/auth/signin">
-        <ToasterWrapper>
-          <Suspense fallback={<LoadingFallback />}>
-            <PatientRecordsWrapper />
-          </Suspense>
-        </ToasterWrapper>
+        <Suspense fallback={<LoadingFallback />}>
+          <PatientRecordsWrapper />
+        </Suspense>
       </ProtectedRoute>
     </ErrorBoundary>
   );

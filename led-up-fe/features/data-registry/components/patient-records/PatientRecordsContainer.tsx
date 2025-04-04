@@ -13,8 +13,6 @@ import { Filter } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
-
-// Import all component parts
 import { SearchInput, FilterSelector, ViewToggle, RecordStats, PatientRecordsHeader } from './PatientRecordsComponents';
 
 import { HealthRecordGrid, HealthRecordTable, PatientRecordsTabs } from './PatientRecordsDisplay';
@@ -62,7 +60,6 @@ export const PatientRecordsContent = React.memo(
           resourceTypeStr.toLowerCase().includes(searchTerm.toLowerCase()) ||
           record.cid.toLowerCase().includes(searchTerm.toLowerCase()) ||
           record.recordId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          // Search in IPFS data if available
           (ipfsData &&
             Object.values(ipfsData).some(
               (value) => typeof value === 'string' && value.toLowerCase().includes(searchTerm.toLowerCase())
@@ -76,14 +73,11 @@ export const PatientRecordsContent = React.memo(
 
     // Load IPFS data for all records when component mounts or records change
     useEffect(() => {
-      // Skip if already loading or no records to load
       if (isLoadingIPFSData || !records?.healthRecords?.length) return;
 
-      // Extract CIDs from records
       const cids = records.healthRecords.map((record: HealthRecord) => record.cid);
       if (!cids.length) return;
 
-      // Check if we already have data for all CIDs to avoid unnecessary loading
       const missingCids = cids.filter((cid: string) => !ipfsDataMap[cid]);
       if (missingCids.length === 0) return;
 
@@ -92,7 +86,6 @@ export const PatientRecordsContent = React.memo(
         try {
           const ipfsResponse = await getBulkIPFSData(missingCids);
 
-          // Create a map of CID -> IPFS data for easy lookup
           const newDataMap: Record<string, any> = { ...ipfsDataMap };
           if (ipfsResponse?.results) {
             ipfsResponse.results.forEach((result: any) => {
@@ -135,9 +128,7 @@ export const PatientRecordsContent = React.memo(
     // Copy to clipboard with visual feedback
     const copyToClipboard = useCallback((text: string, id: string, field: string) => {
       navigator.clipboard.writeText(text);
-      // Set which item is being copied
       setCopiedItem({ id, field });
-      // Reset after 2 seconds
       setTimeout(() => {
         setCopiedItem(null);
       }, 2000);
@@ -335,7 +326,7 @@ export const PatientRecordsContent = React.memo(
       }
     }
 
-    return true; // Don't re-render - props are considered equal
+    return true;
   }
 );
 
