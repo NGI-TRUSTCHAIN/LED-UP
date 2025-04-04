@@ -10,9 +10,9 @@ import { useAddressToDID, useRegisterDid } from '@/features/did-registry/hooks/u
 import { generateKeyPair } from '@/features/cryptography';
 import { AuthStatusCard } from '@/features/auth/components/auth-status-card';
 import { DidCreationFlow } from '@/features/auth/components/did-creation-flow';
-import { useRegisterProducer } from '@/features/data-registry/hooks/use-data-registry';
 import { SigninFlowProvider, useSigninFlow } from '@/features/auth/contexts/signin-flow-context';
 import { motion } from 'framer-motion';
+import { useGrantDidRole } from '@/features/auth';
 
 function SigninPageContent() {
   const router = useRouter();
@@ -21,7 +21,7 @@ function SigninPageContent() {
   const { isAuthenticated, isLoading, did: authDid, error, login, logout } = useAuth();
   const { data: existingDid, isLoading: isLoadingDid, refetch: refetchDid } = useAddressToDID(address);
   const registerDid = useRegisterDid();
-  const { mutate: registerProducer, isPending: isSubmitting } = useRegisterProducer();
+  const { mutate: grantDidRole } = useGrantDidRole();
 
   const {
     isProcessing,
@@ -204,6 +204,10 @@ function SigninPageContent() {
     } finally {
       setIsProcessing(false);
     }
+  };
+
+  const handleGrantDidRole = async (role: string) => {
+    await grantDidRole({ did: didIdentifier, role });
   };
 
   // Handle producer registration

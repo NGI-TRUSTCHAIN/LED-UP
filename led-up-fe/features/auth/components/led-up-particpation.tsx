@@ -35,7 +35,6 @@ const LedUpParticipation = ({
     consent,
     setStatus,
     setConsent,
-    setIsProcessing,
     producerError,
     producerTransactionHash,
     producerIsSuccess,
@@ -74,7 +73,6 @@ const LedUpParticipation = ({
             toast.success('Producer registered successfully', {
               description: `Transaction hash: ${data.hash}`,
             });
-            // Call the parent's onRegister to handle authentication
             onRegister(e);
           },
           onError: (err) => {
@@ -143,7 +141,7 @@ const LedUpParticipation = ({
                     <SelectValue placeholder="Select consent status" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value={ConsentStatus.NotSet.toString()}>Not Set</SelectItem>
+                    <SelectItem value={ConsentStatus.NotSet.toString()}>Pending</SelectItem>
                     <SelectItem value={ConsentStatus.Allowed.toString()}>Allowed</SelectItem>
                     <SelectItem value={ConsentStatus.Denied.toString()}>Denied</SelectItem>
                   </SelectContent>

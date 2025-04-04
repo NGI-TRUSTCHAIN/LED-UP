@@ -246,32 +246,34 @@ export const EnhancedPermissionDashboard = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3 shadow-sm">
-          <TabsTrigger
-            value="users"
-            className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all"
-            onClick={() => setActiveTab('users')}
-          >
-            <Users className="h-4 w-4 mr-2" />
-            Users
-          </TabsTrigger>
-          <TabsTrigger
-            value="resources"
-            className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all"
-            onClick={() => setActiveTab('resources')}
-          >
-            <FileText className="h-4 w-4 mr-2" />
-            Resources
-          </TabsTrigger>
-          <TabsTrigger
-            value="permissions"
-            className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all"
-            onClick={() => setActiveTab('permissions')}
-          >
-            <ShieldCheck className="h-4 w-4 mr-2" />
-            Permissions
-          </TabsTrigger>
-        </TabsList>
+        <div className="border-b mb-6">
+          <TabsList className="bg-transparent h-12 p-0">
+            <TabsTrigger
+              value="users"
+              className="data-[state=active]:bg-primary/5 data-[state=active]:text-primary data-[state=active]:shadow-sm rounded-none border-b-2 border-transparent data-[state=active]:border-primary h-12 px-6 transition-all"
+              onClick={() => setActiveTab('users')}
+            >
+              <Users className="h-4 w-4 mr-2" />
+              Users
+            </TabsTrigger>
+            <TabsTrigger
+              value="resources"
+              className="data-[state=active]:bg-primary/5 data-[state=active]:text-primary data-[state=active]:shadow-sm rounded-none border-b-2 border-transparent data-[state=active]:border-primary h-12 px-6 transition-all"
+              onClick={() => setActiveTab('resources')}
+            >
+              <FileText className="h-4 w-4 mr-2" />
+              Resources
+            </TabsTrigger>
+            <TabsTrigger
+              value="permissions"
+              className="data-[state=active]:bg-primary/5 data-[state=active]:text-primary data-[state=active]:shadow-sm rounded-none border-b-2 border-transparent data-[state=active]:border-primary h-12 px-6 transition-all"
+              onClick={() => setActiveTab('permissions')}
+            >
+              <ShieldCheck className="h-4 w-4 mr-2" />
+              Permissions
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         {/* Users Tab */}
         <TabsContent value="users">
@@ -308,10 +310,10 @@ export const EnhancedPermissionDashboard = () => {
                     </span>
                     Users
                   </h3>
-                  <div className="border rounded-md max-h-[500px] overflow-y-auto bg-white dark:bg-gray-900 shadow-sm">
+                  <div className="border rounded-md max-h-[500px] overflow-y-auto bg-background dark:bg-gray-900 shadow-sm">
                     <Table>
                       <TableHeader>
-                        <TableRow className="bg-slate-50 dark:bg-gray-800">
+                        <TableRow className="bg-muted dark:bg-gray-800">
                           <TableHead>Name</TableHead>
                           <TableHead>DID</TableHead>
                           <TableHead>Permissions</TableHead>
@@ -323,7 +325,7 @@ export const EnhancedPermissionDashboard = () => {
                             key={user.id}
                             className={`${
                               selectedUser === user.id ? 'bg-primary/5 border-l-4 border-l-primary' : ''
-                            } cursor-pointer hover:bg-slate-50 dark:hover:bg-gray-800 transition-colors`}
+                            } cursor-pointer hover:bg-muted dark:hover:bg-gray-800 transition-colors`}
                             onClick={() => setSelectedUser(user.id)}
                           >
                             <TableCell className="font-medium flex items-center gap-2">
@@ -370,7 +372,10 @@ export const EnhancedPermissionDashboard = () => {
                     {users
                       .filter((user) => user.id === selectedUser)
                       .map((user) => (
-                        <div key={user.id} className="space-y-4 bg-white dark:bg-gray-900 p-4 rounded-lg shadow-sm">
+                        <div
+                          key={user.id}
+                          className="space-y-4 bg-background dark:bg-gray-900 p-4 rounded-lg shadow-sm"
+                        >
                           <div className="flex items-center gap-3 pb-3 border-b">
                             <div className="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xl font-bold">
                               {user.name.charAt(0).toUpperCase()}
@@ -384,7 +389,7 @@ export const EnhancedPermissionDashboard = () => {
                           <div className="grid grid-cols-1 gap-3">
                             <div>
                               <Label className="text-xs text-muted-foreground">DID Identifier</Label>
-                              <div className="flex items-center bg-slate-50 dark:bg-gray-800 p-2 rounded text-sm font-mono">
+                              <div className="flex items-center bg-muted dark:bg-gray-800 p-2 rounded text-sm font-mono">
                                 {user.did}
                               </div>
                             </div>
@@ -392,7 +397,7 @@ export const EnhancedPermissionDashboard = () => {
 
                           <div>
                             <Label className="mb-2 block text-xs text-muted-foreground">Permission Access</Label>
-                            <div className="space-y-2 border rounded-md p-4 bg-slate-50 dark:bg-gray-800 divide-y">
+                            <div className="space-y-2 border rounded-md p-4 bg-muted dark:bg-gray-800 divide-y">
                               {permissions.map((permission) => (
                                 <div
                                   key={permission.id}
@@ -456,7 +461,7 @@ export const EnhancedPermissionDashboard = () => {
                   </Card>
                 ) : (
                   <div className="flex items-center justify-center h-full">
-                    <div className="text-center p-6 bg-slate-50 dark:bg-gray-800 rounded-lg">
+                    <div className="text-center p-6 bg-muted dark:bg-gray-800 rounded-lg">
                       <div className="w-12 h-12 rounded-full bg-primary/10 mx-auto flex items-center justify-center mb-4">
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
@@ -538,10 +543,10 @@ export const EnhancedPermissionDashboard = () => {
                     </span>
                     Resources
                   </h3>
-                  <div className="border rounded-md max-h-[500px] overflow-y-auto bg-white dark:bg-gray-900 shadow-sm">
+                  <div className="border rounded-md max-h-[500px] overflow-y-auto bg-background dark:bg-gray-900 shadow-sm">
                     <Table>
                       <TableHeader>
-                        <TableRow className="bg-slate-50 dark:bg-gray-800">
+                        <TableRow className="bg-muted dark:bg-gray-800">
                           <TableHead>Name</TableHead>
                           <TableHead>Access Type</TableHead>
                           <TableHead>Users</TableHead>
@@ -553,7 +558,7 @@ export const EnhancedPermissionDashboard = () => {
                             key={resource.id}
                             className={`${
                               selectedResource === resource.id ? 'bg-primary/5 border-l-4 border-l-primary' : ''
-                            } cursor-pointer hover:bg-slate-50 dark:hover:bg-gray-800 transition-colors`}
+                            } cursor-pointer hover:bg-muted dark:hover:bg-gray-800 transition-colors`}
                             onClick={() => setSelectedResource(resource.id)}
                           >
                             <TableCell className="font-medium">
@@ -599,7 +604,7 @@ export const EnhancedPermissionDashboard = () => {
                                   return (
                                     <div
                                       key={perm.userId}
-                                      className="w-7 h-7 rounded-full bg-slate-200 dark:bg-gray-700 flex items-center justify-center border-2 border-white dark:border-gray-900 text-xs font-medium"
+                                      className="w-7 h-7 rounded-full bg-muted dark:bg-gray-700 flex items-center justify-center border-2 border-white dark:border-gray-900 text-xs font-medium"
                                       title={user?.name}
                                     >
                                       {user?.name.charAt(0).toUpperCase()}
@@ -607,7 +612,7 @@ export const EnhancedPermissionDashboard = () => {
                                   );
                                 })}
                                 {resource.permissions.length > 3 && (
-                                  <div className="w-7 h-7 rounded-full bg-slate-100 dark:bg-gray-800 flex items-center justify-center border-2 border-white dark:border-gray-900 text-xs">
+                                  <div className="w-7 h-7 rounded-full bg-muted dark:bg-gray-800 flex items-center justify-center border-2 dark:border-gray-900 text-xs">
                                     +{resource.permissions.length - 3}
                                   </div>
                                 )}
@@ -645,7 +650,10 @@ export const EnhancedPermissionDashboard = () => {
                     {resources
                       .filter((resource) => resource.id === selectedResource)
                       .map((resource) => (
-                        <div key={resource.id} className="space-y-4 bg-white dark:bg-gray-900 p-4 rounded-lg shadow-sm">
+                        <div
+                          key={resource.id}
+                          className="space-y-4 bg-background dark:bg-gray-900 p-4 rounded-lg shadow-sm"
+                        >
                           <div className="flex items-center gap-3 pb-3 border-b">
                             <div className="w-12 h-12 rounded-md bg-primary/10 text-primary flex items-center justify-center">
                               <svg
@@ -671,14 +679,14 @@ export const EnhancedPermissionDashboard = () => {
 
                           <div>
                             <Label className="text-xs text-muted-foreground">Description</Label>
-                            <div className="bg-slate-50 dark:bg-gray-800 p-3 rounded text-sm mt-1">
+                            <div className="bg-muted dark:bg-gray-800 p-3 rounded text-sm mt-1">
                               {resource.description}
                             </div>
                           </div>
 
                           <div>
                             <Label className="text-xs text-muted-foreground mb-2 block">Access Type</Label>
-                            <div className="flex bg-slate-50 dark:bg-gray-800 p-3 rounded gap-4">
+                            <div className="flex bg-muted dark:bg-gray-800 p-3 rounded gap-4">
                               <div className="flex items-center space-x-2">
                                 <input
                                   type="radio"
@@ -741,7 +749,7 @@ export const EnhancedPermissionDashboard = () => {
 
                           <div>
                             <Label className="text-xs text-muted-foreground mb-2 block">User Access</Label>
-                            <div className="space-y-3 border rounded-md p-4 max-h-[300px] overflow-y-auto bg-slate-50 dark:bg-gray-800 divide-y">
+                            <div className="space-y-3 border rounded-md p-4 max-h-[300px] overflow-y-auto bg-muted dark:bg-gray-800 divide-y">
                               {users.map((user) => {
                                 const userPermission = resource.permissions.find((perm) => perm.userId === user.id);
                                 const userPermissionIds = userPermission ? userPermission.permissionIds : [];
@@ -766,7 +774,7 @@ export const EnhancedPermissionDashboard = () => {
                                           .map((permission) => (
                                             <div
                                               key={permission.id}
-                                              className="flex items-center space-x-2 px-3 py-2 bg-white dark:bg-gray-900 p-1.5 rounded border border-gray-100 dark:border-gray-700"
+                                              className="flex items-center space-x-2 px-3 py-2 bg-background dark:bg-gray-900 p-1.5 rounded border dark:border-gray-700"
                                             >
                                               <Checkbox
                                                 id={`resource-${resource.id}-user-${user.id}-permission-${permission.id}`}
@@ -816,7 +824,7 @@ export const EnhancedPermissionDashboard = () => {
                   </Card>
                 ) : (
                   <div className="flex items-center justify-center h-full">
-                    <div className="text-center p-6 bg-slate-50 dark:bg-gray-800 rounded-lg">
+                    <div className="text-center p-6 bg-muted dark:bg-gray-800 rounded-lg">
                       <div className="w-12 h-12 rounded-full bg-primary/10 mx-auto flex items-center justify-center mb-4">
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
@@ -872,7 +880,7 @@ export const EnhancedPermissionDashboard = () => {
             <CardContent className="px-1">
               <div className="mb-8">
                 <Card className="overflow-hidden border">
-                  <CardHeader className="bg-slate-50 dark:bg-gray-800 p-4">
+                  <CardHeader className="bg-muted dark:bg-gray-800 p-4">
                     <CardTitle className="text-base">Add New Permission Type</CardTitle>
                   </CardHeader>
                   <CardContent className="p-4">
@@ -917,7 +925,7 @@ export const EnhancedPermissionDashboard = () => {
                           required
                         />
                       </div>
-                      <div className="md:col-span-2 lg:col-span-3 flex justify-end">
+                      <div className="justify-end">
                         <Button
                           type="submit"
                           disabled={
@@ -936,7 +944,7 @@ export const EnhancedPermissionDashboard = () => {
 
               <div className="grid gap-6 md:grid-cols-3">
                 {/* Read Permissions */}
-                <Card className="overflow-hidden border bg-white dark:bg-gray-900">
+                <Card className="overflow-hidden border bg-background dark:bg-gray-900">
                   <CardHeader className="bg-blue-50 dark:bg-blue-900/20 p-4 border-b">
                     <div className="flex items-center gap-2">
                       <span className="bg-blue-100 dark:bg-blue-800/30 text-blue-700 dark:text-blue-300 p-1.5 rounded">
@@ -952,7 +960,7 @@ export const EnhancedPermissionDashboard = () => {
                         .map((permission) => (
                           <div
                             key={permission.id}
-                            className="p-3 hover:bg-slate-50 dark:hover:bg-gray-800 transition-colors"
+                            className="p-3 hover:bg-muted dark:hover:bg-gray-800 transition-colors"
                           >
                             <div className="flex justify-between items-center">
                               <div>
@@ -991,7 +999,7 @@ export const EnhancedPermissionDashboard = () => {
                 </Card>
 
                 {/* Write Permissions */}
-                <Card className="overflow-hidden border bg-white dark:bg-gray-900">
+                <Card className="overflow-hidden border bg-background dark:bg-gray-900">
                   <CardHeader className="bg-amber-50 dark:bg-amber-900/20 p-4 border-b">
                     <div className="flex items-center gap-2">
                       <span className="bg-amber-100 dark:bg-amber-800/30 text-amber-700 dark:text-amber-300 p-1.5 rounded">
@@ -1048,7 +1056,7 @@ export const EnhancedPermissionDashboard = () => {
                 </Card>
 
                 {/* Admin Permissions */}
-                <Card className="overflow-hidden border bg-white dark:bg-gray-900">
+                <Card className="overflow-hidden border bg-background dark:bg-gray-900">
                   <CardHeader className="bg-purple-50 dark:bg-purple-900/20 p-4 border-b">
                     <div className="flex items-center gap-2">
                       <span className="bg-purple-100 dark:bg-purple-800/30 text-purple-700 dark:text-purple-300 p-1.5 rounded">
@@ -1066,7 +1074,7 @@ export const EnhancedPermissionDashboard = () => {
                         .map((permission) => (
                           <div
                             key={permission.id}
-                            className="p-3 hover:bg-slate-50 dark:hover:bg-gray-800 transition-colors"
+                            className="p-3 hover:bg-muted dark:hover:bg-gray-800 transition-colors"
                           >
                             <div className="flex justify-between items-center">
                               <div>

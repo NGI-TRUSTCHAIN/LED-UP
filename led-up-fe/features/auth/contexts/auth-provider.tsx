@@ -6,10 +6,19 @@ import { User } from '@/features/auth/types';
 import { Address, keccak256, toBytes } from 'viem';
 import { useUserRoles } from '../hooks/use-did-auth';
 
-export type UserRole = 'ADMIN' | 'CONSUMER' | 'PRODUCER' | 'PROVIDER' | 'OPERATOR' | 'ISSUER' | 'VERIFIER';
+export type UserRole =
+  | 'DEFAULT_ADMIN'
+  | 'ADMIN'
+  | 'CONSUMER'
+  | 'PRODUCER'
+  | 'PROVIDER'
+  | 'OPERATOR'
+  | 'ISSUER'
+  | 'VERIFIER';
 
 // Define role constants to match the smart contract
 const ROLE_HASHES = {
+  DEFAULT_ADMIN: keccak256(toBytes('DEFAULT_ADMIN')),
   ADMIN: keccak256(toBytes('ADMIN')),
   CONSUMER: keccak256(toBytes('CONSUMER')),
   PRODUCER: keccak256(toBytes('PRODUCER')),
@@ -83,8 +92,6 @@ function bytes32ToUserRole(roleHash: `0x${string}`): UserRole | null {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { authState, login, logout, refreshTokenSilently, register } = useServerAuth();
   const { data: roleHashes, isLoading: isRolesLoading } = useUserRoles(authState.did);
-
-  console.log('roleHashes', roleHashes);
 
   const hasRole = useMemo(
     () => (role: UserRole) => {

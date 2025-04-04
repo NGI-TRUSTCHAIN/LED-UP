@@ -12,7 +12,7 @@ import { useSigninFlow } from '../contexts/signin-flow-context';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/features/auth/contexts/auth-provider';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, ShieldCheck } from 'lucide-react';
 
 // Define the registration steps - consolidated to 3 steps
 const registrationSteps: Step[] = [
@@ -216,63 +216,75 @@ export function DidCreationFlow({
   };
 
   return (
-    <Card className="w-full max-w-3xl mx-auto shadow-2xl border bg-gradient-to-br from-background/95 to-background/90 backdrop-blur-sm overflow-hidden">
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
-        <CardHeader className="text-center space-y-6 pb-8 relative">
-          {/* Decorative background elements */}
-          <div className="absolute inset-0 overflow-hidden">
-            <div className="absolute -top-10 -right-10 w-40 h-40 bg-primary/5 rounded-full blur-3xl" />
-            <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-secondary/5 rounded-full blur-3xl" />
+    <Card className="w-full max-w-3xl mx-auto shadow-2xl border bg-card/95 overflow-hidden relative before:absolute before:inset-0 before:bg-gradient-to-br before:from-primary/5 before:via-background before:to-secondary/5 before:opacity-60 before:rounded-xl isolate">
+      <motion.div
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, ease: 'easeOut' }}
+        className="relative z-10"
+      >
+        <CardHeader className="text-center space-y-5 py-8 px-8 relative">
+          {/* Decorative elements */}
+          <div aria-hidden="true" className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div className="absolute -top-24 -right-24 w-64 h-64 bg-primary/10 rounded-full blur-3xl opacity-70" />
+            <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-secondary/10 rounded-full blur-3xl opacity-70" />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[200%] h-24 bg-gradient-to-r from-transparent via-primary/5 to-transparent rotate-12 opacity-40" />
           </div>
 
           <div className="relative">
             <motion.div
-              initial={{ scale: 0.98 }}
-              animate={{ scale: 1 }}
-              transition={{ duration: 0.2 }}
-              className="inline-flex items-center justify-center p-3 rounded-xl bg-primary/10 text-primary mb-4"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.4, delay: 0.1 }}
+              className="inline-flex items-center justify-center p-3.5 rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 text-primary mb-5 ring-1 ring-primary/20"
             >
-              <Sparkles className="h-6 w-6" />
+              <ShieldCheck className="h-6 w-6 stroke-[1.5px]" />
             </motion.div>
-            <CardTitle className="text-3xl font-bold bg-gradient-to-r from-primary via-primary/80 to-primary bg-clip-text text-transparent">
+            <CardTitle className="text-3xl font-bold tracking-tight bg-gradient-to-br from-primary via-primary/90 to-primary/80 bg-clip-text text-transparent pb-1">
               Create Your Decentralized Identity
             </CardTitle>
-            <CardDescription className="text-base text-muted-foreground/90 mt-2 max-w-lg mx-auto">
-              Follow these steps to create your DID and join the LED-UP ecosystem
+            <CardDescription className="text-base text-muted-foreground/90 mt-3 max-w-lg mx-auto font-normal">
+              Follow these steps to create your DID and join the LED-UP ecosystem securely
             </CardDescription>
           </div>
         </CardHeader>
 
-        <CardContent className="space-y-8 px-8 pb-8">
+        <CardContent className="space-y-8 px-8 pb-10">
           {/* Step Indicator */}
-          <div className="relative">
+          <div className="relative px-2">
             <motion.div
-              initial={{ opacity: 0, y: 5 }}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.2 }}
+              transition={{ duration: 0.3, delay: 0.2 }}
               className="relative z-10"
             >
               <StepIndicator steps={registrationSteps} activeStep={activeStep} onStepChange={handleStepChange} />
             </motion.div>
-            <div className="absolute top-1/2 left-0 w-full h-0.5 bg-gradient-to-r from-muted via-border to-muted -translate-y-1/2" />
+            <div className="absolute top-1/2 left-0 w-full h-0.5 bg-gradient-to-r from-muted/40 via-border to-muted/40 -translate-y-1/2" />
           </div>
 
           {/* Step Content */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.2 }}
+            transition={{ duration: 0.4, delay: 0.3 }}
             className="relative"
           >
-            <div className="absolute inset-0 bg-gradient-to-br from-card/50 to-card/30 backdrop-blur-sm rounded-xl" />
-            <div className="relative p-6 rounded-xl border border-border/50 shadow-lg">
+            <div className="absolute inset-0 bg-gradient-to-br from-card/80 to-card/70 backdrop-blur-sm rounded-xl opacity-90" />
+            <div className="relative p-6 rounded-xl border border-border/40 shadow-lg overflow-hidden">
+              <div aria-hidden="true" className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+                <div className="absolute bottom-0 left-0 w-1/3 h-1/3 bg-primary/5 rounded-full blur-2xl opacity-60" />
+                <div className="absolute top-0 right-0 w-1/3 h-1/3 bg-secondary/5 rounded-full blur-2xl opacity-60" />
+              </div>
+
               <AnimatePresence mode="wait">
                 <motion.div
                   key={activeStep}
-                  initial={{ opacity: 0, x: 10 }}
+                  initial={{ opacity: 0, x: 15 }}
                   animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -10 }}
-                  transition={{ duration: 0.2 }}
+                  exit={{ opacity: 0, x: -15 }}
+                  transition={{ duration: 0.25, ease: 'easeInOut' }}
+                  className="relative z-10"
                 >
                   {renderStepContent()}
                 </motion.div>
