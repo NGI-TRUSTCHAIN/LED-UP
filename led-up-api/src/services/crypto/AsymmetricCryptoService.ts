@@ -83,16 +83,16 @@ export class AsymmetricCryptoService {
         throw new Error('Encryption with public key is only supported with secp256k1 curve');
       }
 
+      if (publicKey.startsWith('0x')) {
+        publicKey = publicKey.slice(2);
+      }
+
       if (!this.isValidPublicKey(publicKey)) {
         throw new Error('Invalid public key');
       }
 
       // Generate an ephemeral key pair
       const ephemeralKeyPair = this.ecCurve.genKeyPair();
-
-      if (publicKey.startsWith('0x')) {
-        publicKey = publicKey.slice(2);
-      }
 
       // Derive the shared secret using ECDH
       const recipientPublicKey = this.ecCurve.keyFromPublic(publicKey, 'hex');

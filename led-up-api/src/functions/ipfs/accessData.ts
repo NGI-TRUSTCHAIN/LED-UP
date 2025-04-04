@@ -54,6 +54,8 @@ export async function accessData(
     // Get requester's public key for re-encryption
     const publicKey = await didRegistryService.getPublicKeyForDid(did);
 
+    console.log('publicKey', publicKey);
+
     if (!publicKey) {
       context.log(`Public key not found for DID: ${did}`);
       return {
@@ -65,7 +67,7 @@ export async function accessData(
       };
     }
 
-    const recordIds = await dataRegistryService.getProducerRecords(did);
+    const recordIds = await dataRegistryService.getProducerRecords(did.split(':')[2]);
 
     console.log('recordIds', recordIds);
 

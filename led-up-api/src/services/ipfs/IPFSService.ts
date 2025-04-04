@@ -87,19 +87,20 @@ export class IPFSService {
       // get encrypted data from IPFS
       const response = await this.fetchFromIPFS(cid, context);
 
-      context.log(response.data.encrypted);
-
       // decrypt data with the encryption key
       const decryptedData = this.symmetricEncryption.decrypt(
         response.data.encrypted,
         toCipherKey(this.encryptionKey)
       );
 
-      // encrypt data with the public key
-      const encryptedData = this.asymmetricEncryption.encryptWithPublicKey(
-        decryptedData,
-        publicKey
-      );
+      let encryptedData;
+      try {
+        // encrypt data with the public key
+        encryptedData = this.asymmetricEncryption.encryptWithPublicKey(decryptedData, publicKey);
+      } catch (error) {
+        context?.error(`Error encrypting data: ${error}`);
+        throw new Error(`Error encrypting data: ${error}`);
+      }
 
       return encryptedData;
     } catch (error) {
