@@ -250,185 +250,6 @@ export function ProcessPaymentForm({ unitPrice, serviceFee, isLoading: isParentL
 
   const isFormLoading = isParentLoading || paymentStatus === 'processing' || isLoadingDataSize || isApproving;
 
-  const DirectTokenApproval = () => {
-    const { data: walletClient } = useWalletClient();
-    const publicClient = usePublicClient();
-    const [error, setError] = useState<string | null>(null);
-    const [tokenAddress, setTokenAddress] = useState<`0x${string}` | null>(null);
-    const [isLoadingToken, setIsLoadingToken] = useState(false);
-
-    const compensationAddress = process.env.NEXT_PUBLIC_COMPENSATION_CONTRACT_ADDRESS as `0x${string}`;
-    const envTokenAddress = process.env.NEXT_PUBLIC_TOKEN_CONTRACT_ADDRESS as `0x${string}`;
-
-    // Get the token address from the contract
-    useEffect(() => {
-      const getTokenAddress = async () => {
-        if (!publicClient) return;
-
-        try {
-          setIsLoadingToken(true);
-          // Get the token address directly from the contract
-          const contractTokenAddress = (await publicClient.readContract({
-            address: compensationAddress,
-            abi: CompensationABI, // Use Compensation ABI instead of ERC20ABI
-            functionName: 'getPaymentTokenAddress',
-            args: [],
-          })) as `0x${string}`;
-
-          console.log('Token address from contract:', contractTokenAddress);
-          console.log('Token address from env:', envTokenAddress);
-
-          if (contractTokenAddress.toLowerCase() !== envTokenAddress.toLowerCase()) {
-            console.warn('⚠️ WARNING: Token address mismatch between contract and environment variable');
-            console.warn('Contract token:', contractTokenAddress);
-            console.warn('Env token:', envTokenAddress);
-          }
-
-          setTokenAddress(contractTokenAddress);
-        } catch (error) {
-          console.error('Error getting token address from contract:', error);
-          // Fallback to environment variable
-          console.log('Falling back to environment variable token address:', envTokenAddress);
-          setTokenAddress(envTokenAddress);
-        } finally {
-          setIsLoadingToken(false);
-        }
-      };
-
-      getTokenAddress();
-    }, [publicClient, compensationAddress, envTokenAddress]);
-
-    const handleDirectApproval = async () => {
-      if (!walletClient || !publicClient || !address) {
-        toast.error('Wallet not connected');
-        return;
-      }
-
-      // Use the token address from the contract, or fall back to env if not available
-      const targetTokenAddress = tokenAddress || envTokenAddress;
-
-      if (!targetTokenAddress) {
-        toast.error('Token address not available');
-        return;
-      }
-
-      try {
-        setIsApproving(true);
-        setError(null);
-
-        // Use maximum possible value for approval
-        const maxApproval = BigInt('0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff');
-
-        console.log('Approving tokens directly:', {
-          token: targetTokenAddress,
-          spender: compensationAddress,
-          owner: address,
-          amount: 'MAX_UINT256',
-        });
-
-        // Check current allowance first
-        const currentAllowance = await publicClient.readContract({
-          address: targetTokenAddress,
-          abi: ERC20ABI,
-          functionName: 'allowance',
-          args: [address, compensationAddress],
-        });
-
-        console.log('Current allowance before approval:', (currentAllowance as bigint).toString());
-
-        // Simulate the approval first
-        const { request } = await publicClient.simulateContract({
-          address: targetTokenAddress,
-          abi: ERC20ABI,
-          functionName: 'approve',
-          args: [compensationAddress, maxApproval],
-          account: address,
-        });
-
-        // Execute the transaction
-        const hash = await walletClient.writeContract(request);
-
-        console.log('Approval transaction hash:', hash);
-        toast.info('Approval transaction submitted. Waiting for confirmation...');
-
-        // Wait for transaction confirmation
-        const receipt = await publicClient.waitForTransactionReceipt({ hash });
-        console.log('Approval transaction confirmed:', receipt);
-
-        if (receipt.status === 'success') {
-          // Verify the allowance was updated
-          const newAllowance = await publicClient.readContract({
-            address: targetTokenAddress,
-            abi: ERC20ABI,
-            functionName: 'allowance',
-            args: [address, compensationAddress],
-          });
-
-          console.log('New allowance after approval:', (newAllowance as bigint).toString());
-
-          toast.success('Tokens approved successfully!');
-
-          // Force UI update
-          setTimeout(() => {
-            setIsApproved(true);
-          }, 500);
-        } else {
-          toast.error('Approval transaction failed!');
-        }
-      } catch (err) {
-        console.error('Direct approval error:', err);
-        const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-        setError(errorMessage);
-        toast.error('Approval failed', {
-          description: errorMessage,
-        });
-      } finally {
-        setIsApproving(false);
-      }
-    };
-
-    return (
-      <div className="mt-4 p-4 border-2 border-red-500 rounded-md bg-red-50 dark:bg-red-900/20">
-        <h3 className="font-bold text-red-700 dark:text-red-400 mb-2">Emergency Token Approval</h3>
-        <p className="text-sm mb-3">If the normal approval process isn't working, use this direct method:</p>
-
-        <Button
-          onClick={handleDirectApproval}
-          disabled={isApproving || isLoadingToken}
-          className="w-full bg-red-600 hover:bg-red-700 text-white"
-        >
-          {isApproving ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Direct Token Approval...
-            </>
-          ) : isLoadingToken ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Loading Token Address...
-            </>
-          ) : (
-            'Approve Tokens Directly'
-          )}
-        </Button>
-
-        {error && <p className="text-xs text-red-600 mt-2 break-all">{error}</p>}
-
-        <div className="text-xs mt-2">
-          <div>
-            <strong>Token:</strong> {tokenAddress || envTokenAddress || 'Loading...'}
-          </div>
-          <div>
-            <strong>Spender:</strong> {compensationAddress}
-          </div>
-          {tokenAddress && envTokenAddress && tokenAddress.toLowerCase() !== envTokenAddress.toLowerCase() && (
-            <div className="text-red-600 font-bold mt-1">⚠️ WARNING: Token address mismatch detected!</div>
-          )}
-        </div>
-      </div>
-    );
-  };
-
   return (
     <div className="space-y-8 w-full">
       {/* Balance section - conditional rendering */}
@@ -449,10 +270,8 @@ export function ProcessPaymentForm({ unitPrice, serviceFee, isLoading: isParentL
               onApprovalStatusChange={handleApprovalStatus}
             />
 
-            <DirectTokenApproval />
-
             {!isApproved && totalCost && (
-              <Alert className="mt-4 bg-amber-50 border-amber-200 dark:bg-amber-900/20 dark:border-amber-800">
+              <Alert className="mt-4 bg-amber-50 border-amber-200 dark:bg-amber-900/20 text-amber-700 dark:text-amber-500 dark:border-amber-800">
                 <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
                 <AlertTitle>Token Approval Required</AlertTitle>
                 <AlertDescription className="flex flex-col">
@@ -503,8 +322,8 @@ export function ProcessPaymentForm({ unitPrice, serviceFee, isLoading: isParentL
                 transition={{ duration: 0.3 }}
                 className="mb-4"
               >
-                <Alert className="bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800">
-                  <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+                <Alert className="bg-success text-success-foreground">
+                  <CheckCircle className="h-4 w-4 text-success" />
                   <AlertTitle>Already Paid</AlertTitle>
                   <AlertDescription>
                     This record has already been paid for. No further payment is required.
@@ -520,7 +339,7 @@ export function ProcessPaymentForm({ unitPrice, serviceFee, isLoading: isParentL
                 transition={{ duration: 0.3 }}
                 className="mb-4"
               >
-                <Alert className="bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800">
+                <Alert className="bg-green-50 border-green-200 dark:bg-emerald-950/20 text-green-700 dark:text-green-500 dark:border-green-800">
                   <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
                   <AlertTitle>Payment Successful</AlertTitle>
                   <AlertDescription>
@@ -537,7 +356,7 @@ export function ProcessPaymentForm({ unitPrice, serviceFee, isLoading: isParentL
                 transition={{ duration: 0.3 }}
                 className="mb-4"
               >
-                <Alert className="bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-800">
+                <Alert className="bg-red-50 border-red-200 dark:bg-red-900/20 text-red-700 dark:text-red-500 dark:border-red-800">
                   <AlertCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
                   <AlertTitle>Payment Failed</AlertTitle>
                   <AlertDescription>{errorMessage}</AlertDescription>
@@ -552,7 +371,7 @@ export function ProcessPaymentForm({ unitPrice, serviceFee, isLoading: isParentL
                 transition={{ duration: 0.3 }}
                 className="mb-4"
               >
-                <Alert className="bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800">
+                <Alert className="bg-blue-50 border-blue-200 dark:bg-blue-900/20 text-blue-700 dark:text-blue-500 dark:border-blue-800">
                   <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                   <AlertTitle>Record Data Size</AlertTitle>
                   <AlertDescription>Detected data size: {dataSize.toString()} units</AlertDescription>

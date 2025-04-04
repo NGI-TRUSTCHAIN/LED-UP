@@ -146,14 +146,8 @@ export function TokenBalanceCard({
 
   // Add a button to recheck allowance and display debugging info
   const debugAllowance = async () => {
-    console.log('DEBUG: Checking current allowance...');
     try {
       const currentAllowance = await tokenAllowance.getAllowance();
-      console.log(
-        'DEBUG: Current allowance:',
-        typeof currentAllowance === 'bigint' ? currentAllowance.toString() : '0'
-      );
-      console.log('DEBUG: Required amount:', requiredAmount ? requiredAmount.toString() : 'undefined');
 
       // Ensure currentAllowance is treated as bigint
       const allowanceBigInt = typeof currentAllowance === 'bigint' ? currentAllowance : BigInt(0);
@@ -277,21 +271,29 @@ export function TokenBalanceCard({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-2">
-            <Button variant="outline" size="sm" className="text-xs" onClick={debugAllowance}>
+          <div className="flex items-center justify-end gap-2">
+            <Button variant="default" size="sm" className="text-xs" onClick={debugAllowance}>
               Recheck Allowance
             </Button>
 
-            <Button variant="secondary" size="sm" className="text-xs" onClick={forceMaxApprove} disabled={isApproving}>
+            <Button
+              variant="secondary"
+              size="sm"
+              className="text-xs border border-primary"
+              onClick={forceMaxApprove}
+              disabled={isApproving}
+            >
               {isApproving ? 'Approving...' : 'Force Approve MAX'}
             </Button>
           </div>
 
           {allowance === BigInt(0) && balance > BigInt(0) && (
-            <Alert className="bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-800">
-              <AlertTriangle className="h-4 w-4 text-red-600" />
-              <AlertTitle>No Allowance Set</AlertTitle>
-              <AlertDescription className="text-sm">
+            <Alert className="bg-destructive/20 dark:bg-destructive/20 text-destructive dark:text-foreground border-destructive/50 dark:border-destructive/50">
+              <AlertTitle className="flex items-center gap-2">
+                <AlertTriangle className="h-6 w-6 text-destructive" />
+                No Allowance Set
+              </AlertTitle>
+              <AlertDescription className="text-sm dark:text-foreground">
                 <p>
                   Your balance is {formatTokenAmount(balance, 18, 'LED')} but you haven't approved any tokens for
                   spending.
@@ -336,8 +338,8 @@ export function TokenBalanceCard({
 
           {/* Approved Confirmation */}
           {!needsApproval && requiredAmount && !isLoading && (
-            <Alert className="bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800">
-              <div className="flex items-center text-green-600 dark:text-green-400">
+            <Alert className="bg-success text-success-foreground">
+              <div className="flex items-center text-success">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="16"
@@ -360,7 +362,7 @@ export function TokenBalanceCard({
 
           {/* Insufficient Balance Warning - keep at the bottom */}
           {balance && requiredAmount && balance < requiredAmount && (
-            <Alert variant="destructive">
+            <Alert variant="destructive" className="bg-error text-error-foreground">
               <AlertTriangle className="h-4 w-4" />
               <AlertTitle>Insufficient Balance</AlertTitle>
               <AlertDescription>
