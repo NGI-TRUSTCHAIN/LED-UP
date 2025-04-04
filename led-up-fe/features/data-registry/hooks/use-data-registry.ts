@@ -508,7 +508,7 @@ export function useShareToProvider(config: Partial<ContractConfig> = {}) {
 }
 
 /**
- * Hook to trigger access to a record
+ * Hook to trigger record access
  * @param config - Optional contract configuration
  */
 export function useTriggerAccess(config: Partial<ContractConfig> = {}) {
@@ -532,18 +532,20 @@ export function useTriggerAccess(config: Partial<ContractConfig> = {}) {
       // Execute transaction on the client
       return executeTransaction(walletClient, publicClient, preparation.transaction, walletClient.account);
     },
-    onSuccess: (data, variables) => {
+    onSuccess: (data, recordId) => {
       if (data.success) {
-        // The consumer's address would be the wallet address
-        const walletAddress = walletClient?.account?.address;
+        // Invalidate relevant queries
+        queryClient.invalidateQueries({
+          queryKey: DATA_REGISTRY_KEYS.record.info(recordId),
+        });
 
-        if (walletAddress) {
-          // Invalidate relevant queries
-          queryClient.invalidateQueries({
-            queryKey: DATA_REGISTRY_KEYS.record.access(variables, walletAddress),
-          });
-        }
+        // Return the successful transaction hash and success status
+        return {
+          success: true,
+          hash: data.hash,
+        };
       }
+      return { success: false };
     },
   });
 }

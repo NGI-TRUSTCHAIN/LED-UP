@@ -280,16 +280,15 @@ export async function getAccessForData(
       throw new ApiError(response.message || 'Failed to get access to data');
     }
 
-    const data = response.data;
-
     // Check for API-level success flag
     if (!response.success) {
       throw new Error(response.message || 'You do not have permission to view this health record');
     }
 
+    const data = response.data;
+
     return data;
   } catch (error) {
-    logger.error('Error accessing health record data:', error instanceof Error ? error.message : 'Unknown error');
     throw new Error('Failed to access health record data. Please ensure you have permission.');
   }
 }

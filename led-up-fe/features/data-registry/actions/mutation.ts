@@ -71,7 +71,6 @@ export async function prepareRegisterProducer(input: RegisterProducerInput): Pro
     if (input.consent === undefined || input.consent === null) {
       throw new Error('Consent is required');
     }
-
     return {
       success: true,
       transaction: {

@@ -405,7 +405,7 @@ export function useAccessForData(cid?: string, did?: string, address?: string, r
  * @param privateKey - The private key to use for decryption
  * @returns Object containing the decrypted data and loading/error states
  */
-export function useDecryptHealthData(encryptedData: string | undefined, privateKey: string | undefined) {
+export function useDecryptHealthData(encryptedData: any | undefined, privateKey: string | undefined) {
   const [state, setState] = useState<{
     isDecrypting: boolean;
     error: Error | null;
@@ -431,28 +431,79 @@ export function useDecryptHealthData(encryptedData: string | undefined, privateK
       setState((prev) => ({ ...prev, isDecrypting: true, error: null }));
 
       try {
-        // Parse the encrypted data
-        let parsedData: AsymmetricEncryptOutput;
-        try {
-          parsedData =
-            typeof encryptedData === 'string'
-              ? (JSON.parse(encryptedData) as AsymmetricEncryptOutput)
-              : (encryptedData as AsymmetricEncryptOutput);
-        } catch (parseError) {
-          throw new Error(
-            `Failed to parse encrypted data: ${parseError instanceof Error ? parseError.message : 'Invalid format'}`
-          );
+        // Log the incoming data format
+        console.log('Attempting to decrypt data:', JSON.stringify(encryptedData).substring(0, 100) + '...');
+
+        // Format the encrypted data correctly for decryption
+        const parsedData: AsymmetricEncryptOutput = {
+          ephemeralPublicKey: '',
+          iv: '',
+          authTag: '',
+          encrypted: '',
+        };
+
+        // Check if all the required fields are already present
+        if (
+          typeof encryptedData === 'object' &&
+          encryptedData.ephemeralPublicKey &&
+          encryptedData.iv &&
+          encryptedData.authTag &&
+          encryptedData.encrypted
+        ) {
+          // Data already in the right format
+          parsedData.ephemeralPublicKey = encryptedData.ephemeralPublicKey;
+          parsedData.iv = encryptedData.iv;
+          parsedData.authTag = encryptedData.authTag;
+          parsedData.encrypted = encryptedData.encrypted;
+        } else {
+          // Try to parse it from a string if needed
+          try {
+            const parsed = typeof encryptedData === 'string' ? JSON.parse(encryptedData) : encryptedData;
+
+            if (parsed && parsed.ephemeralPublicKey && parsed.iv && parsed.authTag && parsed.encrypted) {
+              parsedData.ephemeralPublicKey = parsed.ephemeralPublicKey;
+              parsedData.iv = parsed.iv;
+              parsedData.authTag = parsed.authTag;
+              parsedData.encrypted = parsed.encrypted;
+            } else {
+              throw new Error('Missing required encryption fields in parsed data');
+            }
+          } catch (error) {
+            throw new Error(
+              `Failed to parse encrypted data: ${error instanceof Error ? error.message : 'Invalid format'}`
+            );
+          }
         }
 
+        // Validate the data
+        if (!parsedData.ephemeralPublicKey || !parsedData.iv || !parsedData.authTag || !parsedData.encrypted) {
+          throw new Error('Missing required encryption fields');
+        }
+
+        // Log the formatted data
+        console.log('Decrypting data with format:', {
+          hasEphemeralKey: !!parsedData.ephemeralPublicKey,
+          epkLength: parsedData.ephemeralPublicKey.length,
+          hasIV: !!parsedData.iv,
+          ivLength: parsedData.iv.length,
+          hasAuthTag: !!parsedData.authTag,
+          authTagLength: parsedData.authTag.length,
+          hasEncrypted: !!parsedData.encrypted,
+          encryptedLength: parsedData.encrypted.length,
+        });
+
+        // Ensure private key is in the expected format (hex without 0x prefix)
+        const formattedPrivateKey = privateKey.startsWith('0x') ? privateKey.slice(2) : privateKey;
+
         // Decrypt the data
-        const decrypted = decryptWithPrivateKey(parsedData, privateKey);
+        const decrypted = decryptWithPrivateKey(parsedData, formattedPrivateKey);
 
         // Parse the decrypted JSON data
         let result;
         try {
           result = JSON.parse(decrypted);
         } catch (jsonError) {
-          logger.warn('Decrypted data is not valid JSON, returning as string');
+          logger.warn('Decrypted data is not valid JSON, returning as string:', decrypted.substring(0, 50) + '...');
           result = decrypted;
         }
 
@@ -502,7 +553,16 @@ export function useDecryptedHealthData(
   // Get the actual encrypted data from the response
   const encryptedData = useMemo(() => {
     if (!accessData) return undefined;
-    return typeof accessData.data === 'string' ? accessData.data : JSON.stringify(accessData.data);
+
+    if (accessData.ephemeralPublicKey && accessData.iv && accessData.authTag && accessData.encrypted) {
+      return accessData;
+    }
+
+    if (accessData.data && typeof accessData.data === 'object') {
+      return accessData.data;
+    }
+
+    return accessData;
   }, [accessData]);
 
   // Then decrypt the data with the private key
@@ -563,20 +623,51 @@ export function useRevealData(
     isLoading,
     error,
     rawAccessData,
+    encryptedData,
   } = useDecryptedHealthData(cid, did, consumerAddress, privateKey, recordId);
 
-  // Determine if user has permission based on the access response
+  // Determine if user has permission based on the access response and decryption success
   const hasPermission = useMemo(() => {
-    if (!rawAccessData) return false;
-
-    // Check if access data contains permission information
-    if (typeof rawAccessData === 'object' && 'accessGranted' in rawAccessData) {
-      return !!rawAccessData.accessGranted;
+    // If we have successfully decrypted data, we definitely have permission
+    if (decryptedData) {
+      return true;
     }
 
-    // If we have decrypted data, we must have permission
-    return !!decryptedData;
-  }, [rawAccessData, decryptedData]);
+    // If we're still loading, don't make any determination yet
+    if (isLoading) {
+      return revealState.hasPermission;
+    }
+
+    // If we have an error that specifically mentions permission or authentication,
+    // then we likely don't have permission
+    if (error) {
+      const errorMsg = error instanceof Error ? error.message.toLowerCase() : '';
+      if (
+        errorMsg.includes('permission') ||
+        errorMsg.includes('access denied') ||
+        errorMsg.includes('authenticate') ||
+        errorMsg.includes('unauthorized')
+      ) {
+        return false;
+      }
+    }
+
+    // If we attempted decryption with a private key but failed with an authentication error,
+    // then we don't have permission or the key is wrong
+    if (privateKey && error && encryptedData) {
+      const errorMsg = error instanceof Error ? error.message.toLowerCase() : '';
+      if (
+        errorMsg.includes('unable to authenticate') ||
+        errorMsg.includes('decryption failed') ||
+        errorMsg.includes('auth')
+      ) {
+        return false;
+      }
+    }
+
+    // Fall back to checking if we have any data at all
+    return !!rawAccessData && !error;
+  }, [decryptedData, isLoading, error, rawAccessData, encryptedData, privateKey, revealState.hasPermission]);
 
   // Process the decrypted data to redact sensitive fields if needed
   const processedData = useMemo(() => {
@@ -608,6 +699,13 @@ export function useRevealData(
       return decryptedData;
     }
   }, [decryptedData, redactSensitiveFields, revealState.sensitiveFieldsHidden]);
+
+  // Update permission state when it changes
+  useEffect(() => {
+    if (hasPermission !== revealState.hasPermission) {
+      setRevealState((prev) => ({ ...prev, hasPermission }));
+    }
+  }, [hasPermission, revealState.hasPermission]);
 
   // Log access when data is first revealed
   useEffect(() => {
