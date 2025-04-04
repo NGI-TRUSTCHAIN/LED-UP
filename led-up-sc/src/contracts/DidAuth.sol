@@ -25,7 +25,7 @@ contract DidAuth {
     DidIssuer public didIssuer;
 
     // Role definitions for different access levels
-    bytes32 public constant DEFAULT_ADMIN_ROLE = keccak256("DEFAULT_ADMIN_ROLE");
+    bytes32 public constant DEFAULT_ADMIN_ROLE = keccak256("DEFAULT_ADMIN");
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN");
     bytes32 public constant OPERATOR_ROLE = keccak256("OPERATOR");
     bytes32 public constant PRODUCER_ROLE = keccak256("PRODUCER");

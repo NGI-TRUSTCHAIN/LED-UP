@@ -134,12 +134,8 @@ contract DataRegistry is AccessControl, Pausable, ReentrancyGuard, Ownable {
     event RecordVerified(string indexed recordId, address indexed verifier);
     event DidAuthUpdated(address indexed oldAddress, address indexed newAddress);
     event CompensationUpdated(address indexed oldAddress, address indexed newAddress);
-    event ConsumerAuthorized(
-        string indexed recordId, address indexed consumer, AccessLevel accessLevel, uint40 expiration
-    );
-    event ProviderAuthorized(
-        string indexed recordId, address indexed provider, AccessLevel accessLevel, uint40 timestamp
-    );
+    event ConsumerAuthorized(address indexed consumer, string recordId, AccessLevel accessLevel, uint40 expiration);
+    event ProviderAuthorized(address indexed provider, string recordId, AccessLevel accessLevel, uint40 timestamp);
     event AccessTriggered(
         string indexed recordId, address indexed consumer, string consumerDid, AccessLevel accessLevel
     );
@@ -394,7 +390,7 @@ contract DataRegistry is AccessControl, Pausable, ReentrancyGuard, Ownable {
         // Update sharing stats
         _resourceMetadata[recordId].sharedCount++;
 
-        emit ConsumerAuthorized(recordId, consumerAddress, AccessLevel.Read, expiration);
+        emit ConsumerAuthorized(consumerAddress, recordId, AccessLevel.Read, expiration);
     }
 
     function shareToProvider(string calldata recordId, address provider, uint40 accessDuration, AccessLevel accessLevel)
@@ -419,7 +415,7 @@ contract DataRegistry is AccessControl, Pausable, ReentrancyGuard, Ownable {
         // Update resource metadata
         _resourceMetadata[recordId].sharedCount++;
 
-        emit ProviderAuthorized(recordId, provider, accessLevel, uint40(block.timestamp + accessDuration));
+        emit ProviderAuthorized(provider, recordId, accessLevel, uint40(block.timestamp + accessDuration));
     }
 
     /**

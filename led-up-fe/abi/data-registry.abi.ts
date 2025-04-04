@@ -380,15 +380,15 @@ export const DataRegistryABI = [
     inputs: [
       {
         indexed: true,
-        internalType: 'string',
-        name: 'recordId',
-        type: 'string',
-      },
-      {
-        indexed: true,
         internalType: 'address',
         name: 'consumer',
         type: 'address',
+      },
+      {
+        indexed: false,
+        internalType: 'string',
+        name: 'recordId',
+        type: 'string',
       },
       {
         indexed: false,
@@ -475,15 +475,15 @@ export const DataRegistryABI = [
     inputs: [
       {
         indexed: true,
-        internalType: 'string',
-        name: 'recordId',
-        type: 'string',
-      },
-      {
-        indexed: true,
         internalType: 'address',
         name: 'provider',
         type: 'address',
+      },
+      {
+        indexed: false,
+        internalType: 'string',
+        name: 'recordId',
+        type: 'string',
       },
       {
         indexed: false,

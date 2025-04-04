@@ -6,7 +6,7 @@
     "build": "hardhat compile",
     "dev": "hardhat node --network localhost",
     "test": "hardhat test",
-    "deploy": "hardhat run scripts/deploy.ts --network localhost",
+    "deploy": "hardhat run scripts/hardhat/deploy.ts --network localhost",
     "lint": "solhint 'contracts/**/*.sol'",
     "lint:fix": "solhint 'contracts/**/*.sol' --fix",
     "coverage": "hardhat coverage",
