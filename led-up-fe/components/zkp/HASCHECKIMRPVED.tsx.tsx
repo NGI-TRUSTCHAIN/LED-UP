@@ -312,7 +312,10 @@ function HashVerifier() {
             </CardContent>
             <CardFooter>
               {errorMessage && (
-                <Alert variant="destructive" className="w-full mb-4">
+                <Alert
+                  variant="destructive"
+                  className="w-full mb-4 bg-destructive/20 dark:bg-destructive/30 text-destructive border-destructive/40 dark:border-destructive/50"
+                >
                   <AlertCircle className="h-4 w-4" />
                   <AlertTitle>Error</AlertTitle>
                   <AlertDescription>{errorMessage}</AlertDescription>

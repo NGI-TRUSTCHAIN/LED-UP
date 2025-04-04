@@ -18,6 +18,7 @@ import {
   Database,
   Menu,
   X,
+  Users,
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -65,38 +66,51 @@ const patientLinks = [
   },
 ];
 
-// const providerLinks = [
-//   {
-//     label: 'Home',
-//     href: '/',
-//     icon: Home,
-//   },
-//   {
-//     label: 'Dashboard',
-//     href: '/provider/dashboard',
-//     icon: DashboardIcon,
-//   },
-//   {
-//     label: 'Patients',
-//     href: '/provider/patients',
-//     icon: Users,
-//   },
-//   {
-//     label: 'Kanban Board',
-//     href: '/kanban',
-//     icon: Trello,
-//   },
-//   {
-//     label: 'Settings',
-//     href: '/provider/settings',
-//     icon: Settings,
-//   },
-// ];
+const providerLinks = [
+  {
+    label: 'Home',
+    href: '/',
+    icon: Home,
+  },
+  {
+    label: 'Dashboard',
+    href: '/dashboard',
+    icon: DashboardIcon,
+  },
+  {
+    label: 'Shared with me',
+    href: '/shared-with-me',
+    icon: Database,
+  },
+  {
+    label: 'Compensation',
+    href: '/compensation',
+    icon: BarChart2,
+  },
+  {
+    label: 'Access Control',
+    href: '/access-control',
+    icon: Shield,
+  },
+  {
+    label: 'Verification',
+    href: '/verification',
+    icon: CheckSquare,
+  },
+  {
+    label: 'Settings',
+    href: '/settings',
+    icon: Settings,
+  },
+];
 
 const Sidebar = () => {
-  const { logout } = useAuth();
+  const { logout, userRoles } = useAuth();
+  const role = userRoles[0];
+
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const links = role === 'PROVIDER' || role === 'CONSUMER' ? providerLinks : patientLinks;
 
   const SidebarContent = ({ isMobile = false }) => (
     <>
@@ -117,7 +131,7 @@ const Sidebar = () => {
         {isMobile && <span className="text-lg">LED-UP</span>}
       </Link>
       <nav className={cn('flex flex-col', isMobile ? 'w-full px-2 space-y-1' : 'items-center space-y-6')}>
-        {patientLinks.map((item) => {
+        {links.map((item) => {
           const isActive = pathname === item.href;
 
           if (isMobile) {
