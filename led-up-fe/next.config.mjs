@@ -31,6 +31,33 @@ const nextConfig = {
     // For development only
     ignoreDuringBuilds: true,
   },
+
+  // Add webpack configuration to properly handle specific dependencies
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      // Properly handle web-worker dependency
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        net: false,
+        tls: false,
+        path: false,
+        os: false,
+        crypto: false,
+        stream: false,
+        worker_threads: false,
+      };
+    }
+
+    // Fix web-worker issue with proper module handling
+    config.module = {
+      ...config.module,
+      exprContextCritical: false,
+      unknownContextCritical: false,
+    };
+
+    return config;
+  },
 };
 
 export default nextConfig;

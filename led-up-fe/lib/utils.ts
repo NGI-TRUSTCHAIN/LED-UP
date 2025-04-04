@@ -115,3 +115,12 @@ export const revalidateAfterTransaction = async (path: string) => {
     console.error('Error revalidating path:', error);
   }
 };
+
+/**
+ * Truncates a string to the specified length and adds an ellipsis if needed
+ */
+export const truncateString = (str: string, length: number): string => {
+  if (!str) return '';
+  if (str.length <= length) return str;
+  return `${str.substring(0, length)}...`;
+};
