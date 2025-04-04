@@ -63,7 +63,28 @@ export class ContractEventListener {
       throw new EventError(`Contract not found: ${contractId}`, EventErrorCode.CONTRACT_NOT_REGISTERED);
     }
 
-    await this.parser.listenToEvents(contract.parserId, callback);
+    // Check if the event exists in the ABI
+    const eventExists = contract.abi.some((item) => item.type === 'event' && item.name === eventName);
+    if (!eventExists) {
+      throw new EventError(`Event '${eventName}' not found in contract ABI`, EventErrorCode.INVALID_EVENT_NAME);
+    }
+
+    // Update contract config with the specific event name and polling interval
+    this.parser.registerContract({
+      address: contract.address,
+      abi: contract.abi,
+      eventName: eventName,
+      listener: {
+        pollingInterval: pollingInterval || contract.defaultPollingInterval,
+      },
+    });
+
+    await this.parser.listenToEvents(contract.parserId, (event) => {
+      // Only forward events matching the requested event name
+      if (event.eventName === eventName) {
+        callback(event as ParsedEvent<T>);
+      }
+    });
   }
 
   /**

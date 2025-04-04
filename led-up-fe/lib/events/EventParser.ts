@@ -1,4 +1,4 @@
-import { PublicClient, createPublicClient, http, decodeEventLog, Log, parseAbiItem, AbiEvent } from 'viem';
+import { PublicClient, createPublicClient, http, decodeEventLog, Log, AbiEvent } from 'viem';
 import {
   ContractEventConfig,
   EventCallback,
@@ -100,24 +100,40 @@ export class EventParser {
         : undefined;
 
       if (params.eventName && !eventAbi) {
+        console.error(`Event ${params.eventName} not found in ABI for contract ${config.address}`);
         throw new EventError(`Event ${params.eventName} not found in ABI`, EventErrorCode.INVALID_EVENT_NAME);
       }
 
+      console.log(
+        `Querying logs for contract ${config.address}, event: ${params.eventName}, blocks: ${params.fromBlock}-${params.toBlock}`
+      );
       const logs = await this.client.getLogs({
         address: config.address,
         fromBlock: params.fromBlock,
-        toBlock: params.toBlock,
+        toBlock: typeof params.toBlock === 'string' && params.toBlock === 'latest' ? 'latest' : params.toBlock,
         event: eventAbi,
       });
+      console.log(`Found ${logs.length} raw logs`);
 
-      const parsedResults = await this.parseLogs<T>(logs, config);
-      return parsedResults
+      const parsedResults = await this.parseLogs<T>(logs, config, params.eventName);
+      const validEvents = parsedResults
         .filter(
           (result): result is EventParseResult<T> & { success: true; event: ParsedEvent<T> } =>
             result.success && !!result.event
         )
         .map((result) => result.event);
+
+      console.log(`Successfully parsed ${validEvents.length} events out of ${logs.length} logs`);
+
+      // Log errors if there are any
+      const errors = parsedResults.filter((result) => !result.success).length;
+      if (errors > 0) {
+        console.warn(`Failed to parse ${errors} logs`);
+      }
+
+      return validEvents;
     } catch (error) {
+      console.error('Error in queryEvents:', error);
       if (error instanceof EventError) throw error;
       throw new EventError('Failed to query events', EventErrorCode.EVENT_QUERY_FAILED);
     }
@@ -147,15 +163,27 @@ export class EventParser {
   /**
    * Internal method to parse raw logs into structured events
    */
-  private async parseLogs<T>(logs: Log[], config: ContractEventConfig): Promise<EventParseResult<T>[]> {
+  private async parseLogs<T>(
+    logs: Log[],
+    config: ContractEventConfig,
+    eventName?: string
+  ): Promise<EventParseResult<T>[]> {
     return Promise.all(
       logs.map(async (log): Promise<EventParseResult<T>> => {
         try {
-          const { eventName, args } = decodeEventLog({
+          const decodedLog = decodeEventLog({
             abi: config.abi,
             data: log.data,
             topics: log.topics,
           });
+
+          // Skip logs that don't match the requested event name
+          if (eventName && decodedLog.eventName !== eventName) {
+            return {
+              success: false,
+              error: new EventError(`Event name mismatch: expected ${eventName}`, EventErrorCode.PARSER_ERROR),
+            };
+          }
 
           // Handle null values from log entries
           if (!log.blockNumber || !log.blockHash || !log.transactionHash || log.logIndex === null) {
@@ -163,18 +191,23 @@ export class EventParser {
           }
 
           let timestamp: number | undefined;
-          if (log.blockHash) {
-            const block = await this.client.getBlock({
-              blockHash: log.blockHash,
-            });
-            timestamp = Number(block.timestamp);
+          try {
+            if (log.blockHash) {
+              const block = await this.client.getBlock({
+                blockHash: log.blockHash,
+              });
+              timestamp = Number(block.timestamp);
+            }
+          } catch (blockError) {
+            console.warn('Failed to fetch block timestamp:', blockError);
+            // Continue without timestamp
           }
 
           return {
             success: true,
             event: {
-              eventName: eventName || 'UnknownEvent',
-              args: args as T,
+              eventName: decodedLog.eventName || 'UnknownEvent',
+              args: decodedLog.args as T,
               blockNumber: log.blockNumber,
               blockHash: log.blockHash,
               transactionHash: log.transactionHash,
@@ -184,6 +217,7 @@ export class EventParser {
             },
           };
         } catch (error) {
+          console.error('Error parsing log:', error, log);
           return {
             success: false,
             error: new EventError(

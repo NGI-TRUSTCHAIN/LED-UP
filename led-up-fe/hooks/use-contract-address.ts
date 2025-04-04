@@ -9,6 +9,7 @@ const CONTRACT_ADDRESSES = {
   didAuth: process.env.NEXT_PUBLIC_DID_AUTH_CONTRACT_ADDRESS as string,
   didVerifier: process.env.NEXT_PUBLIC_DID_VERIFIER_CONTRACT_ADDRESS as string,
   didIssuer: process.env.NEXT_PUBLIC_DID_ISSUER_CONTRACT_ADDRESS as string,
+  token: process.env.NEXT_PUBLIC_TOKEN_CONTRACT_ADDRESS as string,
 };
 
 export function useContractAddress() {
@@ -20,6 +21,7 @@ export function useContractAddress() {
       didAuthAddress: CONTRACT_ADDRESSES.didAuth,
       didVerifierAddress: CONTRACT_ADDRESSES.didVerifier,
       didIssuerAddress: CONTRACT_ADDRESSES.didIssuer,
+      tokenAddress: CONTRACT_ADDRESSES.token,
     }),
     []
   );

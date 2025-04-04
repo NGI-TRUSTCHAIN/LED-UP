@@ -211,6 +211,12 @@ export type ContractEventType = {
     ProducerRecordUpdated: ProducerRecordUpdatedEvent;
     ProducerConsentUpdated: ProducerConsentUpdatedEvent;
     ProducerRecordStatusUpdated: ProducerRecordStatusUpdatedEvent;
+    ConsumerAuthorized: {
+      recordId: string;
+      consumer: Address;
+      accessLevel: number;
+      expiration: bigint;
+    };
   };
   Compensation: {
     PaymentProcessed: PaymentProcessedEvent;

@@ -38,8 +38,8 @@ export interface ConsentStatusChangedEvent {
 }
 
 export interface ConsumerAuthorizedEvent {
-  recordId: string;
   consumer: Address;
+  recordId: string;
   accessLevel: number;
   expiration: bigint;
 }
@@ -54,8 +54,8 @@ export interface ProviderAddedEvent {
 }
 
 export interface ProviderAuthorizedEvent {
-  recordId: string;
   provider: Address;
+  recordId: string;
   accessLevel: number;
   timestamp: bigint;
 }
@@ -201,6 +201,15 @@ export class DataRegistryEvents {
     await this.listener.listenToEvent(contractId, 'ConsentStatusChanged', callback);
   }
 
+  public async listenToConsumerAuthorized(
+    address: Address,
+    callback: EventCallback<ParsedEvent<ConsumerAuthorizedEvent>>,
+    pollingInterval?: number
+  ): Promise<void> {
+    const contractId = this.ensureContract(address, pollingInterval);
+    await this.listener.listenToEvent(contractId, 'ConsumerAuthorized', callback);
+  }
+
   // Record Events
   public async listenToRecordRegistered(
     address: Address,
@@ -244,8 +253,21 @@ export class DataRegistryEvents {
     fromBlock: bigint,
     toBlock: bigint | 'latest'
   ): Promise<ParsedEvent<AccessGrantedEvent>[]> {
-    const contractId = this.ensureContract(address);
-    return this.listener.queryEvents(contractId, 'AccessGranted', fromBlock, toBlock);
+    try {
+      const contractId = this.ensureContract(address);
+      console.log(`Querying AccessGranted events from ${fromBlock} to ${toBlock} for contract ${address}`);
+      const events = await this.listener.queryEvents<AccessGrantedEvent>(
+        contractId,
+        'AccessGranted',
+        fromBlock,
+        toBlock
+      );
+      console.log(`Found ${events.length} AccessGranted events`);
+      return events;
+    } catch (error) {
+      console.error('Error querying AccessGranted events:', error);
+      return [];
+    }
   }
 
   public async queryAccessRevokedEvents(
@@ -253,8 +275,21 @@ export class DataRegistryEvents {
     fromBlock: bigint,
     toBlock: bigint | 'latest'
   ): Promise<ParsedEvent<AccessRevokedEvent>[]> {
-    const contractId = this.ensureContract(address);
-    return this.listener.queryEvents(contractId, 'AccessRevoked', fromBlock, toBlock);
+    try {
+      const contractId = this.ensureContract(address);
+      console.log(`Querying AccessRevoked events from ${fromBlock} to ${toBlock} for contract ${address}`);
+      const events = await this.listener.queryEvents<AccessRevokedEvent>(
+        contractId,
+        'AccessRevoked',
+        fromBlock,
+        toBlock
+      );
+      console.log(`Found ${events.length} AccessRevoked events`);
+      return events;
+    } catch (error) {
+      console.error('Error querying AccessRevoked events:', error);
+      return [];
+    }
   }
 
   public async queryAccessTriggeredEvents(
@@ -264,6 +299,28 @@ export class DataRegistryEvents {
   ): Promise<ParsedEvent<AccessTriggeredEvent>[]> {
     const contractId = this.ensureContract(address);
     return this.listener.queryEvents(contractId, 'AccessTriggered', fromBlock, toBlock);
+  }
+
+  public async queryConsumerAuthorizedEvents(
+    address: Address,
+    fromBlock: bigint,
+    toBlock: bigint | 'latest'
+  ): Promise<ParsedEvent<ConsumerAuthorizedEvent>[]> {
+    try {
+      const contractId = this.ensureContract(address);
+      console.log(`Querying ConsumerAuthorized events from ${fromBlock} to ${toBlock} for contract ${address}`);
+      const events = await this.listener.queryEvents<ConsumerAuthorizedEvent>(
+        contractId,
+        'ConsumerAuthorized',
+        fromBlock,
+        toBlock
+      );
+      console.log(`Found ${events.length} ConsumerAuthorized events`);
+      return events;
+    } catch (error) {
+      console.error('Error querying ConsumerAuthorized events:', error);
+      return [];
+    }
   }
 
   // Query Methods - Provider Events
