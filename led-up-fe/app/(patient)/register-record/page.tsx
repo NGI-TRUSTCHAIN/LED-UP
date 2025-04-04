@@ -355,7 +355,7 @@ const Page = () => {
     switch (registrationStatus) {
       case RegistrationStatus.PREPARING:
         return (
-          <Alert className="mb-4">
+          <Alert className="mb-4 bg-primary/20 dark:bg-primary/20 text-primary border-primary/40 dark:border-primary/50">
             <Loader2 className="h-4 w-4 animate-spin" />
             <AlertTitle>Preparing record</AlertTitle>
             <AlertDescription>Your health record is being prepared for registration.</AlertDescription>
@@ -363,7 +363,7 @@ const Page = () => {
         );
       case RegistrationStatus.REGISTERING:
         return (
-          <Alert className="mb-4">
+          <Alert className="mb-4 bg-primary/20 dark:bg-primary/20 text-primary border-primary/40 dark:border-primary/50">
             <Loader2 className="h-4 w-4 animate-spin" />
             <AlertTitle>Registering on blockchain</AlertTitle>
             <AlertDescription>
@@ -373,7 +373,7 @@ const Page = () => {
         );
       case RegistrationStatus.SUCCESS:
         return (
-          <Alert className="mb-4 bg-green-50">
+          <Alert className="mb-4 bg-green-50 dark:bg-green-900 text-green-500 dark:text-green-400 border-green-400 dark:border-green-600">
             <CheckCircle2 className="h-4 w-4 text-green-500" />
             <AlertTitle>Registration successful</AlertTitle>
             <AlertDescription>Your record has been successfully registered. Record ID: {recordId}</AlertDescription>
@@ -381,7 +381,7 @@ const Page = () => {
         );
       case RegistrationStatus.ERROR:
         return (
-          <Alert className="mb-4 bg-red-50" variant="destructive">
+          <Alert className="mb-4 bg-red-50 dark:bg-red-900 text-red-500 dark:text-red-400 border-red-400 dark:border-red-600">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Registration failed</AlertTitle>
             <AlertDescription>{errorMessage}</AlertDescription>

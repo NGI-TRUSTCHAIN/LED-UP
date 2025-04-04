@@ -14,12 +14,12 @@ print_status() {
     echo -e "${color}${message}${NC}"
 }
 
-# Function to print usage information
-print_usage() {
-    echo "Usage: $0 <alchemy_api_key>"
-    echo "Example: $0 your_alchemy_api_key"
-    exit 1
-}
+# # Function to print usage information
+# print_usage() {
+#     echo "Usage: $0 <alchemy_api_key>"
+#     echo "Example: $0 your_alchemy_api_key"
+#     exit 1
+# }
 
 # Function to validate API environment variables
 validate_api_env() {
@@ -159,19 +159,82 @@ validate_frontend_env() {
     return 0
 }
 
-# Check if API key is provided
-if [ -z "$1" ]; then
-    print_status "$RED" "❌ Error: Alchemy API key is required"
-    print_usage
-fi
+# Function to open a command in a new terminal window
+open_in_terminal() {
+    local title=$1
+    local cmd=$2
+    local working_dir=$3
+    
+    # Create a script to run in the new terminal
+    TMP_SCRIPT=$(mktemp /tmp/led-up-XXXXXX.sh)
+    cat > "$TMP_SCRIPT" << EOF
+#!/bin/bash
+cd "$working_dir" || exit 1
+echo -e "\033[1;34m====== $title ======\033[0m"
+echo -e "\033[0;33mRunning: $cmd\033[0m"
+echo -e "\033[0;33mWorking directory: $(pwd)\033[0m"
+echo -e "\033[0;33m==========================================\033[0m"
+$cmd
+# Keep terminal open after command completes
+echo -e "\033[0;31m$title process has exited. Press Enter to close this terminal.\033[0m"
+read
+EOF
+    
+    chmod +x "$TMP_SCRIPT"
+    
+    # List of terminal emulators to try
+    terminal_cmds=(
+        "x-terminal-emulator -e"
+        "gnome-terminal -- bash -c"
+        "konsole --new-tab -e"
+        "xterm -T '$title' -e"
+        "terminator -e"
+        "mate-terminal --title='$title' -e"
+        "tilix -e"
+        "kitty -T '$title'"
+    )
+    
+    # Try each terminal emulator until one works
+    for term_cmd in "${terminal_cmds[@]}"; do
+        term_bin=$(echo "$term_cmd" | awk '{print $1}')
+        if command -v "$term_bin" > /dev/null 2>&1; then
+            # Format the command based on terminal requirements
+            if [[ "$term_cmd" == *"kitty"* ]]; then
+                $term_bin "$TMP_SCRIPT" > /dev/null 2>&1 &
+            else
+                $term_cmd "'$TMP_SCRIPT'" > /dev/null 2>&1 &
+            fi
+            
+            # If the command succeeded
+            if [ $? -eq 0 ]; then
+                print_status "$GREEN" "✅ Started $title in new terminal window using $term_bin"
+                # Save the PID of the terminal for cleanup
+                echo $! >> /tmp/led-up-terminals-$$.pids
+                return 0
+            fi
+        fi
+    done
+    
+    # If all terminal emulators failed, fall back to running in background
+    print_status "$YELLOW" "⚠️ Could not open new terminal window. Running $title in the background."
+    (cd "$working_dir" && $cmd) &
+    echo $! >> /tmp/led-up-bg-$$.pids
+    return 0
+}
 
-# Validate API key format (basic validation for 32 character string)
-if [[ ! $1 =~ ^[a-zA-Z0-9]{32}$ ]]; then
-    print_status "$RED" "❌ Error: Invalid Alchemy API key format"
-    print_usage
-fi
+# # Check if API key is provided
+# if [ -z "$1" ]; then
+#     print_status "$RED" "❌ Error: Alchemy API key is required"
+#     print_usage
+# fi
 
-ALCHEMY_API_KEY=$1
+# # Validate API key format (basic validation for 32 character string)
+# if [[ ! $1 =~ ^[a-zA-Z0-9]{32}$ ]]; then
+#     print_status "$RED" "❌ Error: Invalid Alchemy API key format"
+#     print_usage
+# fi
+
+# ALCHEMY_API_KEY=$1
 
 # Function to check if a process is running on a port
 check_port() {
@@ -180,6 +243,21 @@ check_port() {
         return 0
     else
         return 1
+    fi
+}
+
+# Function to clear processes using a specific port
+clear_port() {
+    local port=$1
+    local processes=$(lsof -ti:$port 2>/dev/null)
+    
+    if [ ! -z "$processes" ]; then
+        print_status "$YELLOW" "🔄 Port $port is in use. Clearing processes: $processes"
+        for pid in $processes; do
+            pkill -P $pid 2>/dev/null || true
+            kill -9 $pid 2>/dev/null || true
+        done
+        sleep 2
     fi
 }
 
@@ -209,15 +287,66 @@ handle_error() {
     exit 1
 }
 
-# Function to cleanup background processes on script exit
+# Function to cleanup terminals and processes on script exit
 cleanup() {
     print_status "$YELLOW" "🧹 Cleaning up processes..."
-    jobs -p | xargs -r kill -9
-    exit 0
+    
+    # Kill all terminal windows we opened
+    if [ -f "/tmp/led-up-terminals-$$.pids" ]; then
+        while read pid; do
+            echo "Killing terminal window (PID: $pid)"
+            kill -9 $pid 2>/dev/null || true
+        done < "/tmp/led-up-terminals-$$.pids"
+        rm -f "/tmp/led-up-terminals-$$.pids"
+    fi
+    
+    # Kill all background processes we started
+    if [ -f "/tmp/led-up-bg-$$.pids" ]; then
+        while read pid; do
+            echo "Killing background process (PID: $pid)"
+            pkill -P $pid 2>/dev/null || true
+            kill -9 $pid 2>/dev/null || true
+        done < "/tmp/led-up-bg-$$.pids"
+        rm -f "/tmp/led-up-bg-$$.pids"
+    fi
+    
+    # Kill processes by port
+    HARDHAT_PROCESSES=$(lsof -ti:8545 2>/dev/null)
+    API_PROCESSES=$(lsof -ti:7071 2>/dev/null)
+    FRONTEND_PROCESSES=$(lsof -ti:3000 2>/dev/null)
+    
+    # Kill any remaining processes using these ports
+    if [ ! -z "$HARDHAT_PROCESSES" ]; then
+        echo "Killing processes on port 8545: $HARDHAT_PROCESSES"
+        kill -9 $HARDHAT_PROCESSES 2>/dev/null || true
+    fi
+    
+    if [ ! -z "$API_PROCESSES" ]; then
+        echo "Killing processes on port 7071: $API_PROCESSES"
+        kill -9 $API_PROCESSES 2>/dev/null || true
+    fi
+    
+    if [ ! -z "$FRONTEND_PROCESSES" ]; then
+        echo "Killing processes on port 3000: $FRONTEND_PROCESSES"
+        for pid in $FRONTEND_PROCESSES; do
+            pkill -P $pid 2>/dev/null || true
+            kill -9 $pid 2>/dev/null || true
+        done
+    fi
+    
+    # Clean up temporary scripts
+    rm -f /tmp/led-up-*.sh 2>/dev/null || true
+    
+    print_status "$GREEN" "✅ Cleanup completed"
+    exit 0  # Ensure we exit after cleanup
 }
 
-# Set up cleanup trap
+# Set up cleanup trap for multiple signals
 trap cleanup EXIT INT TERM
+
+# Create files to store PIDs
+touch /tmp/led-up-terminals-$$.pids
+touch /tmp/led-up-bg-$$.pids
 
 # Store the project root directory
 PROJECT_ROOT=$(pwd)
@@ -226,8 +355,13 @@ PROJECT_ROOT=$(pwd)
 validate_api_env || handle_error "API environment validation failed"
 validate_frontend_env || handle_error "Frontend environment validation failed"
 
+# Clean up any existing processes first
+clear_port 8545
+clear_port 7071
+clear_port 3000
+
 # Start Hardhat node
-print_status "$BLUE" "🔄 Starting Hardhat node..."
+print_status "$BLUE" "🔄 Preparing to start Hardhat node..."
 cd led-up-sc || handle_error "Could not find led-up-sc directory"
 
 # Check if node_modules exists, if not run yarn install
@@ -236,17 +370,18 @@ if [ ! -d "node_modules" ]; then
     yarn install || handle_error "Failed to install dependencies in led-up-sc"
 fi
 
-# Start Hardhat node with forking
-print_status "$BLUE" "🔗 Starting Hardhat node with mainnet fork..."
-npx hardhat node --fork "https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_API_KEY" &
-HARDHAT_PID=$!
+# Start Hardhat node with forking in a new terminal
+print_status "$BLUE" "🔗 Starting Hardhat node with mainnet fork in a new terminal..."
+# HARDHAT_CMD="npx hardhat node --fork \"https://eth-mainnet.g.alchemy.com/v2/$ALCHEMY_API_KEY\" --network hardhat"
+HARDHAT_CMD="npx hardhat node --network hardhat"
+open_in_terminal "Hardhat Node" "$HARDHAT_CMD" "$PROJECT_ROOT/led-up-sc"
 
 # Wait for Hardhat node to be ready (default Hardhat port is 8545)
 wait_for_service 8545 "Hardhat node" || handle_error "Hardhat node failed to start"
 
 # Deploy smart contracts
 print_status "$BLUE" "📄 Deploying smart contracts..."
-npx hardhat run scripts/hardhat/deploy.ts --network localhost || handle_error "Smart contract deployment failed"
+(cd "$PROJECT_ROOT/led-up-sc" && npx hardhat run scripts/hardhat/deploy.ts --network localhost) || handle_error "Smart contract deployment failed"
 
 # Start API server
 cd "$PROJECT_ROOT" || handle_error "Could not return to project root"
@@ -258,12 +393,14 @@ if [ ! -d "node_modules" ]; then
     yarn install || handle_error "Failed to install dependencies in led-up-api"
 fi
 
-print_status "$BLUE" "🚀 Starting API server..."
-yarn dev &
-API_PID=$!
+# Start API server in a new terminal
+print_status "$BLUE" "🚀 Starting API server in a new terminal..."
+API_CMD="yarn dev"
+open_in_terminal "API Server" "$API_CMD" "$PROJECT_ROOT/led-up-api"
 
 # Wait for API server to be ready
 wait_for_service 7071 "API server" || handle_error "API server failed to start"
+
 
 # Start main application
 cd "$PROJECT_ROOT" || handle_error "Could not return to project root"
@@ -275,15 +412,10 @@ if [ ! -d "node_modules" ]; then
     yarn install || handle_error "Failed to install dependencies in main application"
 fi
 
-print_status "$BLUE" "🌟 Starting main application..."
-yarn dev &
-MAIN_APP_PID=$!
-
-# Wait for main application to be ready (assuming it runs on port 3000, adjust if different)
-wait_for_service 3000 "Main application" || handle_error "Main application failed to start"
-
-print_status "$GREEN" "✨ All applications are running!"
+# Start Next.js in the current terminal (not in a new one)
+print_status "$BLUE" "🌟 Starting main application in the current terminal..."
 print_status "$YELLOW" "Press Ctrl+C to stop all applications"
+print_status "$GREEN" "✨ Running Next.js frontend (PORT=3000)..."
 
-# Wait for user interrupt
-wait
+# Run the Next.js app in the foreground
+cd "$PROJECT_ROOT/led-up-fe" && PORT=3000 yarn dev --port 3000
