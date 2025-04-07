@@ -3,7 +3,7 @@ import { Button } from './ui/button';
 import { Card, CardContent } from './ui/card';
 import { Progress } from './ui/progress';
 import { decrypt } from '@/utils/decrypt';
-import ViewModal from '@/app/patient-data/modal';
+import ViewModal from '@/app/(patient)/patient-data/modal';
 import { useState } from 'react';
 
 const ResourceCard = ({

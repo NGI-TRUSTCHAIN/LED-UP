@@ -1,0 +1,140 @@
+# Token
+
+## Purpose and Responsibilities
+
+The Token contract provides the ERC20 token implementation that serves as the payment mechanism within the decentralized data sharing system. It creates a token called "LedUpToken" (LEDUP) that is used to facilitate payments between data consumers and producers, with the platform taking a service fee from each transaction.
+
+Key responsibilities include:
+- Providing an ERC20-compliant token for the system
+- Enabling token minting for testing and system initialization
+- Supporting the compensation mechanism within the data sharing platform
+
+## Contract Architecture
+
+The Token contract is a straightforward extension of OpenZeppelin's ERC20 implementation. It inherits all standard ERC20 functionality and adds an unrestricted mint function for creating new tokens.
+
+1. It defines a token with name "LedUpToken" and symbol "LEDUP"
+2. It provides a public mint function that allows anyone to create new tokens
+3. It leverages OpenZeppelin's battle-tested ERC20 implementation
+
+The design is intentionally simple, focusing on basic functionality needed for the system while relying on the robust OpenZeppelin library for security and correctness.
+
+## Key Data Structures
+
+As an ERC20 implementation, the Token contract inherits all standard ERC20 data structures from OpenZeppelin, including:
+
+- Token balances mapping
+- Allowances mapping for delegated transfers
+- Total supply tracking
+
+## Public Interface
+
+### Functions
+
+#### `constructor()`
+
+- **Purpose**: Initializes the token with name "LedUpToken" and symbol "LEDUP"
+- **Access Control**: Called only during contract deployment
+
+#### `mint(address to, uint256 amount)`
+
+- **Purpose**: Creates new tokens and assigns them to the specified address
+- **Access Control**: Public function that anyone can call
+- **Parameters**:
+  - `to`: The address to receive the minted tokens
+  - `amount`: The amount of tokens to mint
+- **Events Emitted**: `Transfer(address(0), to, amount)` (inherited from ERC20)
+
+### Inherited Functions
+
+The contract inherits all standard ERC20 functions:
+
+- `transfer(address to, uint256 amount)`
+- `transferFrom(address from, address to, uint256 amount)`
+- `approve(address spender, uint256 amount)`
+- `allowance(address owner, address spender)`
+- `balanceOf(address account)`
+- `totalSupply()`
+
+### Events
+
+The contract inherits all standard ERC20 events:
+
+- `Transfer(address indexed from, address indexed to, uint256 value)`
+- `Approval(address indexed owner, address indexed spender, uint256 value)`
+
+## Implementation Details
+
+The implementation is minimal, extending OpenZeppelin's ERC20 contract with just a mint function:
+
+```solidity
+contract Token is ERC20 {
+    constructor() ERC20("LedUpToken", "LEDUP") {}
+
+    function mint(address to, uint256 amount) public {
+        _mint(to, amount);
+    }
+}
+```
+
+The internal `_mint` function is provided by the ERC20 base contract and handles token creation safely.
+
+## Security Considerations
+
+### Access Control
+
+- The `mint` function has no access restrictions, allowing anyone to create tokens
+- In a production environment, this would be a critical security risk requiring access controls
+
+### Unrestricted Minting
+
+- Without mint restrictions, the token has an unlimited supply
+- This makes it unsuitable for a production system without modification
+- For production, consider adding an `onlyOwner` or similar modifier to restrict minting
+
+### Potential Improvements
+
+- Add access control to the mint function
+- Consider implementing a capped supply
+- Implement token burning functionality if needed
+- Add pausing functionality for emergency situations
+
+## Integration Points
+
+The Token contract integrates with:
+
+1. **Compensation**: Uses the token for payments between consumers and producers
+2. **DataRegistry**: Passes the token address during deployment for payment handling
+
+In the test environment, we see the following usage patterns:
+
+- Tokens are minted to consumers to make payments for data access
+- Token approvals are granted to the Compensation contract to allow payment processing
+- The Compensation contract transfers tokens from consumers to producers
+
+## Test Coverage
+
+The Token contract is used extensively in the test suite:
+
+- In setup functions to mint tokens to consumers
+- In payment processing tests to verify compensation functions
+- For approvals and transfers during data sharing scenarios
+
+Key test scenarios include:
+- Minting tokens to various addresses
+- Approving token spending
+- Verifying token transfers during compensation
+
+## Upgrade Considerations
+
+The Token contract has several limitations that might require upgrades:
+
+1. **Unrestricted Minting**: Production systems should control who can mint
+2. **Missing Advanced Features**: Consider adding burn, pause, and other common token features
+3. **No Upgrade Mechanism**: Implementing a proxy pattern would allow upgrades
+
+For a production version, consider:
+- Implementing OpenZeppelin's AccessControl for minting permissions
+- Using the upgradeable version of OpenZeppelin's ERC20
+- Adding token burning capabilities for complete lifecycle management
+- Implementing token vesting or other advanced features as needed 

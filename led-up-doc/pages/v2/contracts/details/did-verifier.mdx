@@ -1,0 +1,172 @@
+# DidVerifier
+
+## Purpose and Responsibilities
+
+The DidVerifier contract is responsible for verifying the authenticity and trustworthiness of credentials within the decentralized identity system. It works closely with the DidRegistry to validate that DIDs are active and that credentials are issued by trusted entities.
+
+Key responsibilities include:
+- Managing trusted issuers for specific credential types
+- Verifying the authenticity of credentials
+- Checking if issuers are trusted for specific credential types
+- Ensuring credentials are issued to active DIDs
+
+## Contract Architecture
+
+The DidVerifier implements a straightforward trust model for credential verification:
+
+1. It maintains a registry of trusted issuers for different credential types
+2. It uses the DidRegistry to verify if DIDs are active
+3. It provides functions to add or remove trust from specific issuers
+4. It exposes verification functions that can be called by other contracts
+
+The design follows a role-based approach where trust is established by explicitly marking issuers as trusted for specific credential types.
+
+## Key Data Structures
+
+### Storage Mappings
+
+The contract uses a nested mapping to track trusted issuers for credential types:
+
+```solidity
+mapping(string => mapping(address => bool)) private trustedIssuers;
+```
+
+This maps a credential type (e.g., "HealthCareCredential") to a mapping of issuer addresses to their trust status (true = trusted, false = not trusted).
+
+## Public Interface
+
+### Functions
+
+#### `constructor(address _didRegistryAddress)`
+
+- **Purpose**: Initializes the DidVerifier with a reference to the DidRegistry contract
+- **Parameters**:
+  - `_didRegistryAddress`: The address of the deployed DidRegistry contract
+
+#### `setIssuerTrustStatus(string calldata credentialType, address issuer, bool trusted)`
+
+- **Purpose**: Sets whether an issuer is trusted for a specific credential type
+- **Access Control**: Public function without explicit restrictions
+- **Parameters**:
+  - `credentialType`: The type of credential (e.g., "HealthCareCredential")
+  - `issuer`: The address of the issuer
+  - `trusted`: Boolean indicating if the issuer should be trusted
+- **Events Emitted**: `IssuerTrustStatusUpdated(credentialType, issuer, trusted)`
+- **Errors**:
+  - `DidVerifier__InvalidIssuer()`: Thrown if the issuer address is zero
+
+#### `isIssuerTrusted(string calldata credentialType, address issuer)`
+
+- **Purpose**: Checks if an issuer is trusted for a specific credential type
+- **Parameters**:
+  - `credentialType`: The type of credential
+  - `issuer`: The address of the issuer
+- **Returns**: Boolean indicating if the issuer is trusted
+
+#### `verifyCredential(string calldata credentialType, address issuer, string calldata subject)`
+
+- **Purpose**: Verifies a credential by checking if it was issued by a trusted issuer to an active subject
+- **Parameters**:
+  - `credentialType`: The type of credential
+  - `issuer`: The address of the issuer
+  - `subject`: The DID of the subject (recipient of the credential)
+- **Returns**: Boolean indicating if the credential is valid
+- **Errors**:
+  - `DidVerifier__InvalidCredential()`: Thrown if the subject DID is not active
+  - `DidVerifier__UntrustedIssuer()`: Thrown if the issuer is not trusted for this credential type
+
+### Events
+
+#### `IssuerTrustStatusUpdated(string credentialType, address issuer, bool trusted)`
+
+- **Purpose**: Emitted when an issuer's trust status is updated
+- **Parameters**:
+  - `credentialType`: The type of credential
+  - `issuer`: The address of the issuer
+  - `trusted`: The new trust status
+
+### Errors
+
+#### `DidVerifier__InvalidIssuer()`
+
+- **Cause**: Attempting to set trust status for a zero address
+- **Solution**: Provide a valid issuer address
+
+#### `DidVerifier__UntrustedIssuer()`
+
+- **Cause**: Attempting to verify a credential from an untrusted issuer
+- **Solution**: Ensure the issuer is trusted for the specified credential type
+
+#### `DidVerifier__InvalidCredential()`
+
+- **Cause**: Attempting to verify a credential for an inactive or nonexistent DID
+- **Solution**: Ensure the subject DID exists and is active in the DidRegistry
+
+## Implementation Details
+
+The DidVerifier implements a simple trust model where:
+
+1. Issuers are explicitly marked as trusted for specific credential types
+2. Verification checks both the issuer's trust status and the subject's active status
+3. The contract relies on the DidRegistry to check if DIDs are active
+
+The implementation follows a modular approach, separating credential verification from the core DID registry functionality.
+
+## Security Considerations
+
+### Access Control
+
+- The `setIssuerTrustStatus` function lacks access control
+- In a production system, this should be restricted to trusted administrators
+- Without access control, any address can mark issuers as trusted or untrusted
+
+### Trust Model
+
+- The contract uses a simple boolean trust model
+- More advanced trust models might include trust levels or expiration times
+- Trust is binary - an issuer is either fully trusted or not trusted at all
+
+### Potential Risks
+
+- No revocation mechanism for credentials
+- Trust decisions are centralized through this contract
+- No on-chain verification of credential signatures (assumed to be done off-chain)
+
+## Integration Points
+
+The DidVerifier integrates with:
+
+1. **DidRegistry**: To verify if DIDs are active
+2. **DidAuth**: Uses DidVerifier to validate credentials during authentication
+
+In the test environment, we see the following usage pattern:
+- DidVerifier is deployed with a reference to DidRegistry
+- DidAuth is deployed with references to DidRegistry, DidVerifier, and DidIssuer
+- DidVerifier is used by DidAuth to verify credentials during authentication
+
+## Test Coverage
+
+The DidVerifier is primarily tested through its integration with DidAuth:
+
+- Basic deployment in multiple test setups
+- Implicit testing through DidAuth credential verification functions
+- Integrated as part of the authentication flow
+
+Key test scenarios include:
+- Deployment and initialization with DidRegistry
+- Implicit testing through DidAuth credential verification
+
+## Upgrade Considerations
+
+The DidVerifier has several limitations that might require upgrades:
+
+1. **Limited Access Control**: Add proper access controls for trust management
+2. **Basic Trust Model**: Implement more nuanced trust mechanisms
+3. **No Credential Revocation**: Add capability to revoke previously issued credentials
+
+For a production version, consider:
+- Adding AccessControl mechanisms for trust management
+- Implementing credential expiration and revocation
+- Supporting hierarchical or delegated trust models
+- Adding support for on-chain credential validation (e.g., signature verification)
+- Implementing trust score or reputation mechanisms instead of binary trust 

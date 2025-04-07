@@ -1,14 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { upload } from '@/lib/actions/file';
 
 enum ConsentStatus {
   Allowed = 0,
@@ -34,37 +33,43 @@ export function FileUploadWithConsent() {
   });
 
   const onSubmit = async (data: FormValues) => {
-    // Here you would typically handle the file upload and consent
+    // Handle file upload and consent
     if (data.file) {
-      // Create a FileReader instance
-      const reader = new FileReader();
+      try {
+        // Create form data for file upload
+        const formData = new FormData();
+        formData.append('file', data.file);
+        formData.append('consent', data.consent.toString());
+        formData.append(
+          'metadata',
+          JSON.stringify({
+            fileName: data.file.name,
+            fileType: data.file.type,
+            fileSize: data.file.size,
+            uploadDate: new Date().toISOString(),
+          })
+        );
 
-      // Read the file as text (for JSON files or other text files)
-      reader.readAsText(data.file);
+        // Get file type
+        const fileType = data.file.type;
 
-      // When the file reading is complete
-      reader.onload = async () => {
-        const fileContent = reader.result;
+        // Send directly to the upload endpoint using fetch
+        const response = await fetch('/api/files/upload', {
+          method: 'POST',
+          body: formData,
+        });
 
-        if (typeof fileContent === 'string') {
-          try {
-            // If it's a JSON file, parse the content
-            const jsonData = JSON.parse(fileContent);
-
-            const response = await upload({
-              consent: data.consent,
-              data: jsonData,
-            });
-          } catch (error) {
-            console.error('Failed to parse JSON:', error);
-          }
+        if (!response.ok) {
+          throw new Error(`Upload failed: ${response.statusText}`);
         }
-      };
 
-      // Handle file read error
-      reader.onerror = () => {
-        console.error('Failed to read file:', reader.error);
-      };
+        // Handle successful upload
+        const result = await response.json();
+        alert('File uploaded successfully!');
+      } catch (error) {
+        console.error('Upload failed:', error);
+        alert('Upload failed: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      }
     }
 
     // const response = await upload({

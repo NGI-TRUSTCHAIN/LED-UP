@@ -1,709 +1,682 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {DataTypes} from "../library/DataTypes.sol";
-import {Compensation} from "./Compensation.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
-// import "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
-import {IDataRegistry} from "../interface/IDataRegistry.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {DidAuth} from "./DidAuth.sol";
+import {Compensation} from "./Compensation.sol";
 
 /**
- * @title Data Registry Contract
- * @notice This contract serves as a registry for medical resource records, allowing producers to register,
- *         update, and manage their records while ensuring compliance with consent and payment verification.
- * @dev The contract is designed to be owned by a provider, who has the authority to manage records,
- *      including adding, updating, and removing them. It also incorporates mechanisms to handle
- *      pauses in contract execution for maintenance or emergency situations.
- *
- *      Key functionalities include:
- *      - Registering new medical resource records tied to producers.
- *      - Sharing data between producers and consumers, subject to consent.
- *      - Updating record metadata, statuses, and consent.
- *      - Managing provider metadata and schemas for record management.
- *      - Tracking producer existence and providing read access to records.
- *      - Verifying payment for data sharing and managing token addresses for compensation.
- *
- * @custom:security The contract implements access control via the `onlyOwner` modifier, ensuring that
- *                   only the owner can perform sensitive operations. It also incorporates a paused state
- *                   to prevent contract execution during maintenance or emergencies.
- *
- * @custom:events
- * - ProducerRecordAdded: Emitted when a new producer record is successfully added.
- * - DataShared: Emitted when data is shared between a producer and a consumer.
- * - ProducerRecordRemoved: Emitted when a producer record is removed.
- * - ProducerRecordUpdated: Emitted when a producer record is updated.
- * - ProviderMetadataUpdated: Emitted when the provider's metadata is updated.
- * - ProviderSchemaUpdated: Emitted when the provider's record schema is updated.
- * - PauseStateUpdated: Emitted when the contract's pause state changes.
- * - TokenAddressUpdated: Emitted when the token address is updated.
- * - ProducerConsentUpdated: Emitted when a producer's consent status is updated.
- * - ProducerRecordStatusUpdated: Emitted when a producer's record status is updated.
- *
- * @custom:error
- * - Registry__ParseParamsError(string message): Thrown when there is an error parsing input parameters.
- * - Registry__ProducerRecordNotFound(string recordId): Thrown if the specified producer record does not exist.
- * - Registry__ProducerNotFound(address producer): Thrown if a specified producer does not exist.
- * - Registry__RecordAlreadyExists(string recordId): Thrown if a record with the same ID already exists.
- * - Registry__ProducerRecordAlreadyExists(string recordId): Thrown if a record for the producer already exists.
- * - Registry__NotAuthorized(): Thrown if an action is attempted without proper authorization.
- * - Registry__InvalidProvider(): Thrown if the specified provider is invalid.
- * - Registry__InvalidInputParam(): Thrown if an invalid parameter is provided.
- * - Registry__ServicePaused(): Thrown if an action is attempted while the service is paused.
- * - Registry__ConsentNotAllowed(DataTypes.ConsentStatus consent): Thrown if consent for a record is not allowed.
- * - Registry__PaymentNotVerified(): Thrown if payment verification fails.
- * - Registry__ConsentAlreadyGranted(): Thrown if consent has already been granted for a record.
- * - Registry__ConsentAlreadyRevoked(): Thrown if consent has already been revoked for a record.
+ * @title DataRegistry
+ * @notice Registry for secure data sharing with direct string storage
+ * @dev Implements DID-based authentication with string-based record and CID storage
  */
-contract DataRegistry is IDataRegistry, Ownable, Pausable {
-    /*===================== ERRORS =====================*/
-    error Registry__ParseParamsError(string message);
-    error Registry__ProducerRecordNotFound(string recordId);
-    error Registry__ProducerNotFound(address producer);
-    error Registry__RecordAlreadyExists(string recordId);
-    error Registry__ProducerRecordAlreadyExists(string recordId);
-    error Registry__NotAuthorized();
-    error Registry__InvalidProvider();
-    error Registry__InvalidInputParam();
-    error Registry__ServicePaused();
-    error Registry__ConsentNotAllowed(DataTypes.ConsentStatus consent);
-    error Registry__PaymentNotVerified();
-    error Registry__ConsentAlreadyGranted();
-    error Registry__ConsentAlreadyRevoked();
+contract DataRegistry is AccessControl, Pausable, ReentrancyGuard, Ownable {
+    /*===================== ERRORS ======================*/
+    error DataRegistry__Unauthorized();
+    error DataRegistry__RecordNotFound(string recordId);
+    error DataRegistry__RecordAlreadyExists(string recordId);
+    error DataRegistry__InvalidDID(string did);
+    error DataRegistry__AccessDenied(address consumer, string recordId);
+    error DataRegistry__InvalidAccessDuration(uint256 provided, uint256 min, uint256 max);
+    error DataRegistry__ExpiredAccess(address consumer, string recordId, uint256 expiration);
+    error DataRegistry__InvalidContentHash();
+    error DataRegistry__PaymentNotVerified(string recordId);
+    error DataRegistry__DidAuthNotInitialized();
+    error DataRegistry__InvalidDidAuthAddress();
+    error DataRegistry__AlreadyRegistered(address producer);
+    error DataRegistry__ConsentNotAllowed(string recordId, address producer);
 
-    /*===================== VARIABLES =====================*/
-    string private providerMetadataUrl;
-    bytes32 private providerMetadataHash;
-    string private recordSchemaUrl;
-    bytes32 private recordSchemaHash;
-    uint256 private recordCount = 0;
-    mapping(address => DataTypes.ProducerRecord) producerRecords;
+    /*===================== DATA STRUCTURES ======================*/
+    enum ResourceType {
+        Patient,
+        Observation,
+        Condition,
+        Procedure,
+        Encounter,
+        Medication,
+        MedicationStatement,
+        MedicationRequest,
+        DiagnosticReport,
+        Immunization,
+        AllergyIntolerance,
+        CarePlan,
+        CareTeam,
+        Basic,
+        Other
+    }
+
+    enum RecordStatus {
+        Inactive,
+        Active,
+        Suspended,
+        Deleted
+    }
+
+    enum ConsentStatus {
+        NotSet,
+        Allowed,
+        Denied
+    }
+
+    enum AccessLevel {
+        None,
+        Read,
+        Write
+    }
+
+    // Updated producer metadata to use string for did
+    struct ProducerMetadata {
+        string did; // DID of the producer (no longer hashed)
+        uint8 consent; // 0 = NotSet, 1 = Allowed, 2 = Denied
+        uint16 entries; // Total entries for this producer
+        bool isActive; // If the producer is active
+        uint40 lastUpdated; // Last updated timestamp
+        uint40 nonce; // Nonce for the producer
+        uint32 version; // Version of the producer
+    }
+
+    // Updated resource metadata to use strings for IDs and CID
+    struct ResourceMetadata {
+        uint8 resourceType; // Resource type
+        string recordId; // Record ID of the resource (no longer hashed)
+        address producer; // Producer address
+        uint32 sharedCount; // Total shared count for this resource
+        uint40 updatedAt; // Last updated timestamp
+        uint24 dataSize; // Size of the data
+        bytes32 contentHash; // Content hash of the resource
+        string cid; // CID of the resource (no longer hashed)
+    }
+
+    // Access permission structure remains the same
+    struct AccessPermission {
+        uint40 expiration; // Expiration timestamp
+        bool isRevoked; // If access is revoked
+        uint8 accessLevel; // Access level
+    }
+
+    /*===================== STATE VARIABLES ======================*/
+    // External contract references
+    DidAuth public didAuth;
     Compensation private compensation;
     IERC20 private token;
 
-    /*===================== EVENTS =====================*/
-    event ProducerRecordAdded(
-        address indexed producer, string indexed recordId, string indexed cid, string url, bytes32 hash
+    // Total records counter
+    uint128 private _totalRecords;
+
+    // Updated mappings to use string keys where appropriate
+    mapping(address => ProducerMetadata) private _producerMetadata;
+    mapping(string => ResourceMetadata) private _resourceMetadata;
+    mapping(string => mapping(address => AccessPermission)) private _accessPermissions;
+    mapping(address => string[]) private _producerRecords;
+    mapping(address => bool) private _authorizedProviders;
+
+    // Verification tracking
+    mapping(string => bool) private _verifiedRecords;
+
+    // Add this mapping at the state variables section
+    mapping(string => address) private _recordProducers;
+
+    /*===================== EVENTS ======================*/
+    event RecordRegistered(
+        string indexed recordId, string did, string cid, bytes32 contentHash, address indexed provider
     );
-    event ProducerRecordRemoved(address indexed producer);
-    event ProducerRecordUpdated(
-        address indexed producer, string indexed recordId, string url, string cid, bytes32 hash
+    event RecordUpdated(string indexed recordId, string cid, bytes32 contentHash, address indexed provider);
+    event RecordStatusChanged(string indexed recordId, RecordStatus status, address indexed updater);
+    event ConsentStatusChanged(address indexed provider, ConsentStatus status, address indexed updater);
+    event AccessGranted(
+        string indexed recordId, address indexed consumer, string consumerDid, uint40 expiration, uint8 accessLevel
     );
-    event ProducerRecordStatusUpdated(address indexed producer, DataTypes.RecordStatus indexed status);
-    event ProducerConsentUpdated(address indexed producer, DataTypes.ConsentStatus indexed consent);
-    event ProviderMetadataUpdated(address indexed provider, string url, bytes32 hash);
-    event ProviderSchemaUpdated(address indexed provider, string url, bytes32 hash);
-    event PauseStateUpdated(address indexed contractAddress, address indexed pausedBy, bool indexed pause);
-
-    event DataShared(
-        address indexed producer, address indexed dataConsumer, string recordId, string url, string cid, bytes32 hash
+    event AccessRevoked(string indexed recordId, address indexed consumer, string consumerDid, address indexed revoker);
+    event RecordVerified(string indexed recordId, address indexed verifier);
+    event DidAuthUpdated(address indexed oldAddress, address indexed newAddress);
+    event CompensationUpdated(address indexed oldAddress, address indexed newAddress);
+    event ConsumerAuthorized(address indexed consumer, string recordId, AccessLevel accessLevel, uint40 expiration);
+    event ProviderAuthorized(address indexed provider, string recordId, AccessLevel accessLevel, uint40 timestamp);
+    event AccessTriggered(
+        string indexed recordId, address indexed consumer, string consumerDid, AccessLevel accessLevel
     );
+    event ProviderAdded(address indexed provider);
+    event ProviderRemoved(address indexed provider);
 
-    event TokenAddressUpdated(address indexed _tokenAddress);
-
-    /*===================== MODIFIERS =====================*/
-
-    modifier onlyProviderOrProducer(address _producer) {
-        if (producerRecords[_producer].producer == address(0)) {
-            revert Registry__ProducerNotFound(_producer);
-        }
-        if (msg.sender != owner() && msg.sender != _producer) {
-            revert Registry__NotAuthorized();
+    /*===================== MODIFIERS ======================*/
+    modifier authorizedProvider() {
+        if (!_authorizedProviders[msg.sender]) {
+            revert DataRegistry__Unauthorized();
         }
         _;
     }
 
-    /**
-     * @notice Initializes the contract with the specified parameters.
-     * @dev This constructor sets up the contract with metadata, schema, provider
-     *      address, token address, and compensation contract details. It also
-     *      transfers ownership to the specified provider and initializes the
-     *      compensation contract.
-     *
-     * @param _metadata Metadata associated with the provider, including URL and hash.
-     * @param _schema Schema reference for the records, containing the schema URL and hash.
-     * @param _provider The address of the provider (owner of the contract).
-     * @param _tokenAddress The address of the token contract used for payments.
-     * @param _leveaWallet The wallet address for receiving service fees.
-     * @param _serviceFeePercent The percentage of service fees to be charged.
-     */
-    constructor(
-        DataTypes.Metadata memory _metadata,
-        DataTypes.Schema memory _schema,
-        address _provider,
-        address _tokenAddress,
-        address payable _leveaWallet,
-        uint256 _serviceFeePercent
-    ) Ownable(_provider) Pausable() {
-        transferOwnership(_provider);
-        providerMetadataUrl = _metadata.url;
-        providerMetadataHash = _metadata.hash;
-        recordSchemaUrl = _schema.schemaRef.url;
-        recordSchemaHash = _schema.schemaRef.hash;
-        // token = new LedUpToken("LedUp Token", "LTK");
+    modifier recordExists(string memory recordId) {
+        if (bytes(_resourceMetadata[recordId].recordId).length == 0) {
+            revert DataRegistry__RecordNotFound(recordId);
+        }
+        _;
+    }
+
+    modifier checkDataAccess(string memory recordId) {
+        bool isProducer = didAuth.authenticate(didAuth.getDidFromAddress(msg.sender), didAuth.PRODUCER_ROLE())
+            || msg.sender == _resourceMetadata[recordId].producer;
+
+        if (!isProducer && !isAuthorizedProvider(msg.sender, recordId)) {
+            revert DataRegistry__Unauthorized();
+        }
+        _;
+    }
+
+    modifier consentAllowed(string memory recordId) {
+        ResourceMetadata memory metadata = _resourceMetadata[recordId];
+        address producer = msg.sender; // Since we store the actual recordId now
+        if (_producerMetadata[producer].consent != uint8(ConsentStatus.Allowed)) {
+            revert DataRegistry__ConsentNotAllowed(recordId, producer);
+        }
+        _;
+    }
+
+    modifier paymentVerified(string memory recordId) {
+        if (!compensation.verifyPayment(recordId)) {
+            revert DataRegistry__PaymentNotVerified(recordId);
+        }
+        _;
+    }
+
+    modifier withRole(bytes32 role) {
+        string memory callerDid = didAuth.getDidFromAddress(msg.sender);
+        if (!didAuth.authenticate(callerDid, role)) {
+            revert DataRegistry__Unauthorized();
+        }
+        _;
+    }
+
+    modifier onlyProducer(string memory recordId) {
+        if (_resourceMetadata[recordId].producer != msg.sender) {
+            revert DataRegistry__Unauthorized();
+        }
+        _;
+    }
+
+    modifier onlyRegisteredProducer() {
+        if (!didAuth.authenticate(_producerMetadata[msg.sender].did, didAuth.PRODUCER_ROLE())) {
+            revert DataRegistry__Unauthorized();
+        }
+        _;
+    }
+
+    /*===================== CONSTRUCTOR ======================*/
+    constructor(address _tokenAddress, address payable _provider, uint256 _serviceFee, address _didAuthAddress)
+        Ownable(msg.sender)
+    {
+        if (_didAuthAddress == address(0)) {
+            revert DataRegistry__InvalidDidAuthAddress();
+        }
+
+        didAuth = DidAuth(_didAuthAddress);
+        compensation = new Compensation(_provider, _tokenAddress, _serviceFee, 1e18, _didAuthAddress);
         token = IERC20(_tokenAddress);
-        compensation = new Compensation(_provider, _tokenAddress, _leveaWallet, _serviceFeePercent, 1e18);
     }
 
-    /*===================== EXTERNAL FUNCTIONS =====================*/
+    /*===================== EXTERNAL FUNCTIONS ======================*/
     /**
-     * @notice Registers a medical resource record for a producer and ensures it does not already exist.
-     * @dev This function adds a new record for the specified producer. It checks if the producer already
-     *      has an entry and if the provided resource type for the record doesn't already exist. The function
-     *      reverts if the record already exists for the producer. The record is tied to the producer,
-     *      and a signature is required to authenticate the resource.
-     *
-     * @param _recordId The unique identifier for the medical resource record.
-     * @param _producer The address of the producer (creator/owner of the record).
-     * @param _signature A cryptographic signature to authenticate the medical resource.
-     * @param _resourceType The type of medical resource being registered (e.g., report, document, etc.).
-     * @param _consent The consent status for the record, defining the usage rights.
-     * @param _metadata Metadata associated with the medical resource, including CID, URL, hash, etc.
-     *
-     * @custom:modifier onlyOwner Ensures that only the owner of the contract can call this function.
-     * @custom:modifier whenNotPaused Ensures that the function can only be called when the contract is not paused.
-     *
-     * @custom:event ProducerRecordAdded Emitted when a new producer record is successfully added.
-     * @custom:error Registry__RecordAlreadyExists Thrown if a record with the same `resourceType` already exists for the producer.
+     * @notice Add a provider to the authorized providers list
+     * @param _provider Address of the provider to add
      */
-    function registerProducerRecord(
-        string memory _recordId,
-        address _producer,
-        bytes memory _signature,
-        string memory _resourceType,
-        DataTypes.ConsentStatus _consent,
-        DataTypes.RecordMetadata memory _metadata
-    ) external override onlyOwner whenNotPaused {
-        DataTypes.Record memory medicalResource = DataTypes.Record(_signature, _resourceType, _metadata);
-
-        DataTypes.ProducerRecord storage producerData = producerRecords[_producer];
-
-        // If the producer record doesn't exist, initialize it
-        if (producerData.producer == address(0)) {
-            producerData.producer = _producer;
-            producerData.status = DataTypes.RecordStatus.ACTIVE;
-            producerData.consent = _consent;
-            producerData.nonce = 0;
-            recordCount = recordCount + 1;
-        }
-
-        // check wether the resourceType already exists, update the record
-        // if (
-        //     keccak256(abi.encodePacked(_recordId))
-        //         == keccak256(abi.encodePacked(producerData.records[_recordId].resourceType))
-        // ) {
-        //     revert Registry__RecordAlreadyExists(_recordId);
-        // }
-
-        if (bytes(producerData.records[_recordId].resourceType).length != 0) {
-            revert Registry__RecordAlreadyExists(_recordId);
-        }
-
-        // Add the record to the producer's records
-        producerData.recordIds.push(_recordId); // add the recordId to the producer's recordIds array
-        producerData.records[_recordId] = medicalResource;
-        producerData.nonce = producerData.nonce + 1;
-
-        emit ProducerRecordAdded(_producer, _recordId, _metadata.cid, _metadata.url, _metadata.hash);
-        // _metadata.dataSize
+    function addProvider(address _provider) external onlyOwner {
+        _authorizedProviders[_provider] = true;
+        emit ProviderAdded(_provider);
     }
 
     /**
-     * @notice Shares a medical record from a producer to a consumer, ensuring proper validation and consent.
-     * @dev This function checks if the consumer is valid, verifies the producer and their consent status,
-     *      and ensures payment for the data has been verified. If any conditions are not met, the function reverts.
-     *
-     * @param _producer The address of the data provider.
-     * @param _consumer The address of the data consumer.
-     * @param _recordId The unique identifier for the medical resource record.
-     *
-     * @custom:modifier onlyOwner Ensures that only the owner of the contract can call this function.     *
-     * @custom:modifier whenNotPaused Ensures that the function can only be called when the contract is not paused.
-     *
-     * @custom:error Registry__InvalidInputParam Thrown if the consumer address is invalid (i.e., address(0)).
-     * @custom:error Registry__ProducerNotFound Thrown if the producer's record does not exist.
-     * @custom:error Registry__PaymentNotVerified Thrown if payment verification for the record fails.
-     * @custom:error Registry__ConsentNotAllowed Thrown if the producer's consent status does not allow sharing the data.
-     * @custom:error Registry__ProducerRecordNotFound Thrown if the specified record for the producer does not exist.
-     *
-     * @custom:event DataShared Emitted when the medical record is successfully shared from the producer to the consumer.
+     * @notice Remove a provider from the authorized providers list
+     * @param _provider Address of the provider to remove
      */
-    function shareData(address _producer, address _consumer, string memory _recordId) external override whenNotPaused {
-        // check if the data provider and data consumer are valid
-        if (_consumer == address(0)) {
-            revert Registry__InvalidInputParam();
-        }
-
-        //check the existence of the data provider
-        if (producerRecords[_producer].producer == address(0)) {
-            revert Registry__ProducerNotFound(_producer);
-        }
-
-        // verify payment to _producer  for _recordId
-        bool verify = compensation.verifyPayment(_recordId);
-
-        if (!verify) {
-            revert Registry__PaymentNotVerified();
-        }
-
-        // Read the producer record from smart contract storage
-        DataTypes.ProducerRecord storage producerRecord = producerRecords[_producer];
-
-        // check for consent status
-        if (producerRecord.consent != DataTypes.ConsentStatus.Allowed) {
-            revert Registry__ConsentNotAllowed(producerRecord.consent);
-        }
-
-        DataTypes.Record storage record = producerRecord.records[_recordId];
-
-        // checking the existence of the record
-        if (record.signature.length == 0) {
-            revert Registry__ProducerRecordNotFound(_recordId);
-        }
-
-        // TODO: more data sharing logic here
-
-        emit DataShared(_producer, _consumer, _recordId, record.metadata.cid, record.metadata.url, record.metadata.hash);
+    function removeProvider(address _provider) external onlyOwner {
+        _authorizedProviders[_provider] = false;
+        emit ProviderRemoved(_provider);
     }
 
     /**
-     * @notice Removes all records for a specific producer and updates the record count.
-     * @dev This function deletes the entire record data for the given producer address. The function can only
-     *      be executed by the contract owner and when the contract is not paused. Upon successful removal,
-     *      the total record count is decreased.
-     *
-     * @param _producer The address of the producer whose records are to be deleted.
-     *
-     * @custom:modifier onlyOwner Ensures that only the owner of the contract can call this function.
-     * @custom:modifier whenNotPaused Ensures that the function can only be called when the contract is not paused.
-     *
-     * @custom:event ProducerRecordRemoved Emitted when the records of a producer are successfully removed.
+     * @notice Register producer with DID
+     * @param _status Initial record status
+     * @param _consent Initial consent status
      */
-    function removeProducerRecord(address _producer) external override onlyOwner whenNotPaused {
-        delete producerRecords[_producer];
+    function registerProducer(RecordStatus _status, ConsentStatus _consent) external whenNotPaused {
+        string memory producerDid = didAuth.getDidFromAddress(msg.sender);
 
-        // Reduce the record count
-        recordCount = recordCount - 1;
-
-        emit ProducerRecordRemoved(_producer);
-    }
-
-    /**
-     * @notice Updates an existing medical resource record for a producer.
-     * @dev This function updates the specified record of a producer. It modifies the record metadata, signature,
-     *      resource type, status, and consent. The function also increments the nonce to track the update.
-     *      Reverts if the producer is not found.
-     *
-     * @param _recordId The unique identifier for the medical resource record.
-     * @param _producer The address of the producer (owner of the record).
-     * @param _signature A cryptographic signature to authenticate the updated medical resource.
-     * @param _resourceType The type of medical resource being updated (e.g., report, document, etc.).
-     * @param _status The new status of the record (e.g., active, inactive).
-     * @param _consent The updated consent status for the record, defining the usage rights.
-     * @param _recordMetadata Updated metadata associated with the medical resource (e.g., CID, URL, hash).
-     *
-     * @custom:modifier onlyOwner Ensures that only the owner of the contract can call this function.
-     * @custom:modifier whenNotPaused Ensures that the function can only be called when the contract is not paused.
-     *
-     * @custom:error Registry__ProducerNotFound Thrown if the specified producer does not exist.
-     *
-     * @custom:event ProducerRecordUpdated Emitted when a producer's record is successfully updated.
-     */
-    function updateProducerRecord(
-        string memory _recordId,
-        address _producer,
-        bytes memory _signature,
-        string memory _resourceType,
-        DataTypes.RecordStatus _status,
-        DataTypes.ConsentStatus _consent,
-        DataTypes.RecordMetadata memory _recordMetadata
-    ) external override onlyOwner whenNotPaused {
-        if (producerRecords[_producer].producer == address(0)) {
-            revert Registry__ProducerNotFound(_producer);
+        // Ensure producer DID exists
+        if (bytes(producerDid).length == 0) {
+            revert DataRegistry__InvalidDID(producerDid);
         }
-        DataTypes.Record memory medicalResource = DataTypes.Record(_signature, _resourceType, _recordMetadata);
 
-        producerRecords[_producer].records[_recordId] = medicalResource;
-        producerRecords[_producer].status = _status;
-        producerRecords[_producer].consent = _consent;
-        producerRecords[_producer].nonce = producerRecords[_producer].nonce + 1;
+        // Check if already registered
+        if (bytes(_producerMetadata[msg.sender].did).length > 0) {
+            revert DataRegistry__AlreadyRegistered(msg.sender);
+        }
 
-        emit ProducerRecordUpdated(_producer, _recordId, _recordMetadata.cid, _recordMetadata.url, _recordMetadata.hash);
+        // update the producer role
+        didAuth.grantDidRole(producerDid, didAuth.PRODUCER_ROLE());
+
+        // Store producer metadata
+        _producerMetadata[msg.sender] = ProducerMetadata({
+            did: producerDid,
+            consent: uint8(_consent),
+            entries: 0,
+            isActive: _status == RecordStatus.Active,
+            lastUpdated: uint40(block.timestamp),
+            nonce: 0,
+            version: 1
+        });
     }
 
     /**
-     * @notice Updates the metadata of an existing medical resource record for a producer.
-     * @dev This function updates only the metadata (such as CID, URL, and hash) of a producer's specific record.
-     *      It does not modify the record's signature, status, or consent.
-     *
-     * @param _producer The address of the producer (owner of the record).
-     * @param _recordId The unique identifier for the medical resource record.
-     * @param _metadata The new metadata for the record, containing CID, URL, hash, etc.
-     *
-     * @custom:modifier onlyOwner Ensures that only the owner of the contract can call this function.
-     * @custom:modifier whenNotPaused Ensures that the function can only be called when the contract is not paused.
-     *
-     * @custom:event ProducerRecordUpdated Emitted when a producer's record metadata is successfully updated.
+     * @notice Register a new data record with minimal on-chain footprint
+     * @param recordId String representation of record ID
+     * @param cid IPFS Content ID (will be stored as hash on-chain)
+     * @param contentHash Hash of the content for integrity verification
+     * @param resourceType Resource type string (stored as hash)
+     * @param dataSize Size of data for payment calculation
      */
-    function updateProducerRecordMetadata(
-        address _producer,
-        string memory _recordId,
-        DataTypes.RecordMetadata memory _metadata
-    ) external override onlyOwner whenNotPaused {
-        producerRecords[_producer].records[_recordId].metadata = _metadata;
+    function registerRecord(
+        string calldata recordId,
+        string calldata cid,
+        bytes32 contentHash,
+        ResourceType resourceType,
+        uint24 dataSize
+    ) external whenNotPaused onlyRegisteredProducer nonReentrant {
+        //practically it should the provider who can create resource
+        _resourceMetadata[recordId] = ResourceMetadata({
+            resourceType: uint8(resourceType),
+            recordId: recordId,
+            producer: msg.sender,
+            sharedCount: 0,
+            updatedAt: uint40(block.timestamp),
+            dataSize: dataSize,
+            contentHash: contentHash,
+            cid: cid
+        });
 
-        emit ProducerRecordUpdated(_producer, _recordId, _metadata.cid, _metadata.url, _metadata.hash);
+        // Add to producer records
+        _producerRecords[msg.sender].push(recordId);
+
+        // Update producer metadata
+        _producerMetadata[msg.sender].entries++;
+        _producerMetadata[msg.sender].lastUpdated = uint40(block.timestamp);
+        _producerMetadata[msg.sender].nonce++;
+
+        // Increment total records
+        unchecked {
+            _totalRecords++;
+        }
+
+        emit RecordRegistered(recordId, _producerMetadata[msg.sender].did, cid, contentHash, msg.sender);
     }
 
     /**
-     * @notice Updates the status of a producer's record.
-     * @dev This function updates the overall status of the producer's record (e.g., active, inactive, etc.).
-     *      It does not modify individual records, but the general status of the producer's records.
-     *
-     * @param _producer The address of the producer (owner of the records).
-     * @param _status The new status to assign to the producer's records.
-     *
-     * @custom:modifier onlyOwner Ensures that only the owner of the contract can call this function.
-     * @custom:modifier whenNotPaused Ensures that the function can only be called when the contract is not paused.
-     *
-     * @custom:event ProducerRecordStatusUpdated Emitted when the status of the producer's record is updated.
+     * @notice Update an existing record
+     * @param recordId String representation of record ID
+     * @param cid New IPFS Content ID
+     * @param contentHash New content hash
      */
-    function updateProducerRecordStatus(address _producer, DataTypes.RecordStatus _status)
+    function updateRecord(string calldata recordId, string calldata cid, bytes32 contentHash)
         external
-        override
-        onlyOwner
+        whenNotPaused
+        onlyRegisteredProducer
+        nonReentrant
+    {
+        address producer = _resourceMetadata[recordId].producer;
+
+        if (producer != msg.sender || _resourceMetadata[recordId].contentHash == bytes32(0)) {
+            revert DataRegistry__Unauthorized();
+        }
+
+        // Update record with minimal data
+        _resourceMetadata[recordId].contentHash = contentHash;
+        _resourceMetadata[recordId].cid = cid;
+        _resourceMetadata[recordId].updatedAt = uint40(block.timestamp);
+
+        // Update producer metadata
+        _producerMetadata[msg.sender].lastUpdated = uint40(block.timestamp);
+        _producerMetadata[msg.sender].nonce++;
+
+        emit RecordUpdated(recordId, cid, contentHash, msg.sender);
+    }
+
+    /**
+     * @notice Share data by granting access to consumer
+     * @param recordId String representation of record ID
+     * @param consumerAddress Address of consumer to grant access
+     * @param accessDuration Duration of access in seconds
+     */
+    function shareData(string calldata recordId, address consumerAddress, uint40 accessDuration)
+        external
+        whenNotPaused
+        nonReentrant
+        withRole(didAuth.PRODUCER_ROLE())
+        consentAllowed(recordId)
+    {
+        // Ensure record exists and caller is producer
+        address producer = _resourceMetadata[recordId].producer;
+
+        if (producer != msg.sender || _resourceMetadata[recordId].contentHash == bytes32(0)) {
+            revert DataRegistry__Unauthorized();
+        }
+
+        // Verify consent is allowed
+        if (_producerMetadata[producer].consent != uint8(ConsentStatus.Allowed)) {
+            revert DataRegistry__ConsentNotAllowed(recordId, producer);
+        }
+
+        // Verify payment
+        if (!compensation.verifyPayment(recordId)) {
+            revert DataRegistry__PaymentNotVerified(recordId);
+        }
+
+        // Get consumer DID
+        string memory consumerDid = didAuth.getDidFromAddress(consumerAddress);
+
+        // Verify consumer role
+        if (!didAuth.authenticate(consumerDid, didAuth.CONSUMER_ROLE())) {
+            revert DataRegistry__Unauthorized();
+        }
+
+        // Calculate expiration
+        uint40 expiration = uint40(block.timestamp) + accessDuration;
+
+        // Grant access
+        _accessPermissions[recordId][consumerAddress] =
+            AccessPermission({expiration: expiration, isRevoked: false, accessLevel: uint8(AccessLevel.Read)});
+
+        // Update sharing stats
+        _resourceMetadata[recordId].sharedCount++;
+
+        emit ConsumerAuthorized(consumerAddress, recordId, AccessLevel.Read, expiration);
+    }
+
+    function shareToProvider(string calldata recordId, address provider, uint40 accessDuration, AccessLevel accessLevel)
+        external
+        withRole(didAuth.PRODUCER_ROLE())
+        consentAllowed(recordId)
+    {
+        if (!_authorizedProviders[provider]) {
+            revert DataRegistry__Unauthorized();
+        }
+
+        address producer = _resourceMetadata[recordId].producer;
+        // Ensure record exists and caller is producer
+        if (producer != msg.sender || _resourceMetadata[recordId].contentHash == bytes32(0)) {
+            revert DataRegistry__RecordNotFound(recordId);
+        }
+
+        // Update producer metadata
+        _producerMetadata[producer].lastUpdated = uint40(block.timestamp);
+        _producerMetadata[producer].nonce++;
+
+        // Update resource metadata
+        _resourceMetadata[recordId].sharedCount++;
+
+        emit ProviderAuthorized(provider, recordId, accessLevel, uint40(block.timestamp + accessDuration));
+    }
+
+    /**
+     * @notice Get the CID of a record if caller has access
+     * @param recordId String representation of record ID
+     */
+    function triggerAccess(string calldata recordId)
+        external
+        withRole(didAuth.CONSUMER_ROLE())
+        paymentVerified(recordId)
+    {
+        // Check record existence
+        if (_resourceMetadata[recordId].contentHash == bytes32(0)) {
+            revert DataRegistry__RecordNotFound(recordId);
+        }
+
+        // Check consumer access
+        AccessPermission memory access = _accessPermissions[recordId][msg.sender];
+
+        // Verify access
+        if (access.isRevoked) {
+            revert DataRegistry__AccessDenied(msg.sender, recordId);
+        }
+
+        if (access.expiration < uint40(block.timestamp)) {
+            revert DataRegistry__ExpiredAccess(msg.sender, recordId, access.expiration);
+        }
+
+        // revoke access after one time access
+        _accessPermissions[recordId][msg.sender].isRevoked = true;
+
+        emit AccessTriggered(recordId, msg.sender, didAuth.getDidFromAddress(msg.sender), AccessLevel.Read);
+    }
+
+    /**
+     * @notice Revoke previously granted access
+     * @param recordId String representation of record ID
+     * @param consumerAddress Address of consumer to revoke access from
+     */
+    function revokeAccess(string calldata recordId, address consumerAddress) external whenNotPaused nonReentrant {
+        // Check record existence
+        if (_resourceMetadata[recordId].contentHash == bytes32(0)) {
+            revert DataRegistry__RecordNotFound(recordId);
+        }
+
+        // Get producer address
+        address producer = _resourceMetadata[recordId].producer;
+
+        // Only producer, owner, or the consumer themselves can revoke
+        bool isProducer = producer == msg.sender;
+        bool isOwner = owner() == msg.sender;
+        bool isSelfRevocation = consumerAddress == msg.sender;
+
+        if (!isProducer && !isOwner && !isSelfRevocation) {
+            revert DataRegistry__Unauthorized();
+        }
+
+        // Mark access as revoked
+        _accessPermissions[recordId][consumerAddress].isRevoked = true;
+        _accessPermissions[recordId][consumerAddress].expiration = uint40(block.timestamp);
+
+        emit AccessRevoked(recordId, consumerAddress, didAuth.getDidFromAddress(consumerAddress), msg.sender);
+    }
+
+    /**
+     * @notice Verify a record by a trusted verifier
+     * @param recordId String representation of record ID
+     */
+    function verifyRecord(string calldata recordId)
+        external
+        whenNotPaused
+        nonReentrant
+        withRole(didAuth.VERIFIER_ROLE())
+    {
+        // Check record existence
+        if (_resourceMetadata[recordId].contentHash == bytes32(0)) {
+            revert DataRegistry__RecordNotFound(recordId);
+        }
+
+        // Mark as verified
+        _verifiedRecords[recordId] = true;
+
+        emit RecordVerified(recordId, msg.sender);
+    }
+
+    /**
+     * @notice Update consent status for a producer
+     * @param producer Producer address
+     * @param consentStatus New consent status
+     */
+    function updateProducerConsent(address producer, ConsentStatus consentStatus)
+        external
+        withRole(didAuth.PRODUCER_ROLE())
         whenNotPaused
     {
-        producerRecords[_producer].status = _status;
+        // Ensure producer exists
+        if (bytes(_producerMetadata[producer].did).length == 0) {
+            revert DataRegistry__Unauthorized();
+        }
 
-        emit ProducerRecordStatusUpdated(_producer, _status);
+        // Update consent
+        _producerMetadata[producer].consent = uint8(consentStatus);
+        _producerMetadata[producer].lastUpdated = uint40(block.timestamp);
+
+        emit ConsentStatusChanged(producer, consentStatus, msg.sender);
     }
 
+    /*===================== VIEW FUNCTIONS ======================*/
     /**
-     * @notice Updates the consent status of a producer's record.
-     * @dev This function updates the consent status, determining whether the producer's records can be accessed
-     *      or shared based on the new consent value.
-     *
-     * @param _producer The address of the producer (owner of the records).
-     * @param _status The new consent status to assign to the producer's records.
-     *
-     * @custom:modifier onlyOwner Ensures that only the owner of the contract can call this function.
-     * @custom:modifier whenNotPaused Ensures that the function can only be called when the contract is not paused.
-     *
-     * @custom:event ProducerConsentUpdated Emitted when the consent status of the producer's records is updated.
+     * @notice Check if a consumer has access to a record
+     * @param recordId String representation of record ID
+     * @param consumerAddress any address that is allowed to access the record
      */
-    function updateProducerConsent(address _producer, DataTypes.ConsentStatus _status)
+    function checkAccess(string calldata recordId, address consumerAddress)
         external
-        override
-        onlyOwner
-        whenNotPaused
+        view
+        returns (bool hasAccess, uint40 expiration, uint8 accessLevel, bool isRevoked)
     {
-        producerRecords[_producer].consent = _status;
+        // Check record existence
+        if (_resourceMetadata[recordId].contentHash == bytes32(0)) {
+            return (false, 0, 0, true);
+        }
 
-        emit ProducerConsentUpdated(_producer, _status);
+        // Get producer address
+        address producer = _resourceMetadata[recordId].producer;
+        // Producer always has full access
+        if (producer == consumerAddress) {
+            return (true, type(uint40).max, uint8(AccessLevel.Write), false);
+        }
+
+        // Get access permissions
+        AccessPermission memory access = _accessPermissions[recordId][consumerAddress];
+
+        // Check if revoked
+        if (access.isRevoked) {
+            return (false, access.expiration, access.accessLevel, true);
+        }
+
+        // Check if expired
+        hasAccess = uint40(block.timestamp) <= access.expiration;
+
+        return (hasAccess, access.expiration, access.accessLevel, access.isRevoked);
     }
 
     /**
-     * @notice Updates the metadata for the provider.
-     * @dev This function updates the provider's metadata URL and hash.
-     *      It is typically used to modify the information associated with the provider,
-     *      such as links to documentation or service descriptions.
-     *
-     * @param _metadata The new metadata for the provider, containing the URL and hash.
-     *
-     * @custom:modifier onlyOwner Ensures that only the owner of the contract can call this function.
-     * @custom:modifier whenNotPaused Ensures that the function can only be called when the contract is not paused.
-     *
-     * @custom:event ProviderMetadataUpdated Emitted when the provider's metadata is successfully updated.
+     * @notice Get basic record information this should be public as we are not storing any sensitive data
+     * @param recordId String representation of record ID
      */
-    function updateProviderMetadata(DataTypes.Metadata memory _metadata) external override onlyOwner whenNotPaused {
-        providerMetadataUrl = _metadata.url;
-        providerMetadataHash = _metadata.hash;
+    function getRecordInfo(string calldata recordId)
+        external
+        view
+        returns (bool isVerified, ResourceMetadata memory metadata)
+    {
+        // checkDataAccess(recordId)
+        // Check record existence
+        if (bytes(_resourceMetadata[recordId].recordId).length == 0) {
+            revert DataRegistry__RecordNotFound(recordId);
+        }
 
-        emit ProviderMetadataUpdated(owner(), _metadata.url, _metadata.hash);
+        metadata = _resourceMetadata[recordId];
+        isVerified = _verifiedRecords[recordId];
     }
 
     /**
-     * @notice Updates the schema reference for the provider's records.
-     * @dev This function updates the URL and hash of the schema used for the provider's records.
-     *      It allows the owner to specify a new schema definition, which can be useful for maintaining
-     *      compatibility with updated data standards or formats.
-     *
-     * @param _schemaRef The new schema reference for the provider, containing the URL and hash.
-     *
-     * @custom:modifier onlyOwner Ensures that only the owner of the contract can call this function.
-     * @custom:modifier whenNotPaused Ensures that the function can only be called when the contract is not paused.
-     *
-     * @custom:event ProviderSchemaUpdated Emitted when the provider's record schema is successfully updated.
+     * @notice Get all records for a producer
+     * @param producer Producer address
      */
-    function updateProviderRecordSchema(DataTypes.Schema memory _schemaRef) external override onlyOwner whenNotPaused {
-        recordSchemaUrl = _schemaRef.schemaRef.url;
-        recordSchemaHash = _schemaRef.schemaRef.hash;
-
-        emit ProviderSchemaUpdated(owner(), _schemaRef.schemaRef.url, _schemaRef.schemaRef.hash);
+    function getProducerRecords(address producer) external view returns (string[] memory recordIds) {
+        return _producerRecords[producer];
     }
 
     /**
-     * @notice Changes the pause state of the contract.
-     * @dev This function allows the owner to pause or unpause the contract,
-     *      which can be useful for temporarily halting operations in case of emergencies
-     *      or maintenance. When the contract is paused, certain functions may be restricted
-     *      to prevent state changes.
-     *
-     * @param _pause A boolean indicating the desired state: true to pause, false to unpause.
-     *
-     * @custom:modifier onlyOwner Ensures that only the owner of the contract can call this function.
-     *
-     * @custom:event PauseStateUpdated Emitted when the pause state of the contract is changed.
+     * @notice Get producer metadata
+     * @param producer Producer address
      */
-    function changePauseState(bool _pause) external override onlyOwner {
-        _pause ? _pauseContract() : _unpauseContract();
-
-        emit PauseStateUpdated(address(this), msg.sender, _pause);
+    function getProducerMetadata(address producer)
+        external
+        view
+        returns (string memory did, uint8 consent, uint16 entries, bool isActive, uint40 lastUpdated, uint40 nonce)
+    {
+        ProducerMetadata memory metadata = _producerMetadata[producer];
+        return
+            (metadata.did, metadata.consent, metadata.entries, metadata.isActive, metadata.lastUpdated, metadata.nonce);
     }
 
-    function _pauseContract() internal whenNotPaused {
+    /**
+     * @notice Get total record count
+     */
+    function getTotalRecords() external view returns (uint256) {
+        return _totalRecords;
+    }
+
+    /**
+     * @notice Check if a record is verified
+     * @param recordId String representation of record ID
+     */
+    function isRecordVerified(string calldata recordId) external view returns (bool) {
+        return _verifiedRecords[recordId];
+    }
+
+    /**
+     * @notice Check if a provider is authorized for a record
+     * @param _provider Provider address to check
+     * @param recordId Record ID to check
+     */
+    function isAuthorizedProvider(address _provider, string memory recordId) public view returns (bool) {
+        bool isProvider = didAuth.authenticate(didAuth.getDidFromAddress(_provider), didAuth.PROVIDER_ROLE())
+            && _authorizedProviders[_provider];
+        bool hasPermission = _accessPermissions[recordId][_provider].accessLevel > 0;
+
+        return isProvider && hasPermission;
+    }
+
+    function getCompensationAddress() external view returns (address) {
+        return address(compensation);
+    }
+
+    /*===================== ADMIN FUNCTIONS ======================*/
+    /**
+     * @notice Update the DidAuth contract address
+     * @param _didAuthAddress Address of the new DidAuth contract
+     */
+    function updateDidAuthAddress(address _didAuthAddress) external onlyOwner {
+        if (_didAuthAddress == address(0)) {
+            revert DataRegistry__InvalidDidAuthAddress();
+        }
+
+        address oldAddress = address(didAuth);
+        didAuth = DidAuth(_didAuthAddress);
+
+        emit DidAuthUpdated(oldAddress, _didAuthAddress);
+    }
+
+    /**
+     * @notice Update the Compensation contract address
+     * @param _compensationAddress Address of the new Compensation contract
+     */
+    function updateCompensationAddress(address _compensationAddress) external onlyOwner {
+        address oldAddress = address(compensation);
+        compensation = Compensation(_compensationAddress);
+
+        emit CompensationUpdated(oldAddress, _compensationAddress);
+    }
+
+    /**
+     * @notice Pauses the contract
+     */
+    function pause() external onlyOwner {
         _pause();
     }
 
-    function _unpauseContract() internal whenPaused {
+    /**
+     * @notice Unpauses the contract
+     */
+    function unpause() external onlyOwner {
         _unpause();
     }
 
-    // function grantConsent(address _provider) external {
-    //     if (
-    //         producerRecords[msg.sender].consent ==
-    //         DataTypes.ConsentStatus.Allowed
-    //     ) {
-    //         revert Registry__ConsentAlreadyGranted();
-    //     }
-
-    //     producerRecords[msg.sender].consent = DataTypes.ConsentStatus.Allowed;
-    // }
-
-    // function revokeConsent(address _provider) external {
-    //     if (
-    //         producerRecords[msg.sender].consent ==
-    //         DataTypes.ConsentStatus.Denied
-    //     ) {
-    //         revert Registry__ConsentAlreadyRevoked();
-    //     }
-
-    //     producerRecords[msg.sender].consent = DataTypes.ConsentStatus.Denied;
-    // }
-
-    /**
-     * @notice Changes the address of the token contract used by the registry.
-     * @dev This function allows the owner to update the address of the ERC20 token
-     *      contract that the registry interacts with. The new token address cannot be
-     *      the zero address. This is useful for changing to a different token if needed.
-     *
-     * @param _tokenAddress The new address of the ERC20 token contract.
-     *
-     * @custom:modifier onlyOwner Ensures that only the owner of the contract can call this function.
-     *
-     * @custom:error Registry__InvalidInputParam Thrown if the provided token address is the zero address.
-     *
-     * @custom:event TokenAddressUpdated Emitted when the token address is successfully updated.
-     */
-    function changeTokenAddress(address _tokenAddress) external onlyOwner {
-        if (_tokenAddress == address(0)) {
-            revert Registry__InvalidInputParam();
-        }
-
-        token = IERC20(_tokenAddress);
-
-        emit TokenAddressUpdated(_tokenAddress);
-    }
-
-    /*====================== VIEW FUNCTIONS ======================*/
-    /**
-     * @notice Retrieves information about a producer's record.
-     * @dev This function allows the owner to access specific details about a producer's record,
-     *      including the producer's address, record status, consent status, and nonce.
-     *      It is useful for auditing or monitoring purposes.
-     *
-     * @param _address The address of the producer whose record information is to be retrieved.
-     *
-     * @return DataTypes.RecordInfo A struct containing the producer's address, status, consent status, and nonce.
-     *
-     * @custom:modifier onlyOwner Ensures that only the owner of the contract can call this function.
-     */
-    function getProducerRecordInfo(address _address)
-        external
-        view
-        override
-        onlyOwner
-        returns (DataTypes.RecordInfo memory)
-    {
-        return DataTypes.RecordInfo(
-            producerRecords[_address].producer,
-            producerRecords[_address].status,
-            producerRecords[_address].consent,
-            producerRecords[_address].nonce
-        );
-    }
-
-    /**
-     * @notice Retrieves a specific producer's medical record.
-     * @dev This function allows either the producer or an authorized provider to access
-     *      the details of a specific medical record associated with a producer.
-     *      It returns the full record information stored in the contract.
-     *
-     * @param _producer The address of the producer whose record is being retrieved.
-     * @param _recordId The unique identifier of the medical record to retrieve.
-     *
-     * @return DataTypes.Record The medical record associated with the specified producer and record ID.
-     *
-     * @custom:modifier onlyProviderOrProducer Ensures that only the authorized provider or
-     *        the producer themselves can call this function.
-     */
-    function getProducerRecord(address _producer, string memory _recordId)
-        external
-        view
-        override
-        onlyProviderOrProducer(_producer)
-        returns (DataTypes.Record memory)
-    {
-        return producerRecords[_producer].records[_recordId];
-    }
-
-    /**
-     * @notice Retrieves all records associated with a producer.
-     * @dev This function returns the status, consent status, and all records for a specified producer.
-     *      It is useful for retrieving comprehensive information about a producer's records.
-     *
-     * @param _producer The address of the producer whose records are being retrieved.
-     *
-     * @return DataTypes.RecordStatus The current status of the producer's records.
-     * @return DataTypes.ConsentStatus The current consent status of the specified producer.
-     * @return DataTypes.Record[] memory An array of records associated with the specified producer.
-     * @return uint256 The current count of records (nonce) associated with the specified producer.
-     */
-    function getProducerRecords(address _producer)
-        external
-        view
-        override
-        onlyProviderOrProducer(_producer)
-        returns (DataTypes.RecordStatus, DataTypes.ConsentStatus, DataTypes.Record[] memory, string[] memory, uint256)
-    {
-        DataTypes.ProducerRecord storage producerRecord = producerRecords[_producer];
-        uint256 count = producerRecord.recordIds.length;
-
-        DataTypes.Record[] memory records = new DataTypes.Record[](count);
-
-        for (uint256 i = 0; i < count; i++) {
-            records[i] = producerRecord.records[producerRecord.recordIds[i]];
-        }
-
-        return (producerRecord.status, producerRecord.consent, records, producerRecord.recordIds, producerRecord.nonce);
-    }
-
-    /**
-     * @notice Retrieves the consent status of a producer.
-     * @dev This function allows anyone to access the consent status of a specific producer.
-     *      It is useful for checking whether a producer has allowed or restricted access
-     *      to their medical records.
-     *
-     * @param _address The address of the producer whose consent status is being retrieved.
-     *
-     * @return DataTypes.ConsentStatus The current consent status of the specified producer.
-     */
-    function getProducerConsent(address _address) external view override returns (DataTypes.ConsentStatus) {
-        return producerRecords[_address].consent;
-    }
-
-    /**
-     * @notice Retrieves the count of records associated with a producer.
-     * @dev This function returns the nonce value for the specified producer, which represents
-     *      the number of records that have been added for that producer. It can be used to
-     *      track the total number of records or to verify the existence of records.
-     *
-     * @param _producer The address of the producer whose record count is being retrieved.
-     *
-     * @return uint256 The current count of records (nonce) associated with the specified producer.
-     */
-    function getProducerRecordCount(address _producer) external view override returns (uint256) {
-        return producerRecords[_producer].nonce; // need to check
-    }
-
-    /**
-     * @notice Retrieves the total count of all records in the registry.
-     * @dev This function returns the overall number of records that have been registered in
-     *      the contract, regardless of the producer. It can be used for reporting or analytics purposes.
-     *
-     * @return uint256 The total count of records stored in the registry.
-     */
-    function getTotalRecordsCount() external view override returns (uint256) {
-        return recordCount;
-    }
-
-    /**
-     * @notice Retrieves the status of a producer's records.
-     * @dev This function returns the current status of the records associated with the
-     *      specified producer. It helps in determining whether the producer's records
-     *      are active, inactive, or in any other state defined in the RecordStatus enum.
-     *
-     * @param _producer The address of the producer whose record status is being retrieved.
-     *
-     * @return DataTypes.RecordStatus The current status of the records associated with the specified producer.
-     */
-    function getProducerRecordStatus(address _producer) external view override returns (DataTypes.RecordStatus) {
-        return producerRecords[_producer].status;
-    }
-
-    /**
-     * @notice Retrieves the metadata of the provider.
-     * @dev This function returns the metadata associated with the provider, including
-     *      the URL and hash. This metadata can be used to reference the provider's
-     *      information or specifications in external systems.
-     *
-     * @return DataTypes.Metadata The metadata of the provider, containing the URL and hash.
-     */
-    function getProviderMetadata() external view override returns (DataTypes.Metadata memory) {
-        DataTypes.Metadata memory metadata = DataTypes.Metadata({url: providerMetadataUrl, hash: providerMetadataHash});
-
-        return metadata;
-    }
-
-    /**
-     * @notice Retrieves the schema of the records.
-     * @dev This function returns the schema reference associated with the records,
-     *      including the URL and hash. This schema information can be used to validate
-     *      or understand the structure of the records in the system.
-     *
-     * @return DataTypes.Schema The schema reference for the records, containing the URL and hash.
-     */
-    function getRecordSchema() external view override returns (DataTypes.Schema memory) {
-        DataTypes.Schema memory recordSchema =
-            DataTypes.Schema({schemaRef: DataTypes.Metadata({url: recordSchemaUrl, hash: recordSchemaHash})});
-
-        return recordSchema;
-    }
-
-    /**
-     * @notice Checks if a producer exists in the registry.
-     * @dev This function verifies the existence of a producer by checking if the
-     *      producer's address is not the zero address. It is useful for confirming
-     *      whether a producer has been registered in the system.
-     *
-     * @param _producer The address of the producer to check.
-     * @return bool True if the producer exists, otherwise false.
-     */
-    function producerExists(address _producer) external view override returns (bool) {
-        return producerRecords[_producer].producer != address(0);
-    }
-
-    /**
-     * @notice Retrieves the address of the compensation contract.
-     * @dev This function provides the address of the compensation contract used for
-     *      verifying payments related to data sharing. It can be helpful for
-     *      interacting with the compensation system externally.
-     *
-     * @return address The address of the compensation contract.
-     */
-    function getCompensationContractAddress() external view returns (address) {
-        return address(compensation);
+    // Add a view function to get producer
+    function getRecordProducer(string calldata recordId) external view returns (address) {
+        return _resourceMetadata[recordId].producer;
     }
 }

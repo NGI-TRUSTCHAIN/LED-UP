@@ -9,6 +9,9 @@ LED-UP is a secure health data transaction platform that leverages blockchain an
 - Automatic compensation for shared files
 - Zero-Knowledge Proofs (ZKP) for privacy-preserving data verification
 - Smart contract for automatic compensation
+- Decentralized Identity (DID) management for secure authentication
+- Role-based access control for healthcare data
+- Consent management for patient data sharing
 
 ## Prerequisites
 
@@ -18,14 +21,17 @@ LED-UP is a secure health data transaction platform that leverages blockchain an
 
 ## Technologies Used
 
-- Next.js
-- React
+- Next.js 15 with App Router
+- React 19
 - TypeScript
 - Tailwind CSS
-- Ethereum (Sepolia testnet)
+- Ethereum (Sepolia testnet / local Hardhat network)
 - IPFS (via Pinata)
-- ZoKrates (for ZKP)
+- Zero-Knowledge Proofs (via ZoKrates)
 - ConnectKit (for wallet connection)
+- Wagmi & Viem (for blockchain interactions)
+- TanStack Query (for data fetching)
+- Radix UI (for accessible components)
 
 ## Getting Started
 
@@ -41,46 +47,89 @@ LED-UP is a secure health data transaction platform that leverages blockchain an
 2. Install dependencies:
 
    ```
-   yarn install or npm install
+   yarn install
+   # or
+   npm install
    ```
 
 3. Set up environment variables:
-   Create a `.env.local` file in the root directory and add the following variables:
+   Create a `.env.local` file in the root directory based on `.env.local.example`.
 
-   ```
-   NEXT_PUBLIC_ALCHEMY_ID=your_alchemy_id
-   NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=your_walletconnect_project_id
-   PINATA_JWT=your_pinata_jwt
-   API_SECRET=your_api_secret
-   API_KEY=your_api_key
-   NEXT_PUBLIC_GATEWAY_URL=your_pinata_gateway_url
-   ENCRYPTION_KEY=your_encryption_key
-   BASE_URL=your_base_url  # backend base url
-   ```
+4. Set up ZKP circuits:
 
-4. Download the zkp files from [here](https://drive.google.com/file/d/1JFp9gsCLI-nnNO42VXEj0PTLrMCy0W_L/view?usp=sharing) unzip it and put it in the `zkp` folder in the root directory.
+   ```bash
+   npm run setup-circuits
+   # or
+   yarn setup-circuits
+   ```
 
 5. Run the development server:
 
    ```
    npm run dev
+   # or
+   yarn dev
    ```
 
 6. Open [http://localhost:3000](http://localhost:3000) in your browser to see the application.
+
+## Available Scripts
+
+| Script                          | Description                                      |
+| ------------------------------- | ------------------------------------------------ |
+| `npm run dev`                   | Starts the development server with hot reloading |
+| `npm run build`                 | Builds the application for production            |
+| `npm run start`                 | Starts the production server                     |
+| `npm run lint`                  | Runs ESLint for code linting                     |
+| `npm run test`                  | Runs Jest unit and integration tests             |
+| `npm run test:watch`            | Runs Jest tests in watch mode                    |
+| `npm run setup-circuits`        | Sets up ZKP circuit files                        |
+| `npm run test:playwright`       | Runs Playwright E2E tests                        |
+| `npm run test:playwright:ui`    | Runs Playwright tests with UI                    |
+| `npm run test:playwright:debug` | Runs Playwright tests in debug mode              |
+| `npm run test:playwright:zkp`   | Runs ZKP-specific Playwright tests               |
+
+## Project Structure
+
+- `app/`: Next.js App Router pages and layouts
+- `components/`: Reusable UI components
+- `features/`: Feature-specific code
+  - `auth/`: Authentication feature
+  - `data-registry/`: Data registry feature
+  - `zkp/`: Zero-knowledge proof feature
+  - `did-registry/`: DID registry feature
+  - `compensation/`: Compensation feature
+- `hooks/`: Custom React hooks
+- `lib/`: Utility functions and server actions
+- `abi/`: Smart contract ABIs
+- `utils/`: Helper functions
+- `public/`: Static assets
+- `types/`: TypeScript type definitions
+- `__tests__/`: Test files
+
+## Key Features
+
+### DID Authentication
+
+Provides decentralized identity-based authentication with secure key management.
+
+### Data Registry
+
+Enables secure storage of healthcare data using IPFS with backend encryption.
+
+### Zero-Knowledge Proofs
+
+Privacy-preserving verification of data without revealing the underlying information.
+
+### Compensation System
+
+Manages payments between data producers and consumers with automatic settlements.
 
 ## Usage
 
 1. Connect your Ethereum wallet using the "CONNECT TO LED-UP" button.
 2. Navigate to the "Files" page to view and upload files.
 3. Navigate to the "Patient Data" page to view and upload patient data.
-
-## Project Structure
-
-- `app/`: Next.js app router and page components
-- `components/`: Reusable React components
-- `lib/`: Utility functions and server actions
-- `utils/`: Helper functions and constants
-- `zkp/`: zkp related files and scripts
 
 ## Contributing
 

@@ -111,7 +111,7 @@ export async function verifyProofOnChainV2(proofData: any) {
   if (window.ethereum === null) {
     provider = ethers.getDefaultProvider();
   } else {
-    provider = new ethers.JsonRpcProvider('http://localhost:8545');
+    provider = new ethers.JsonRpcProvider(process.env.NEXT_PUBLIC_RPC_URL || 'http://localhost:8545');
     signer = await provider.getSigner();
   }
 

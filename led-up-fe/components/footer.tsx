@@ -1,9 +1,7 @@
-import Link from 'next/link';
-
 export function Footer() {
   return (
-    <footer className="bg-gray-100 dark:bg-gray-800 border-t">
-      <div className="container mx-auto py-8 px-4">
+    <footer className="fixed bottom-0 w-full z-10 border-t bg-background">
+      <div className="container mx-auto py-2 px-4">
         {/*<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
           <div>
             <h3 className="text-lg font-semibold mb-4">Product</h3>
@@ -123,7 +121,9 @@ export function Footer() {
           </div>
         </div> */}
         <div className="">
-          <p className="text-center text-gray-500 dark:text-gray-400">&copy; 2024 LED-UP. All rights reserved.</p>
+          <p className="text-center text-gray-500 dark:text-gray-400 text-sm font-mono">
+            &copy; {new Date().getFullYear()} LED-UP. All rights reserved.
+          </p>
         </div>
       </div>
     </footer>

@@ -1,0 +1,256 @@
+import HeaderTitle from '@/components/title';
+
+<HeaderTitle
+  title="Feature Modules Documentation"
+  source="https://github.com/LED-UP/LED-UP/tree/main/frontend"
+/>
+---
+
+
+
+## Overview
+
+This document describes the domain-specific feature modules of the LEDUP frontend application. Each feature module encapsulates related components, hooks, utilities, and state management for a specific functional area of the application.
+
+## Feature Module Structure
+
+Each feature module follows a consistent structure:
+
+```
+features/
+├── feature-name/
+│   ├── components/       # Feature-specific components
+│   ├── hooks/            # Feature-specific hooks
+│   ├── utils/            # Feature-specific utilities
+│   ├── types/            # TypeScript type definitions
+│   ├── constants/        # Constants and configuration
+│   ├── actions/          # Server actions and API integration
+│   ├── schema/           # Validation schemas
+│   └── index.ts          # Public API exports
+```
+
+## DID Authentication Feature
+
+The DID Authentication feature handles decentralized identity-based authentication.
+
+### Purpose and Functionality
+
+The DID Authentication feature provides functionality for authenticating users using decentralized identifiers (DIDs). It includes components for login, registration, and DID verification, as well as hooks for managing authentication state.
+
+### Component Structure
+
+```
+features/did-auth/
+├── components/           # Authentication UI components
+├── hooks/                # Authentication-related hooks
+├── contexts/             # Context providers for auth state
+├── actions/              # Authentication server actions
+├── types/                # Type definitions for auth data
+└── schema/               # Validation schemas for auth forms
+```
+
+### Key Components and Hooks
+
+- Authentication forms for DID-based login and registration
+- DID verification components for validating identity
+- `useDidAuth` hook for authenticating with DIDs and managing auth state
+- Server actions for secure authentication processing
+
+## Data Registry Feature
+
+The Data Registry feature handles data storage, retrieval, and registration on the blockchain with IPFS integration.
+
+### Purpose and Functionality
+
+This feature enables secure storage of healthcare data using IPFS with backend encryption. It manages blockchain registration of data records and provides components for data upload, retrieval, and management.
+
+### Component Structure
+
+```
+features/data-registry/
+├── components/           # Data management UI components
+├── hooks/                # IPFS and data registry hooks
+├── actions/              # Server actions for IPFS operations
+├── services/             # Service integrations
+├── utils/                # Utilities for data processing
+├── helpers/              # Helper functions
+├── schema/               # Validation schemas
+├── types/                # Type definitions
+└── tests/                # Feature-specific tests
+```
+
+### Key Components and Hooks
+
+- Data upload and retrieval components
+- Record management interfaces
+- `useIPFSUpload` hook for uploading data to IPFS
+- `useDataRegistry` hook for blockchain interactions
+- Server actions for secure IPFS operations with encryption
+
+### Architecture
+
+The Data Registry feature uses a hybrid architecture:
+
+1. Frontend collects and sends plain data to backend
+2. Backend encrypts data using AES-256-CCM
+3. Encrypted data is uploaded to IPFS
+4. IPFS returns a Content Identifier (CID)
+5. CID and metadata are stored on the blockchain
+6. Frontend can later retrieve and display data
+
+## Zero-Knowledge Proof (ZKP) Feature
+
+The ZKP feature enables privacy-preserving verification of data without revealing the underlying information.
+
+### Purpose and Functionality
+
+This feature provides zero-knowledge proofs for various verification scenarios, including age verification, hash verification, and FHIR data verification. It uses ZoKrates for circuit implementation and integrates with Azure Functions for off-chain proof generation and verification.
+
+### Component Structure
+
+```
+features/zkp/
+├── components/           # ZKP UI components
+├── hooks/                # Hooks for ZKP operations
+├── actions/              # Server actions for proof generation
+├── utils/                # ZKP utilities
+├── types/                # Type definitions
+└── schema/               # Validation schemas
+```
+
+### Key Components and Hooks
+
+- Proof request and verification UI components
+- Verification status displays
+- Hooks for interacting with ZKP circuits
+- Utilities for proof generation and verification
+
+## Compensation Feature
+
+The Compensation feature manages payments between data producers and consumers.
+
+### Purpose and Functionality
+
+This feature provides functionality for registering producers and consumers, processing payments for data usage, managing producer balances, and verifying payments for data access.
+
+### Component Structure
+
+```
+features/compensation/
+├── components/           # Payment and compensation UI
+├── hooks/                # Hooks for contract interaction
+├── actions/              # Server actions for payment processing
+├── utils/                # Utilities for payment calculations
+├── constants/            # Payment-related constants
+├── types/                # Type definitions
+└── schema/               # Validation schemas
+```
+
+### Key Components and Hooks
+
+- Producer and consumer registration forms
+- Payment processing interfaces
+- Balance management and withdrawal components
+- `useCompensation` hook for compensation operations
+- Hooks for querying producer/consumer information
+
+## DID Registry Feature
+
+The DID Registry feature manages decentralized identifiers on the blockchain.
+
+### Purpose and Functionality
+
+This feature provides functionality for registering, updating, and resolving DIDs on the blockchain. It includes components for DID management and hooks for interacting with the DID Registry contract.
+
+### Component Structure
+
+```
+features/did-registry/
+├── components/           # DID management UI
+├── hooks/                # Hooks for DID operations
+├── actions/              # Server actions for DID transactions
+├── types/                # Type definitions
+└── schema/               # Validation schemas
+```
+
+### Key Components and Hooks
+
+- DID registration and management interfaces
+- Hooks for interacting with the DID Registry contract
+- Components for displaying DID information and verification status
+
+## Consent Management Feature
+
+The Consent Management feature handles user consent for data sharing and access control.
+
+### Purpose and Functionality
+
+This feature enables users to manage consent for data sharing, including granting and revoking access permissions. It provides interfaces for consent management and hooks for interacting with consent-related contracts.
+
+### Component Structure
+
+```
+features/consent-management/
+├── components/           # Consent management UI
+├── hooks/                # Hooks for consent operations
+├── actions/              # Server actions for consent transactions
+├── types/                # Type definitions
+└── schema/               # Validation schemas
+```
+
+## IPFS Feature
+
+The IPFS feature provides core functionality for interacting with the InterPlanetary File System.
+
+### Purpose and Functionality
+
+This feature provides low-level utilities and hooks for IPFS operations, including file upload, download, and pinning. It serves as the foundation for other features that require decentralized storage.
+
+### Component Structure
+
+```
+features/ipfs/
+├── components/           # IPFS operation UI
+├── hooks/                # Hooks for IPFS interactions
+├── actions/              # Server actions for IPFS operations
+├── types/                # Type definitions
+└── utils/                # IPFS utilities
+```
+
+## Feature Interconnections
+
+The LEDUP features are designed to work together as an integrated ecosystem:
+
+1. **DID Authentication** provides the foundation for user identity and authentication
+2. **DID Registry** manages the decentralized identifiers used throughout the application
+3. **Data Registry** leverages the DID system for secure data storage and retrieval
+4. **Compensation** uses DIDs to link producers and consumers for payment processing
+5. **ZKP** provides privacy-preserving verification of data without revealing sensitive information
+6. **Consent Management** ensures that data access follows user permissions
+
+### Cross-Feature Communication
+
+Features communicate through:
+
+1. **Shared contracts**: Multiple features interact with the same smart contracts
+2. **Context providers**: Global state management for cross-feature data
+3. **Composite components**: Components that combine functionality from multiple features
+4. **Custom events**: Event emission and listening for cross-feature notifications
+
+## Feature Development Guidelines
+
+When developing new features or extending existing ones:
+
+1. **Follow the established structure**: Use the standard directory structure for consistency
+2. **Minimize cross-feature dependencies**: Keep features as isolated as possible
+3. **Use typed exports**: Ensure all exported components and hooks are properly typed
+4. **Document public APIs**: Add JSDoc comments to exported functions and components
+5. **Create unit tests**: Test components and hooks in isolation
+6. **Create integration tests**: Test interactions between features
+7. **Follow naming conventions**: Use consistent naming for files and exports
+8. **Export only what's needed**: Use index.ts to control the public API of the feature
+
+---
+
+**Last Updated:** March 2025
+**Contact:** LED-UP Development Team

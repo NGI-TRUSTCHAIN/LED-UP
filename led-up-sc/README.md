@@ -1,113 +1,167 @@
-## LED-UP Smart Contracts
+# DID Registry Smart Contract
 
-The LED-UP smart contracts are written in Solidity and tested using the Foundry testing framework.There are two main contracts in the project:
+This project implements a Decentralized Identifier (DID) Registry smart contract that allows for the registration, resolution, and management of DIDs on the blockchain. The contract is built using Solidity and the Hardhat development environment.
 
-- **LEDToken.sol**: ERC20 token contract for the LED token. This contract is based on the OpenZeppelin ERC20 implementation. The contract acts as the main token for the compensation system.
-- **DataRegistry.sol**: The main contract for the LED-UP platform. This contract is responsible for managing the data registration, sharing and operations.
-- **Compensation.sol**: The contract for managing the compensation system. This contract is responsible for managing the compensation system for the data sharing and operations.
+## Features
 
-## Main Features
-
-- **Registering Data**: Providers can register new data records for producers. Each record includes a unique ID, metadata (like a URL and hash), and a digital signature. Updating Data: Providers can update existing data records, including changing the metadata and status.
-- **Sharing Data**: Data can be shared with consumers, but only if the producer has given consent and the payment for the data has been verified.
-  Consent Management: Producers can grant or revoke consent for their data to be shared.
-- **Access Control**: The contract access control for data security purposes. The functions are equipped with efficient access control. The contract can be paused and unpaused by the owner to temporarily stop all operations.
-- **Compensation**: The contract integrates with a compensation system to verify payments for data sharing.
+- DID registration with associated documents and public keys
+- DID resolution to retrieve associated data
+- DID document and public key updates
+- DID deactivation
+- Address to DID mapping
+- Controller management for DIDs
+- Gas-optimized Zero-Knowledge Proof circuits for enhanced privacy
 
 ## Project Structure
 
-```bash
-├── lib
-│   ├── forge-std
-│   └── openzeppelin-contracts
-├── script
-│   ├── Compensation.s.sol
-│   ├── DataRegistry.s.sol
-│   └── HelperConfig.s.sol
-├── src
-│   ├── contracts
-│   ├── interface
-│   └── library
-└── test
-│   ├── Compensation.t.sol
-│   ├── Consent.t.sol
-│   ├── DataRegistry.t.sol
-│   ├── DataRegistry.t.ts
-│   ├── Token.t.sol
-│   └── ZKP.t.sol
-├── foundry.toml
-├── Makefile
-├── README.md
+```
+didregistry/
+├── contracts/           # Smart contract source code
+│   └── circuits/        # ZK circuit implementations
+│       └── circom/      # Circom circuit definitions
+│           └── enhanced/# Gas-optimized circuits
+├── interfaces/          # Contract interfaces
+├── test/                # Test files
+│   ├── did/             # DID Registry tests
+│   ├── zkp-test/        # Zero-Knowledge Proof tests
+│   │   └── circom/      # Circom circuit tests
+│   │       └── gas/     # Gas optimization benchmarks
+│   ├── DidRegistry.test.ts         # Basic tests
+│   └── DidRegistry.enhanced.test.ts # Comprehensive test suite
+├── ignition/            # Hardhat Ignition deployment modules
+├── scripts/             # Utility scripts
+│   ├── run-tests.sh     # Test runner script
+│   └── build-optimized-circuits.sh # Circuit build script
+├── led-up-fe/           # Frontend components
+│   └── features/        # Frontend features
+│       └── circom/      # Circom circuit utilities
+│           └── utils/   # Optimized utility functions
+└── TESTING.md           # Detailed testing documentation
 ```
 
-# Prerequisites
+## Getting Started
 
-Before you can try to test and interact with the LED-UP smart contracts, you need to have the following:
+### Prerequisites
 
-- Foundry Installed on your machine
-- git installed on your machine
+- Node.js (v14 or later)
+- npm or yarn
+- Circom 2.1.4+ (for ZK circuits)
+- SnarkJS 0.7+ (for ZK proofs)
 
-## Setup Instructions
-
-1. **Clone the repository**:
-
-   ```bash
-   git clone https://github.com/NGI-TRUSTCHAIN/LED-UP/tree/master/LED-UP-SMART-CONTRACTS
-   cd LED-UP-SMART-CONTRACTS
-   ```
-
-2. **Install dependencies**:
-   Run the following command to install the dependencies and build the project:
-
-   ```bash
-   forge build
-   ```
-
-3. **Set up environment variables**:
-   The project requires several environment variables. They are stored in the `.env` file for local development and in the deployment environment for production. Create a `.env` file at the project root if it doesn't already exist. This file should not be committed to version control. Here’s an example setting that you can use:
-
-   ```bash
-   SEPOLIA_RPC_URL=<your_sepolia_rpc_url>      # For deployment
-   SEPOLIA_API_KEY=<your_sepolia_api_key>      # For deployment
-   PRIVATE_KEY=<your_private_key>              # For deployment
-   ETHERSCAN_API_KEY=<etherscan_api_key>       # For verification on Etherscan
-   ```
-
-### Test
+### Installation
 
 ```shell
-# simple local test
-$ forge test
-
-# test locally with details
-forge test -vvvv --detailed --summary --build-info --show-progress
-# fork test with details
-forge test -vvvv --detailed --summary --build-info --show-progress --fork <rpc_url>
+# Install dependencies
+npm install
+# or
+yarn install
 ```
 
-### Deployments
+### Compilation
 
 ```shell
-# Deploy DataRegistry Smart Contract
-$ forge script script/DataRegistry.s.sol:DeployDataRegistry --rpc-url <your_rpc_url> --private-key <your_private_key>
-# Deploy Compensation Smart Contract
-$ forge script script/Compensation.s.sol:DeployCompensation --rpc-url <your_rpc_url> --private-key <your_private_key>
+# Compile smart contracts
+npm run compile
+# or
+yarn compile
+
+# Build optimized circuits
+npm run build:circuits
+# or
+yarn build:circuits
 ```
 
-## Contributing
+## Testing
 
-We welcome contributions to this project! Please follow these steps:
+This project includes a comprehensive test suite for the DID Registry contract and ZK circuits. For detailed information about testing, see [TESTING.md](./TESTING.md).
 
-1. Fork the repository.
-2. Create a feature branch (`git checkout -b feature/my-feature`).
-3. Commit your changes (`git commit -m 'Add feature'`).
-4. Push to the branch (`git push origin feature/my-feature`).
-5. Create a new Pull Request.
+### Running Tests
+
+```shell
+# Run DID Registry tests
+npm run test:did
+# or
+yarn test:did
+
+# Run enhanced test suite
+npm run test:did-enhanced
+# or
+yarn test:did-enhanced
+
+# Run all smart contract tests
+npm run test:all
+# or
+yarn test:all
+
+# Run tests with gas reporting
+npm run test:gas
+npm run test:gas-enhanced
+# or
+yarn test:gas
+yarn test:gas-enhanced
+
+# Run test coverage
+npm run coverage
+npm run coverage:did
+# or
+yarn coverage
+yarn coverage:did
+```
+
+### Running ZK Circuit Tests
+
+```shell
+# Run gas optimization tests
+npm run test:circuit:gas
+# or
+yarn test:circuit:gas
+
+# Run optimized hash tests
+npm run test:circuit:hash
+# or
+yarn test:circuit:hash
+
+# Run all circuit tests
+npm run test:circuit:all
+# or
+yarn test:circuit:all
+```
+
+## Gas-Optimized Circom Circuits
+
+This project includes gas-optimized implementations of Zero-Knowledge Proof circuits. The optimizations focus on reducing constraint count, gas costs, and improving overall efficiency.
+
+### Optimization Areas
+
+- **Optimized Hash Handling**: Efficient hash splitting and validation functions
+- **Enhanced Error Reporting**: Gas-efficient error coding scheme
+- **Multi-Hash Algorithm Support**: Lazy computation of hash functions
+- **Circuit Compilation Optimization**: R1CS optimization and constraint reduction
+- **Efficient Verification**: Gas-optimized verification contracts
+
+### Expected Improvements
+
+| Optimization Area           | Expected Gas Savings |
+| --------------------------- | -------------------- |
+| Hash Handling               | 30-40%               |
+| Error Reporting             | 25%                  |
+| Multi-Hash Support          | 45%                  |
+| Circuit Design              | 15%                  |
+| Smart Contract Verification | 30-50%               |
+| Batch Verification          | 70%                  |
+
+## Deployment
+
+```shell
+# Deploy using Hardhat
+npm run deploy
+# or
+yarn deploy
+
+# Deploy using Hardhat Ignition
+npx hardhat ignition deploy ./ignition/modules/DidRegistry.ts
+```
 
 ## License
 
-AGPL-3.0 license
-
-## Contact
-
-led-up@modern-miracle.com
+This project is licensed under the AGPL License. See the [LICENSE](./LICENSE) file for details.

@@ -1,7 +1,0 @@
-// ageGreater.zok
-def main(private field age, field threshold) -> field {
-    // Check if age is greater than threshold
-    field isGreater = if age > threshold { 1} else { 0 };
-
-    return isGreater;
-}

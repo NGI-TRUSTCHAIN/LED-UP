@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "target": "es2020",
+    "module": "commonjs",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "outDir": "./dist",
+    "rootDir": ".",
+    "typeRoots": ["./node_modules/@types", "./types", "./circuits/__test__/types"],
+    "baseUrl": ".",
+    "paths": {
+      "circom_tester": ["./types/circom_tester.d.ts"],
+      "*": ["./types/*"]
+    }
+  },
+  "include": ["./scripts", "./test", "./circuits/__test__/**/*.ts", "circom/**/*.ts"],
+  "exclude": ["node_modules", "dist"]
+}

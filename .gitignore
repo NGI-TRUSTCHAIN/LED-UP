@@ -40,3 +40,9 @@ coverage/
 .DS_Store
 ./led-up-sc/broadcast/DataRegistry.s.sol/11155111/*.json
 ./led-up-sc/broadcast/
+./workplan-and-docs/
+circom/
+scripts/
+commit-history.md
+
+./led-up-graph
