@@ -10,6 +10,7 @@ import { getResourceTypeName } from '../../utils/transformation';
 import { CopyButton, IPFSLinkButton, ShareButton, RevealButton, formatUtils } from './PatientRecordsComponents';
 import { HealthRecordCard } from './HealthRecordCard';
 import { ChevronRight, FileText } from 'lucide-react';
+import ResourceModal from './ResourceModal';
 
 // HealthRecordGrid - Grid view for records
 export const HealthRecordGrid = ({
@@ -286,6 +287,8 @@ export const PatientRecordsTabs = ({
         </Button>
 
         <ConsentManager />
+
+        <ResourceModal />
       </div>
     </div>
   );

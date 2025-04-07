@@ -322,6 +322,7 @@ contract DataRegistry is AccessControl, Pausable, ReentrancyGuard, Ownable {
     function updateRecord(string calldata recordId, string calldata cid, bytes32 contentHash)
         external
         whenNotPaused
+        onlyRegisteredProducer
         nonReentrant
     {
         address producer = _resourceMetadata[recordId].producer;

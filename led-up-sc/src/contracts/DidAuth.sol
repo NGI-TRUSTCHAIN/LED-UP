@@ -112,7 +112,7 @@ contract DidAuth {
 
         // Check role - make sure the DID has the specific role
         bytes32 didHash = keccak256(abi.encodePacked(did));
-        return didRoles[didHash][role];
+        return didRoles[didHash][role]; // true if the DID has the role
     }
 
     /**

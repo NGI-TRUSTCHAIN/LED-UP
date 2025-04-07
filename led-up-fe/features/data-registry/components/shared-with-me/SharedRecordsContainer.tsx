@@ -26,6 +26,8 @@ import { RevealDataDialog } from './RevealDataDialog';
 import { HealthRecord } from '../../types';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
+import { useRecordInfo } from '../../hooks/use-data-registry';
+import { getBulkIPFSData } from '../../actions/ipfs';
 
 // Type definitions
 type ViewMode = 'grid' | 'table';
@@ -372,11 +374,36 @@ export const SharedWithMePage: React.FC = () => {
   const [isAccessingData, setIsAccessingData] = useState(false);
   const [copiedItem, setCopiedItem] = useState<{ id: string; field: string } | null>(null);
   const [triggeredAccess, setTriggeredAccess] = useState<Record<string, boolean>>({});
+  const [ipfsDataMap, setIpfsDataMap] = useState<Record<string, any>>({});
+
+  // Get record info for the revealing record
+  const { data: recordDetails } = useRecordInfo(revealingRecord?.recordId);
 
   // Get shared records data
   const { extendedRecords, recordCounts, isLoading, isRefetching, handleRefresh } = useSharedRecordsData(
     address as Address
   );
+
+  // Create HealthRecord object for RevealDataDialog - using recordDetails to get the correct CID
+  const healthRecordForReveal = useMemo(() => {
+    if (!revealingRecord || !recordDetails) return null;
+
+    return {
+      recordId: revealingRecord.recordId,
+      cid: recordDetails.metadata?.cid || '',
+      resourceType: recordDetails.metadata?.resourceType || 0,
+      producer: recordDetails.producer || ('0x0' as `0x${string}`),
+      updatedAt: Number(revealingRecord.grantedAt) || 0,
+      dataSize: recordDetails.metadata?.dataSize || 0,
+      contentHash: recordDetails.metadata?.contentHash || ('0x' as `0x${string}`),
+      isVerified: recordDetails.isVerified || false,
+    };
+  }, [revealingRecord, recordDetails]);
+
+  // Open in IPFS explorer helper function
+  const openInIPFS = useCallback((cid: string) => {
+    window.open(`https://ipfs.io/ipfs/${cid}`, '_blank');
+  }, []);
 
   // Filter records based on search and filters
   const filteredRecords = useMemo(() => {
@@ -597,23 +624,6 @@ export const SharedWithMePage: React.FC = () => {
       </Card>
     );
   }
-
-  // Create HealthRecord object for RevealDataDialog
-  const healthRecordForReveal = useMemo(() => {
-    if (!revealingRecord) return null;
-
-    // Create a basic record with available info
-    return {
-      recordId: revealingRecord.recordId,
-      cid: '', // We'll need to update this when data is available
-      resourceType: 0,
-      producer: '0x0' as `0x${string}`,
-      updatedAt: Number(revealingRecord.grantedAt) || 0,
-      dataSize: 0,
-      contentHash: '0x' as `0x${string}`,
-      isVerified: false,
-    };
-  }, [revealingRecord]);
 
   return (
     <div className="flex flex-col gap-4 w-full max-w-7xl mx-auto">

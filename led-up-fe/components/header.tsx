@@ -20,6 +20,7 @@ import { useAuth } from '@/features/auth/contexts/auth-provider';
 import { Copy, CheckCheck } from 'lucide-react';
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
+
 export function Header() {
   const { isAuthenticated, did, logout } = useAuth();
   const [isCopied, setIsCopied] = useState(false);
