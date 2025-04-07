@@ -1,7 +1,7 @@
 import { renderHook, act } from '@testing-library/react';
-import { useCircuitVerification } from '../../../features/circom/hooks/useCircuitVerification';
-import { CircuitType } from '../../../features/circom/types';
-import * as proofUtils from '../../../features/circom/utils/proof';
+import { useCircuitVerification } from '../../../features/zkp/hooks/useCircuitVerification';
+import { CircuitType } from '../../../features/zkp/types';
+import * as proofUtils from '../../../features/zkp/utils/proof';
 import '@testing-library/jest-dom';
 
 // Mock the proof utilities

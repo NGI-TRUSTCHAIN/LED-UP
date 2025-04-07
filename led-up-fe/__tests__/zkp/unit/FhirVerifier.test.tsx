@@ -1,8 +1,8 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { FhirVerifier } from '@/features/circom/components';
-import * as useCircuitVerificationModule from '@/features/circom/hooks/useCircuitVerification';
-import * as poseidonModule from '@/features/circom/utils/poseidon';
+import { FhirVerifier } from '@/features/zkp/components';
+import * as useCircuitVerificationModule from '@/features/zkp/hooks/useCircuitVerification';
+import * as poseidonModule from '@/features/zkp/utils/poseidon';
 
 // Mock TextEncoder if not available in test environment
 if (typeof global.TextEncoder === 'undefined') {

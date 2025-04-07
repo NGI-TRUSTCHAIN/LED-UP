@@ -1,4 +1,4 @@
-import { calculatePoseidonHash, splitHashForCircuit, poseidonHashToHex } from '@/features/circom/utils/poseidon';
+import { calculatePoseidonHash, splitHashForCircuit, poseidonHashToHex } from '@/features/zkp/utils/poseidon';
 
 // Mock the poseidon instance
 jest.mock('circomlibjs', () => {

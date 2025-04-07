@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import MvpVerifier from '@/features/mvp/MvpVerifier';
-import * as mvpHashUtils from '@/features/circom/utils/mvpOptimizedHash';
+import * as mvpHashUtils from '@/features/zkp/utils/mvpOptimizedHash';
 import * as snarkjs from 'snarkjs';
 
 // Mock the hash utilities

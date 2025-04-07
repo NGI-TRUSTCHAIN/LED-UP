@@ -2,10 +2,10 @@
 
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AgeVerifier, FhirVerifier, HashVerifier } from '@/features/circom/components';
+import { AgeVerifier, FhirVerifier, HashVerifier } from '@/features/zkp/components';
 import { Separator } from '@/components/ui/separator';
-import { CircuitType } from '@/features/circom/types';
-import { getCircuitMetadata } from '@/features/circom/utils/proof';
+import { CircuitType } from '@/features/zkp/types';
+import { getCircuitMetadata } from '@/features/zkp/utils/proof';
 import { Card, CardContent } from '@/components/ui/card';
 import { Shield, FileText, Hash, AlertTriangle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';

@@ -1,8 +1,8 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import AgeVerifier from '@/features/circom/components/AgeVerifier';
-import { useCircuitVerification } from '@/features/circom/hooks/useCircuitVerification';
-import { CircuitType, AgeVerificationType } from '@/features/circom/types';
+import AgeVerifier from '@/features/zkp/components/AgeVerifier';
+import { useCircuitVerification } from '@/features/zkp/hooks/useCircuitVerification';
+import { CircuitType, AgeVerificationType } from '@/features/zkp/types';
 
 // Mock the useCircuitVerification hook
 jest.mock('@/features/circom/hooks/useCircuitVerification');
