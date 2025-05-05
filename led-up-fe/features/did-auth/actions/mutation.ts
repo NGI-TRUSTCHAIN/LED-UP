@@ -1,6 +1,6 @@
 'use server';
 
-import { createPublicClient, http } from 'viem';
+import { createPublicClient, http, keccak256, toBytes } from 'viem';
 import { hardhat, mainnet } from 'viem/chains';
 import { DidAuthABI } from '@/abi/did-auth.abi';
 import { revalidatePath } from 'next/cache';
@@ -34,6 +34,42 @@ type TransactionResponse = {
   functionName?: string;
   args?: any[];
 };
+
+export type Role =
+  | 'default_admin'
+  | 'admin'
+  | 'operator'
+  | 'producer'
+  | 'consumer'
+  | 'provider'
+  | 'issuer'
+  | 'verifier';
+
+// Using pre-computed keccak256 hashes for common roles
+// These are the standard hashes used by OpenZeppelin's AccessControl
+function getRoleHash(role: Role): string {
+  switch (role.toUpperCase()) {
+    case 'default_admin':
+      return '0x0000000000000000000000000000000000000000000000000000000000000000';
+    case 'admin':
+      return keccak256(toBytes('ADMIN'));
+    case 'operator':
+      return keccak256(toBytes('OPERATOR'));
+    case 'producer':
+      return keccak256(toBytes('PRODUCER'));
+    case 'consumer':
+      return keccak256(toBytes('CONSUMER'));
+    case 'provider':
+      return keccak256(toBytes('PROVIDER'));
+    case 'issuer':
+      return keccak256(toBytes('ISSUER'));
+    case 'verifier':
+      return keccak256(toBytes('VERIFIER'));
+    default:
+      console.error(`Unknown role: ${role}`);
+      return '0x0000000000000000000000000000000000000000000000000000000000000000';
+  }
+}
 
 /**
  * Create a public client for reading from the blockchain
@@ -91,14 +127,14 @@ export async function processTransactionReceipt(
  * @param role - The role to grant
  * @returns The transaction response
  */
-export async function grantDidRole(did: string, role: string): Promise<TransactionResponse> {
+export async function grantDidRole(did: string, role: Role): Promise<TransactionResponse> {
   try {
     return {
       success: true,
       contractAddress: defaultConfig.contractAddress,
       abi: DidAuthABI,
       functionName: 'grantDidRole',
-      args: [did, role],
+      args: [did, getRoleHash(role)],
     };
   } catch (error: any) {
     console.error('Error granting DID role:', error);

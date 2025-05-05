@@ -13,11 +13,12 @@ import {
 } from '@/components/ui/dialog';
 import { Card } from '@/components/ui/card';
 import { motion } from 'framer-motion';
+import { Role } from '@/features/did-auth/actions/mutation';
 
 interface UserRoleDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSelectRole: (role: 'consumer' | 'producer' | 'admin' | 'provider') => void;
+  onSelectRole: (role: Role) => void;
   className?: string;
 }
 

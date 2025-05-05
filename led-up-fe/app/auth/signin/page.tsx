@@ -13,6 +13,7 @@ import { DidCreationFlow } from '@/features/auth/components/did-creation-flow';
 import { SigninFlowProvider, useSigninFlow } from '@/features/auth/contexts/signin-flow-context';
 import { motion } from 'framer-motion';
 import { useGrantDidRole } from '@/features/auth';
+import { Role } from '@/features/did-auth/actions/mutation';
 
 function SigninPageContent() {
   const router = useRouter();
@@ -206,17 +207,27 @@ function SigninPageContent() {
     }
   };
 
-  const handleGrantDidRole = async (role: string) => {
-    await grantDidRole({ did: didIdentifier, role });
+  const handleGrantDidRole = async (role: Role) => {
+    try {
+      await grantDidRole({ did: didIdentifier, role });
+      return true;
+    } catch (error) {
+      toast.error('Error', {
+        description: error instanceof Error ? error.message : 'An error occurred during DID role grant',
+      });
+    }
   };
 
   // Handle producer registration
-  const handleRegisterProducer = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleRegisterParticipant = async (role: Role) => {
     setIsProcessing(true);
 
     try {
-      // After successful producer registration, authenticate and redirect
+      if (role === 'consumer' || role === 'admin' || role === 'provider') {
+        const didGranted = await handleGrantDidRole(role);
+        if (!didGranted) return;
+      }
+
       const success = await login(true, '/dashboard');
 
       if (success) {
@@ -307,7 +318,7 @@ function SigninPageContent() {
                 onDidDocumentChange={handleDidDocumentChange}
                 onCancel={handleDisconnect}
                 onDidRegister={handleRegisterDid}
-                onProducerRegister={handleRegisterProducer}
+                onParticipantRegister={handleRegisterParticipant}
               />
             </motion.div>
           )}

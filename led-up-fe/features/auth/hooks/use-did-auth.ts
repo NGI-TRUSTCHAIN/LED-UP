@@ -2,6 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import * as didAuthActions from '@/features/did-auth/actions';
+import { Role } from '@/features/did-auth/actions/mutation';
 
 /**
  * Hook to authenticate a DID for a specific role
@@ -236,7 +237,7 @@ export function useGrantDidRole() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ did, role }: { did: string; role: string }) => didAuthActions.grantDidRole(did, role),
+    mutationFn: ({ did, role }: { did: string; role: Role }) => didAuthActions.grantDidRole(did, role),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['didAuth'] });
     },

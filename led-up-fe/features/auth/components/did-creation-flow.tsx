@@ -13,6 +13,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/features/auth/contexts/auth-provider';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, ShieldCheck } from 'lucide-react';
+import { Role } from '@/features/did-auth/actions/mutation';
 
 // Define the registration steps - consolidated to 3 steps
 const registrationSteps: Step[] = [
@@ -42,7 +43,7 @@ interface DidCreationFlowProps {
   onDidDocumentChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   onCancel: () => void;
   onDidRegister: () => void;
-  onProducerRegister: (e: React.FormEvent) => void;
+  onParticipantRegister: (role: Role) => void;
 }
 
 export function DidCreationFlow({
@@ -54,7 +55,7 @@ export function DidCreationFlow({
   onDidDocumentChange,
   onCancel,
   onDidRegister,
-  onProducerRegister,
+  onParticipantRegister,
 }: DidCreationFlowProps) {
   const router = useRouter();
   const { login } = useAuth();
@@ -135,7 +136,6 @@ export function DidCreationFlow({
     setShowRoleDialog(false);
 
     if (typedRole === 'consumer') {
-      // For consumers, authenticate and redirect to dashboard
       const success = await login(true, '/dashboard');
       if (success) {
         toast.success('Authentication Successful', {
@@ -144,24 +144,20 @@ export function DidCreationFlow({
         router.push('/dashboard');
       }
     } else {
-      // For producers, show the registration form
       setActiveStep(2);
     }
   };
 
   // Handle producer registration
-  const handleProducerRegister = async (e: React.FormEvent) => {
-    // Call the parent's onProducerRegister function to handle the actual registration
-    onProducerRegister(e);
-
-    // After successful producer registration, authenticate and redirect
-    // This will be handled by the parent component
+  const handleRegisterParticipant = async (e: React.FormEvent) => {
+    if (selectedRole === 'consumer') {
+      // producer role will be registered with did registration step
+      onParticipantRegister(selectedRole);
+    }
   };
 
-  // Effect to move to next step after DID is created
   useEffect(() => {
     if (didCreated && activeStep === 1) {
-      // Small delay to allow the user to see the success message
       const timer = setTimeout(() => {
         setShowRoleDialog(true);
       }, 1000);
@@ -170,7 +166,6 @@ export function DidCreationFlow({
     }
   }, [didCreated, activeStep]);
 
-  // Copy to clipboard
   const copyToClipboard = (text: string, type: string) => {
     navigator.clipboard.writeText(text);
     toast.success('Copied to clipboard', {
@@ -178,7 +173,6 @@ export function DidCreationFlow({
     });
   };
 
-  // Render the appropriate step content
   const renderStepContent = () => {
     switch (activeStep) {
       case 1: // Configure & Register DID (consolidated step)
@@ -203,7 +197,7 @@ export function DidCreationFlow({
           <LedUpParticipation
             onPrevious={handlePrevStep}
             onNext={handleNextStep}
-            onRegister={handleProducerRegister}
+            onRegister={handleRegisterParticipant}
             isProcessing={isProcessing}
             showRoleDialog={showRoleDialog}
             setShowRoleDialog={setShowRoleDialog}
