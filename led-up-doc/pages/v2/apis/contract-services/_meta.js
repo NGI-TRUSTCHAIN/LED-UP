@@ -1,4 +1,4 @@
-export default {
+const meta = {
   'compensation-api': 'Compensation API',
   'compensation-service': 'Compensation Service',
   'data-registry-api': 'Data Registry API',
@@ -9,3 +9,5 @@ export default {
   'did-registry-service': 'DID Registry Service',
   'did-verifier-service': 'DID Verifier Service',
 };
+
+export default meta;

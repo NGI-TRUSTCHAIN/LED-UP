@@ -15,28 +15,29 @@ This project implements a Decentralized Identifier (DID) Registry smart contract
 ## Project Structure
 
 ```
-didregistry/
-├── contracts/           # Smart contract source code
-│   └── circuits/        # ZK circuit implementations
-│       └── circom/      # Circom circuit definitions
-│           └── enhanced/# Gas-optimized circuits
-├── interfaces/          # Contract interfaces
+led-up-sc/
+├── src/                 # Source code
+│   ├── contracts/       # Smart contract implementations
+│   │   ├── zkp/         # ZK verifier contracts
+│   ├── interfaces/      # Contract interfaces
+│   └── library/         # Shared libraries
+├── circuits/            # ZK circuit implementations
+│   ├── __test__/        # Circuit test files
+│   ├── out-files/       # Generated circuit outputs
+│   ├── ptau/            # Trusted setup files
+│   └── scripts/         # Circuit utility scripts
+├── interfaces/          # TypeScript interfaces
 ├── test/                # Test files
-│   ├── did/             # DID Registry tests
-│   ├── zkp-test/        # Zero-Knowledge Proof tests
-│   │   └── circom/      # Circom circuit tests
-│   │       └── gas/     # Gas optimization benchmarks
-│   ├── DidRegistry.test.ts         # Basic tests
-│   └── DidRegistry.enhanced.test.ts # Comprehensive test suite
-├── ignition/            # Hardhat Ignition deployment modules
+│   ├── hardhat/         # Hardhat-based tests
+│   └── foundry/         # Foundry-based tests
 ├── scripts/             # Utility scripts
-│   ├── run-tests.sh     # Test runner script
-│   └── build-optimized-circuits.sh # Circuit build script
-├── led-up-fe/           # Frontend components
-│   └── features/        # Frontend features
-│       └── circom/      # Circom circuit utilities
-│           └── utils/   # Optimized utility functions
-└── TESTING.md           # Detailed testing documentation
+├── ignition/            # Hardhat Ignition deployment modules
+├── types/               # TypeScript type definitions
+├── lib/                 # Libraries (Foundry)
+├── artifacts/           # Compiled contract artifacts
+├── typechain-types/     # Generated TypeScript types
+├── factories/           # Generated contract factories
+└── coverage/            # Code coverage reports
 ```
 
 ## Getting Started
@@ -47,6 +48,7 @@ didregistry/
 - npm or yarn
 - Circom 2.1.4+ (for ZK circuits)
 - SnarkJS 0.7+ (for ZK proofs)
+- Foundry (for testing with Forge)
 
 ### Installation
 
@@ -55,15 +57,21 @@ didregistry/
 npm install
 # or
 yarn install
+
+# Setup Foundry (if using Foundry)
+forge install
 ```
 
 ### Compilation
 
 ```shell
-# Compile smart contracts
+# Compile smart contracts with Hardhat
 npm run compile
 # or
 yarn compile
+
+# Compile with Foundry
+forge build
 
 # Build optimized circuits
 npm run build:circuits
@@ -73,58 +81,37 @@ yarn build:circuits
 
 ## Testing
 
-This project includes a comprehensive test suite for the DID Registry contract and ZK circuits. For detailed information about testing, see [TESTING.md](./TESTING.md).
+This project includes a comprehensive test suite for the DID Registry contract and ZK circuits.
 
 ### Running Tests
 
 ```shell
-# Run DID Registry tests
-npm run test:did
+# Run Hardhat tests
+npm run test:hardhat
 # or
-yarn test:did
+yarn test:hardhat
 
-# Run enhanced test suite
-npm run test:did-enhanced
-# or
-yarn test:did-enhanced
-
-# Run all smart contract tests
-npm run test:all
-# or
-yarn test:all
+# Run Foundry tests
+forge test
 
 # Run tests with gas reporting
 npm run test:gas
-npm run test:gas-enhanced
 # or
 yarn test:gas
-yarn test:gas-enhanced
 
 # Run test coverage
 npm run coverage
-npm run coverage:did
 # or
 yarn coverage
-yarn coverage:did
 ```
 
 ### Running ZK Circuit Tests
 
 ```shell
-# Run gas optimization tests
-npm run test:circuit:gas
+# Run circuit tests
+npm run test:circuits
 # or
-yarn test:circuit:gas
-
-# Run optimized hash tests
-npm run test:circuit:hash
-# or
-yarn test:circuit:hash
-
-# Run all circuit tests
-npm run test:circuit:all
-# or
-yarn test:circuit:all
+yarn test:circuits
 ```
 
 ## Gas-Optimized Circom Circuits
@@ -160,6 +147,9 @@ yarn deploy
 
 # Deploy using Hardhat Ignition
 npx hardhat ignition deploy ./ignition/modules/DidRegistry.ts
+
+# Deploy using Foundry
+forge script scripts/Deploy.s.sol --rpc-url <RPC_URL> --private-key <PRIVATE_KEY>
 ```
 
 ## License

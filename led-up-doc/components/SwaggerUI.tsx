@@ -6,7 +6,7 @@ import * as yaml from 'js-yaml';
 import { useThemeConfig } from 'nextra-theme-docs';
 
 const SwaggerComponent: React.FC<{ yamlFileUrl: string }> = ({ yamlFileUrl }) => {
-  const [spec, setSpec] = useState<object>({});
+  const [spec, setSpec] = useState<object | null>(null);
 
   useEffect(() => {
     const fetchYaml = async () => {
@@ -36,6 +36,7 @@ const SwaggerComponent: React.FC<{ yamlFileUrl: string }> = ({ yamlFileUrl }) =>
 
   if (!spec) return <div>Loading...</div>;
 
+  // @ts-expect-error - SwaggerUI type is incompatible with React 18
   return <SwaggerUI spec={spec} />;
 };
 

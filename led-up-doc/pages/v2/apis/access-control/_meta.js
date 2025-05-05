@@ -1,4 +1,4 @@
-export default {
+const meta = {
   README: 'Overview',
   'access-control-apis': 'Access Control APIs',
   'access-validation': 'Access Validation',
@@ -6,3 +6,5 @@ export default {
   'data-access-controller': 'Data Access Controller',
   'integration-patterns': 'Integration Patterns',
 };
+
+export default meta;

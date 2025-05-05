@@ -1,12 +1,6 @@
 import HeaderTitle from '@/components/title';
 
-<HeaderTitle
-  title="Key Vault Service"
-  source="https://github.com/LED-UP/LED-UP/tree/main/apis/auth"
-/>
----
-
-
+<HeaderTitle title="Key Vault Service" source="https://github.com/LED-UP/LED-UP/tree/main/apis/auth" />
 
 **Component Type:** Service  
 **Path:** `/services/auth/KeyVault.service.ts`
@@ -239,14 +233,14 @@ The key management process in the LEDUP system:
 ```mermaid
 sequenceDiagram
     participant Client
-    participant KeyVault as Key Vault Service
-    participant Encryption as Encryption Provider
-    participant Storage as Storage Provider
+    participant KeyVault
+    participant Storage
+    participant Encryption
 
     Client->>KeyVault: generateKeyPair()
     KeyVault->>Encryption: generateKeyPair()
-    Encryption-->>KeyVault: {publicKey, privateKey}
-    KeyVault-->>Client: {publicKey, privateKey}
+    Encryption-->>KeyVault: keyPair
+    KeyVault-->>Client: keyPair
 
     Client->>KeyVault: storeKey(keyId, privateKey, passphrase)
     KeyVault->>Encryption: encrypt(privateKey, passphrase)
@@ -341,15 +335,15 @@ The Key Vault Service implements several security best practices:
 
 The KeyVaultService implements comprehensive error handling:
 
-| Error Condition      | Status Code | Error Message                          |
-| -------------------- | ----------- | -------------------------------------- |
-| Key not found        | 404         | Key with ID '{keyId}' not found        |
-| Invalid passphrase   | 401         | Invalid passphrase for key '{keyId}'   |
-| Storage failure      | 500         | Failed to store key '{keyId}'          |
-| Encryption failure   | 500         | Failed to encrypt data                 |
-| Decryption failure   | 500         | Failed to decrypt key '{keyId}'        |
-| Signing failure      | 500         | Failed to sign data with key '{keyId}' |
-| Verification failure | 400         | Failed to verify signature             |
+| Error Condition      | Status Code | Error Message                                         |
+| -------------------- | ----------- | ----------------------------------------------------- |
+| Key not found        | 404         | Key with ID '&#123;keyIdValue&#125;' not found        |
+| Invalid passphrase   | 401         | Invalid passphrase for key '&#123;keyIdValue&#125;'   |
+| Storage failure      | 500         | Failed to store key '&#123;keyIdValue&#125;'          |
+| Encryption failure   | 500         | Failed to encrypt data                                |
+| Decryption failure   | 500         | Failed to decrypt key '&#123;keyIdValue&#125;'        |
+| Signing failure      | 500         | Failed to sign data with key '&#123;keyIdValue&#125;' |
+| Verification failure | 400         | Failed to verify signature                            |
 
 ## Integration Examples
 

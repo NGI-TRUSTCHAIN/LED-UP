@@ -1,4 +1,4 @@
-export default {
+const meta = {
   approach: 'Approach',
   'compensation-contract': 'Compensation Contract',
   'data-registry-contract': 'Data Registry Contract',
@@ -8,3 +8,5 @@ export default {
   'did-issuer': 'DID Issuer Contract',
   'did-verifier': 'DID Verifier Contract',
 };
+
+export default meta;

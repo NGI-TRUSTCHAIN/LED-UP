@@ -1,4 +1,4 @@
-export default {
+const meta = {
   README: 'Overview',
   circuits: 'Circuits Introduction',
   'installation-and-setup': 'Installation & Setup',
@@ -6,3 +6,5 @@ export default {
   'hash-verification': 'Hash Verification',
   'fhir-verification': 'FHIR Verification',
 };
+
+export default meta;

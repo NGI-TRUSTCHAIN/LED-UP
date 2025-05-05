@@ -1,4 +1,4 @@
-export default {
+const meta = {
   'project-setup': 'Project Setup',
   'page-structure': 'Page Structure',
   'component-library': 'Component Library',
@@ -15,3 +15,5 @@ export default {
   'feature-modules': 'Feature Modules',
   'frontend-documentation-todolist': 'Documentation To-Do',
 };
+
+export default meta;

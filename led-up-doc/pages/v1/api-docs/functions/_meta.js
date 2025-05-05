@@ -1,4 +1,4 @@
-export default {
+const meta = {
   'blockchain-refresh': {
     title: 'Blockchain Refresh',
     display: 'hidden',
@@ -192,3 +192,5 @@ export default {
     display: 'hidden',
   },
 };
+
+export default meta;

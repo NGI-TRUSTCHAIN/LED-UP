@@ -1,4 +1,4 @@
-export default {
+const meta = {
   'getting-started': 'Getting Started',
   consent: {
     display: 'hidden',
@@ -11,3 +11,5 @@ export default {
   },
   data_types: 'Data Types',
 };
+
+export default meta;

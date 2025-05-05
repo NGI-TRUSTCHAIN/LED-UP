@@ -1,4 +1,4 @@
-export default {
+const meta = {
   README: 'Overview',
   'auth-challenge-service': 'Auth Challenge Service',
   'auth-functions': 'Auth Functions',
@@ -10,3 +10,5 @@ export default {
   'jwt-service': 'JWT Service',
   'key-vault-service': 'Key Vault Service',
 };
+
+export default meta;

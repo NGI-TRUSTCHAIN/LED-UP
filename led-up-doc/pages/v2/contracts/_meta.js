@@ -1,4 +1,4 @@
-export default {
+const meta = {
   README: 'Overview',
   architecture: 'Contract Architecture',
   'data-registry': 'Data Registry',
@@ -8,3 +8,5 @@ export default {
   'did-auth': 'DID Authentication',
   details: 'More details',
 };
+
+export default meta;

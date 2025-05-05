@@ -1,4 +1,4 @@
-export default {
+const meta = {
   'access-control': 'Access Control',
   auth: 'Authentication',
   'contract-services': 'Contract Services',
@@ -8,3 +8,5 @@ export default {
   sync: 'Blockchain Sync',
   zkp: 'ZKP',
 };
+
+export default meta;
