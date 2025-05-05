@@ -31,12 +31,20 @@ LED-UP platform revolutionizing data sharing and compensation systems. Our platf
 
 Our code repository is organized into the following sections:
 
-- **Smart Contracts**: Contains the Solidity smart contracts that power LED-UP's decentralized data management system. These contracts define the rules and logic governing data registration, sharing, and compensation. 
+- **Smart Contracts**: Contains the Solidity smart contracts that power LED-UP's decentralized data management system. These contracts define the rules and logic governing data registration, sharing, and compensation.
 
 - **APIs**: Includes the serverless APIs built using Azure Functions that interact with the LED-UP platform. These APIs facilitate data uploads, sharing, and retrieval operations, providing a seamless interface for developers to integrate with LED-UP.
 
 - **Documentation**: Comprises detailed guides and resources for developers to understand and utilize LED-UP's features effectively. This section covers smart contract integration, API usage, and other essential information for working with LED-UP.
 
+## Quick Start Guide
+
+Run the following to quickly run all the apps under led-up repo
+
+```bash
+   chmod +x ./run-app.sh
+   ./run-app.sh
+```
 
 ## Contribution
 
@@ -48,16 +56,16 @@ To get started, feel free to open an issue, submit a pull request, or reach out 
 
 This project is supported and maintained by the following core contributors:
 
-- **Mengstu Fentaw**  
-  GitHub: [@menge-mm](https://github.com/menge-mm)  
+- **Mengstu Fentaw**
+  GitHub: [@menge-mm](https://github.com/menge-mm)
   Email: [mfn@modern-miracle.com](mailto:mfn@modern-miracle.com)
 
-- **Dr. Manuel Knott**  
-  GitHub: [@mak-mm](https://github.com/mak-mm)  
+- **Dr. Manuel Knott**
+  GitHub: [@mak-mm](https://github.com/mak-mm)
   Email: [mak@modern-miracle.com](mailto:mak@modern-miracle.com)
 
-- **Sarra-Maryam Fezzani**  
-  GitHub: [@smfzzni](https://github.com/smfzzni)  
+- **Sarra-Maryam Fezzani**
+  GitHub: [@smfzzni](https://github.com/smfzzni)
   Email: [smf@modern-miracle.com](mailto:smf@modern-miracle.com)
 
 ### Project Support
@@ -72,4 +80,3 @@ Email: [led-up@modern-miracle.com](mailto:led-up@modern-miracle.com)
 ## License
 
 This project is licensed under the AGPL 3.0 License. You can find more details in the LICENSE file or refer to the official documentation of the AGPL 3.0 license for further information.
-
