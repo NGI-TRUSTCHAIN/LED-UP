@@ -42,7 +42,6 @@ coverage/
 ./led-up-sc/broadcast/
 ./workplan-and-docs/
 circom/
-scripts/
 commit-history.md
 
 ./led-up-graph/
